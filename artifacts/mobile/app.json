@@ -3,7 +3,7 @@
     "name": "Buddy-Link AR",
     "slug": "mobile",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "dark",
@@ -14,7 +14,7 @@
       "backgroundColor": "#0D1B2A"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "The AR Co-Pilot view uses your camera to overlay mission graphics and sparkle effects during your GoBabyGo session."
       }
