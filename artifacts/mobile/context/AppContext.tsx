@@ -66,7 +66,17 @@ export interface SavedCar {
   model3dStatus?: Model3dStatus;
   model3dUrl?: string | null;
   createdAt: number;
+  isDefault?: boolean;
 }
+
+export const DEFAULT_CAR: SavedCar = {
+  id: "default-car",
+  name: "Buddy Car",
+  photoUri: "",
+  stickers: [],
+  createdAt: 0,
+  isDefault: true,
+};
 
 export interface CarDesign {
   id: string;
@@ -405,6 +415,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        if (!initialCars.some((c) => c.isDefault)) {
+          initialCars = [DEFAULT_CAR, ...initialCars];
+          await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
+        }
         setSavedCars(initialCars);
         if (rawDesigns) setDesigns(JSON.parse(rawDesigns));
       } finally {
@@ -457,6 +471,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [persistCars]);
 
   const deleteSavedCar = useCallback(async (id: string) => {
+    if (id === DEFAULT_CAR.id) return;
     let next: SavedCar[] = [];
     setSavedCars((prev) => {
       next = prev.filter((c) => c.id !== id);

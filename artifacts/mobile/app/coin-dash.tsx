@@ -22,6 +22,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Colors } from "@/constants/colors";
 import { useApp, STICKER_CATALOG } from "@/context/AppContext";
 
@@ -92,12 +93,14 @@ function generatePath(): DrivePath {
 
 function VehicleOnTrack({
   photoUri,
+  isDefault,
   stickers,
   vehicleName,
   tilt,
   onLap,
 }: {
   photoUri: string | null;
+  isDefault?: boolean;
   stickers: { stickerId: string }[];
   vehicleName: string;
   tilt: { x: number; y: number };
@@ -157,7 +160,11 @@ function VehicleOnTrack({
 
   return (
     <Animated.View style={[styles.carContainer, carStyle]}>
-      {photoUri ? (
+      {isDefault ? (
+        <View style={styles.carPlaceholder}>
+          <DefaultCarSvg width={CAR_W - 20} height={CAR_H - 20} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+        </View>
+      ) : photoUri ? (
         <Image source={{ uri: photoUri }} style={styles.carImage} resizeMode="cover" />
       ) : (
         <View style={styles.carPlaceholder}>
@@ -211,7 +218,8 @@ function DustParticle({ delay }: { delay: number }) {
 export default function CoinDashScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const { garage } = useApp();
+  const { savedCars } = useApp();
+  const activeCar = savedCars[0] ?? null;
   const tilt = useGyroscope();
   const [laps, setLaps] = useState(0);
 
@@ -259,7 +267,7 @@ export default function CoinDashScreen() {
     );
   }
 
-  const hasVehicle = !!garage.photoUri;
+  const hasVehicle = !!activeCar;
 
   return (
     <View style={styles.container}>
@@ -282,9 +290,10 @@ export default function CoinDashScreen() {
 
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <VehicleOnTrack
-          photoUri={garage.photoUri}
-          stickers={garage.stickers}
-          vehicleName={garage.vehicleName}
+          photoUri={activeCar?.photoUri || null}
+          isDefault={activeCar?.isDefault}
+          stickers={activeCar?.stickers ?? []}
+          vehicleName={activeCar?.name ?? "My Car"}
           tilt={tilt}
           onLap={handleLap}
         />

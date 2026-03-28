@@ -67,7 +67,13 @@ function SavedCarCard({ car, onPress, onDelete, onRename }: {
   return (
     <Pressable onPress={onPress} style={cardStyles.card}>
       <View style={cardStyles.imageArea}>
-        <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
+        {car.isDefault ? (
+          <View style={cardStyles.defaultCarArea}>
+            <DefaultCarSvg width={140} height={90} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+          </View>
+        ) : (
+          <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
+        )}
         {car.model3dUrl && (
           <View style={cardStyles.badge3d}>
             <Text style={cardStyles.badge3dText}>3D</Text>
@@ -76,14 +82,16 @@ function SavedCarCard({ car, onPress, onDelete, onRename }: {
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{car.name}</Text>
-        <View style={cardStyles.actions}>
-          <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="pencil" size={14} color={Colors.primary} />
-          </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="trash-outline" size={14} color={Colors.danger} />
-          </Pressable>
-        </View>
+        {!car.isDefault && (
+          <View style={cardStyles.actions}>
+            <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
+              <Ionicons name="pencil" size={14} color={Colors.primary} />
+            </Pressable>
+            <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
+              <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+            </Pressable>
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -145,6 +153,12 @@ const cardStyles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+  defaultCarArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(79,142,247,0.08)",
   },
   badge3d: {
     position: "absolute",
@@ -399,42 +413,23 @@ export default function GarageScreen() {
 
         {activeTab === "cars" && (
           <View style={styles.section}>
-            {savedCars.length === 0 ? (
-              <View style={styles.emptyState}>
-                <View style={styles.defaultCarWrap}>
-                  <DefaultCarSvg width={220} height={130} bodyColor="#4F8EF7" accentColor="#FFD93D" />
-                </View>
-                <Text style={styles.emptyTitle}>NO CARS YET</Text>
-                <Text style={styles.emptySubtitle}>Scan a photo of your real GoBabyGo vehicle to add it to your garage!</Text>
-                <Pressable onPress={handleScanNewCar} style={styles.emptyBtn}>
-                  <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.emptyBtnGrad}>
-                    <Ionicons name="camera" size={20} color="#FFFFFF" />
-                    <Text style={styles.emptyBtnText}>SCAN YOUR RIDE!</Text>
-                  </LinearGradient>
-                </Pressable>
-              </View>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.cardRow}
-              >
-                {savedCars.map((car) => (
-                  <SavedCarCard
-                    key={car.id}
-                    car={car}
-                    onPress={() => handleOpenCar(car)}
-                    onDelete={() => handleDeleteCar(car)}
-                    onRename={() => startRename(car.id, "cars", car.name)}
-                  />
-                ))}
-                <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
-              </ScrollView>
-            )}
-
-            {savedCars.length > 0 && (
-              <Text style={styles.scrollHint}>← Swipe to see more cars</Text>
-            )}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardRow}
+            >
+              {savedCars.map((car) => (
+                <SavedCarCard
+                  key={car.id}
+                  car={car}
+                  onPress={() => handleOpenCar(car)}
+                  onDelete={() => handleDeleteCar(car)}
+                  onRename={() => startRename(car.id, "cars", car.name)}
+                />
+              ))}
+              <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
+            </ScrollView>
+            <Text style={styles.scrollHint}>← Swipe to see more cars</Text>
           </View>
         )}
 

@@ -102,10 +102,11 @@ Expo React Native mobile app — **GoBabyGo Buddy-Link AR**. A gamified companio
 - Sensors: `expo-sensors` Accelerometer used for shake/proximity detection
 - Storage: AsyncStorage (no backend — fully offline)
 - Design: Deep navy (#0D1B2A) + orange accent (#FF6B2B) + amber secondary (#FFD166)
-- Navigation: 3 bottom tabs (Home/Missions/History) + stack routes /ar, /summary, /parent-mode
-- Screens: Home, Missions, History, AR Co-Pilot, Session Summary, Parent Mode (PIN: 1234)
-- Components: AROverlay (SparkleEffect, MissionShield, SpeedStar), MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning
-- Context: AppContext with 10 missions, session management, badge generation, AsyncStorage persistence
+- Navigation: 4 bottom tabs (Home/Games/Garage/Sounds) + stack routes /ar, /summary, /parent-mode, /coin-dash, /car-detail, /design-builder
+- Screens: Home, Games, Garage, Sounds, AR Drive (Coin Dash), Car Detail, Design Builder, Session Summary, Parent Mode (PIN: 1234)
+- Components: DefaultCarSvg (configurable SVG car), AROverlay, MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning
+- Context: AppContext with savedCars (pre-seeded with default "Buddy Car"), carDesigns, session management, badge generation, AsyncStorage persistence
+- Garage: Tabbed (SAVED CARS / MY DESIGNS), default "Buddy Car" always present (non-deletable), used as vehicle in AR games via savedCars[0]
 - Animation: All Animated API calls use `useNativeDriver: Platform.OS !== 'web'` for web compatibility
 - `pnpm --filter @workspace/mobile run dev` — start Expo dev server
 

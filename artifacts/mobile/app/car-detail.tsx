@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
+import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -397,9 +398,11 @@ export default function CarDetailScreen() {
             <Pressable onPress={handleRescan} style={styles.iconBtn} hitSlop={8}>
               <Ionicons name="camera" size={18} color={Colors.primary} />
             </Pressable>
-            <Pressable onPress={handleDelete} style={styles.iconBtn} hitSlop={8}>
-              <Ionicons name="trash-outline" size={18} color={Colors.danger} />
-            </Pressable>
+            {!car?.isDefault && (
+              <Pressable onPress={handleDelete} style={styles.iconBtn} hitSlop={8}>
+                <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -434,7 +437,13 @@ export default function CarDetailScreen() {
           const { width, height } = e.nativeEvent.layout;
           setPhotoAreaLayout({ width, height });
         }}>
-          <Image source={{ uri: car.photoUri }} style={styles.vehiclePhoto} resizeMode="cover" />
+          {car.isDefault ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(79,142,247,0.08)" }}>
+              <DefaultCarSvg width={280} height={170} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+            </View>
+          ) : (
+            <Image source={{ uri: car.photoUri }} style={styles.vehiclePhoto} resizeMode="cover" />
+          )}
           <LinearGradient colors={["transparent", "rgba(9,25,42,0.5)"]} style={styles.vehiclePhotoOverlay} />
           {car.stickers.map((placed) => (
             <DraggableSticker key={placed.uid} placed={placed} onMove={handleMoveSticker} onRemove={handleRemoveSticker} />
