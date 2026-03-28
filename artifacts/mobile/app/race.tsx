@@ -2,8 +2,9 @@ import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,11 +12,9 @@ import {
   View,
 } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSequence,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -46,7 +45,7 @@ function GoBurst({ visible }: { visible: boolean }) {
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       scale.value = 0;
       opacity.value = 1;
@@ -72,45 +71,238 @@ function GoBurst({ visible }: { visible: boolean }) {
   );
 }
 
-function PitStopBar({ filling }: { filling: boolean }) {
-  const width = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const [done, setDone] = useState(false);
+type GasCanProps = {
+  fillPct: number;
+};
 
-  React.useEffect(() => {
-    if (filling) {
-      setDone(false);
-      opacity.value = withTiming(1, { duration: 200 });
-      width.value = 0;
-      width.value = withTiming(100, { duration: 2000, easing: Easing.out(Easing.quad) }, (finished) => {
-        if (finished) {
-          setDone(true);
-        }
-      });
-    } else {
-      opacity.value = withDelay(1500, withTiming(0, { duration: 400 }));
-    }
-  }, [filling]);
-
-  const barStyle = useAnimatedStyle(() => ({
-    width: `${width.value}%` as any,
-  }));
-
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+function GasCan({ fillPct }: GasCanProps) {
+  const clamp = Math.max(0, Math.min(1, fillPct));
+  const fuelColor = clamp > 0.5 ? "#F4633A" : clamp > 0.2 ? "#FFD93D" : "#FF2200";
 
   return (
-    <Animated.View style={[styles.pitStopContainer, containerStyle]}>
-      <Text style={styles.pitStopLabel}>
-        {done ? "⛽ TANK FULL! 🎉" : "⛽ FILLING UP..."}
-      </Text>
-      <View style={styles.pitStopTrack}>
-        <Animated.View style={[styles.pitStopFill, barStyle]} />
+    <View style={gasStyles.wrap}>
+      <View style={gasStyles.can}>
+        <View style={gasStyles.canNozzle} />
+        <View style={gasStyles.canBody}>
+          <View style={gasStyles.canInner}>
+            <View style={[gasStyles.fuelFill, { height: `${Math.round(clamp * 100)}%`, backgroundColor: fuelColor }]} />
+          </View>
+          <View style={gasStyles.fuelPct}>
+            <Text style={gasStyles.fuelPctText}>{Math.round(clamp * 100)}%</Text>
+          </View>
+        </View>
+        <View style={gasStyles.canHandle} />
       </View>
-    </Animated.View>
+      <Text style={gasStyles.hint}>
+        {clamp <= 0 ? "⛽ TANK FULL! 🎉" : "Tilt phone to pour fuel!"}
+      </Text>
+    </View>
   );
 }
+
+const gasStyles = StyleSheet.create({
+  wrap: {
+    alignItems: "center",
+    gap: 24,
+  },
+  can: {
+    alignItems: "center",
+    position: "relative",
+  },
+  canNozzle: {
+    width: 18,
+    height: 30,
+    backgroundColor: "#888",
+    borderRadius: 4,
+    marginRight: -70,
+    alignSelf: "flex-end",
+    marginBottom: -4,
+    transform: [{ rotate: "30deg" }],
+  },
+  canBody: {
+    width: 120,
+    height: 160,
+    backgroundColor: "#1A1A2E",
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: "#F4633A",
+    overflow: "hidden",
+    justifyContent: "flex-end",
+  },
+  canInner: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "100%",
+    justifyContent: "flex-end",
+  },
+  fuelFill: {
+    width: "100%",
+    borderRadius: 0,
+    minHeight: 2,
+  },
+  fuelPct: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fuelPctText: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontFamily: "Nunito_700Bold",
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  canHandle: {
+    width: 50,
+    height: 18,
+    backgroundColor: "transparent",
+    borderTopWidth: 5,
+    borderColor: "#888",
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  hint: {
+    color: "#CCCCCC",
+    fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
+    textAlign: "center",
+    letterSpacing: 1,
+  },
+});
+
+type AccelSubscription = { remove: () => void };
+
+function useTiltDrain(active: boolean, onDrain: (amount: number) => void) {
+  const subscriptionRef = useRef<AccelSubscription | null>(null);
+
+  useEffect(() => {
+    if (!active || Platform.OS === "web") return;
+
+    let mounted = true;
+
+    (async () => {
+      try {
+        const sensors = await import("expo-sensors");
+        const { Accelerometer } = sensors;
+        Accelerometer.setUpdateInterval(80);
+
+        subscriptionRef.current = Accelerometer.addListener(({ x, y, z }: { x: number; y: number; z: number }) => {
+          if (!mounted) return;
+          const tilt = Math.abs(x) + Math.abs(y - (-1));
+          if (tilt > 0.35) {
+            onDrain(tilt * 0.012);
+          }
+        });
+      } catch (e) {
+        console.warn("[Race] Accelerometer unavailable:", e);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      subscriptionRef.current?.remove();
+      subscriptionRef.current = null;
+    };
+  }, [active, onDrain]);
+}
+
+function PitStopModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const [fillPct, setFillPct] = useState(1);
+  const [done, setDone] = useState(false);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      setFillPct(1);
+      setDone(false);
+      doneRef.current = false;
+    }
+  }, [visible]);
+
+  const handleDrain = useCallback((amount: number) => {
+    if (doneRef.current) return;
+    setFillPct((prev) => {
+      const next = prev - amount;
+      if (next <= 0) {
+        doneRef.current = true;
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setDone(true);
+        setTimeout(onClose, 1800);
+        return 0;
+      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      return next;
+    });
+  }, [onClose]);
+
+  useTiltDrain(visible && !done, handleDrain);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={pitStyles.overlay}>
+        <View style={pitStyles.card}>
+          <Text style={pitStyles.title}>⛽ PIT STOP</Text>
+          <GasCan fillPct={fillPct} />
+          {done && (
+            <Text style={pitStyles.doneText}>FUELED UP! 🎉</Text>
+          )}
+          <Pressable onPress={onClose} style={pitStyles.closeBtn} hitSlop={12}>
+            <Text style={pitStyles.closeBtnText}>SKIP</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const pitStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  card: {
+    backgroundColor: "#0D1F35",
+    borderRadius: 28,
+    padding: 36,
+    alignItems: "center",
+    gap: 20,
+    borderWidth: 2,
+    borderColor: "#F4633A44",
+    width: 300,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
+  },
+  doneText: {
+    color: "#00CC44",
+    fontSize: 24,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
+    textAlign: "center",
+  },
+  closeBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+  },
+  closeBtnText: {
+    color: "#888",
+    fontSize: 14,
+    fontFamily: "Nunito_600SemiBold",
+    letterSpacing: 2,
+  },
+});
 
 export default function RaceScreen() {
   const insets = useSafeAreaInsets();
@@ -119,8 +311,7 @@ export default function RaceScreen() {
   const [lightState, setLightState] = useState<LightState>("off");
   const [gameState, setGameState] = useState<GameState>("idle");
   const [showGo, setShowGo] = useState(false);
-  const [pitstopFilling, setPitstopFilling] = useState(false);
-  const [pitstopVisible, setPitstopVisible] = useState(false);
+  const [pitStopOpen, setPitStopOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimers = useCallback(() => {
@@ -155,28 +346,11 @@ export default function RaceScreen() {
     }, 1200);
   }, [clearTimers]);
 
-  const handlePitStop = useCallback(() => {
-    if (pitstopFilling) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setPitstopVisible(true);
-    setPitstopFilling(true);
-
-    setTimeout(() => {
-      setPitstopFilling(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setTimeout(() => {
-        setPitstopVisible(false);
-      }, 2000);
-    }, 2000);
-  }, [pitstopFilling]);
-
   const resetRace = useCallback(() => {
     clearTimers();
     setLightState("off");
     setGameState("idle");
     setShowGo(false);
-    setPitstopFilling(false);
-    setPitstopVisible(false);
   }, [clearTimers]);
 
   return (
@@ -184,7 +358,6 @@ export default function RaceScreen() {
       colors={["#0D0D1A", "#1A0A2E", "#0D1F35"]}
       style={styles.container}
     >
-      {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
         <Pressable
           onPress={() => router.back()}
@@ -200,31 +373,20 @@ export default function RaceScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Race Track decoration */}
       <View style={styles.trackLines}>
         {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
           <View key={i} style={styles.trackDash} />
         ))}
       </View>
 
-      {/* Stoplight */}
       <View style={styles.lightArea}>
         <StopLight state={lightState} />
       </View>
 
-      {/* GO Burst */}
       <View style={styles.burstArea} pointerEvents="none">
         <GoBurst visible={showGo} />
       </View>
 
-      {/* Pit stop bar */}
-      {pitstopVisible && (
-        <View style={styles.pitArea}>
-          <PitStopBar filling={pitstopFilling} />
-        </View>
-      )}
-
-      {/* Controls */}
       <View style={[styles.controls, { paddingBottom: insets.bottom + 32 }]}>
         {gameState === "idle" || gameState === "done" ? (
           <Pressable
@@ -256,17 +418,12 @@ export default function RaceScreen() {
         )}
 
         <Pressable
-          onPress={handlePitStop}
-          disabled={pitstopFilling}
-          style={({ pressed }) => [
-            styles.pitBtn,
-            pressed && styles.btnPressed,
-            pitstopFilling && styles.pitBtnDisabled,
-          ]}
+          onPress={() => setPitStopOpen(true)}
+          style={({ pressed }) => [styles.pitBtn, pressed && styles.btnPressed]}
           testID="race-pitstop-btn"
         >
           <LinearGradient
-            colors={pitstopFilling ? ["#555", "#444"] : ["#F4633A", "#C13E20"]}
+            colors={["#F4633A", "#C13E20"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.pitBtnGrad}
@@ -276,6 +433,8 @@ export default function RaceScreen() {
           </LinearGradient>
         </Pressable>
       </View>
+
+      <PitStopModal visible={pitStopOpen} onClose={() => setPitStopOpen(false)} />
     </LinearGradient>
   );
 }
@@ -342,10 +501,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-  },
-  pitArea: {
-    paddingHorizontal: 32,
-    marginBottom: 16,
   },
   stoplightPole: {
     alignItems: "center",
@@ -423,30 +578,6 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     textAlign: "center",
   },
-  pitStopContainer: {
-    gap: 10,
-    alignItems: "center",
-  },
-  pitStopLabel: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  pitStopTrack: {
-    width: "100%",
-    height: 24,
-    backgroundColor: "#222",
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#444",
-  },
-  pitStopFill: {
-    height: "100%",
-    backgroundColor: "#F4633A",
-    borderRadius: 12,
-  },
   controls: {
     paddingHorizontal: 24,
     gap: 14,
@@ -499,9 +630,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 2,
-  },
-  pitBtnDisabled: {
-    opacity: 0.5,
   },
   btnPressed: {
     opacity: 0.85,
