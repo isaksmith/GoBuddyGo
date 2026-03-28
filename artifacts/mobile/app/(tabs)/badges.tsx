@@ -6,6 +6,7 @@ import React from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
+import { BADGE_REGISTRY, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
@@ -36,6 +37,63 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   );
 }
 
+interface GalleryItem {
+  meta: BadgeMeta;
+  earnedDate: number | null;
+}
+
+function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: number }) {
+  const { meta, earnedDate } = item;
+  const earned = earnedDate !== null;
+  const { gradientColors, SvgComponent } = meta;
+
+  return (
+    <LinearGradient
+      colors={
+        earned
+          ? [gradientColors[0] + "44", gradientColors[1] + "22"]
+          : [Colors.backgroundCard + "CC", Colors.backgroundCard + "CC"]
+      }
+      style={[styles.badgeCard, !earned && styles.badgeCardLocked]}
+    >
+      <View
+        style={[
+          styles.badgeIconCircle,
+          earned
+            ? { borderColor: gradientColors[0] + "99", shadowColor: gradientColors[0] }
+            : { borderColor: Colors.border, shadowColor: "transparent" },
+          !earned && styles.badgeIconCircleLocked,
+        ]}
+      >
+        <View style={!earned ? styles.lockedSvgWrapper : undefined}>
+          <SvgComponent />
+        </View>
+        {!earned && (
+          <View style={styles.lockOverlay}>
+            <Ionicons name="lock-closed" size={22} color="#FFFFFF" />
+          </View>
+        )}
+      </View>
+      <Text
+        style={[
+          styles.badgeTitle,
+          { fontSize: 13 * textScale },
+          !earned && styles.badgeTitleLocked,
+        ]}
+      >
+        {meta.title.toUpperCase()}
+      </Text>
+      {earned ? (
+        <Text style={[styles.badgeDate, { fontSize: 11 * textScale }]}>
+          {new Date(earnedDate!).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+        </Text>
+      ) : (
+        <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale }]}>NOT YET EARNED</Text>
+      )}
+    </LinearGradient>
+  );
+}
+
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -46,9 +104,22 @@ export default function BadgesScreen() {
   const numCols = width > 600 ? 3 : 2;
   const hPad = width > 600 ? 20 : 12;
 
-  const allBadges = sessionHistory.flatMap((s) =>
-    s.badges.map((b) => ({ ...b, date: s.date }))
-  );
+  const earnedMap: Record<string, number> = {};
+  for (const session of sessionHistory) {
+    for (const badge of session.badges) {
+      const resolvedId = resolveId(badge.id);
+      if (earnedMap[resolvedId] === undefined || session.date < earnedMap[resolvedId]) {
+        earnedMap[resolvedId] = session.date;
+      }
+    }
+  }
+
+  const galleryItems: GalleryItem[] = Object.values(BADGE_REGISTRY).map((meta) => ({
+    meta,
+    earnedDate: earnedMap[meta.id] ?? null,
+  }));
+
+  const earnedCount = galleryItems.filter((i) => i.earnedDate !== null).length;
 
   return (
     <LinearGradient
@@ -56,41 +127,22 @@ export default function BadgesScreen() {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
-        <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>⭐ Badges</Text>
+        <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>🏆 Badges</Text>
         <View style={styles.countPill}>
-          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>{allBadges.length} EARNED</Text>
+          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>
+            {earnedCount}/{galleryItems.length} EARNED
+          </Text>
         </View>
       </View>
 
       <FlatList
-        data={allBadges}
-        keyExtractor={(_, i) => String(i)}
+        data={galleryItems}
+        keyExtractor={(item) => item.meta.id}
         numColumns={numCols}
         key={String(numCols)}
         contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76, paddingHorizontal: hPad }]}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="star-outline" size={52} color={Colors.textMuted} />
-            </View>
-            <Text style={styles.emptyTitle}>NO BADGES YET</Text>
-            <Text style={styles.emptySubtitle}>
-              Complete missions to earn badges!
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.badgeCard}>
-            <View style={styles.badgeIconCircle}>
-              <Ionicons name="star" size={36} color={Colors.secondary} />
-            </View>
-            <Text style={[styles.badgeTitle, { fontSize: 13 * textScale }]}>{item.title.toUpperCase()}</Text>
-            <Text style={[styles.badgeDate, { fontSize: 11 * textScale }]}>
-              {new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-            </Text>
-          </View>
-        )}
+        renderItem={({ item }) => <BadgeGridCard item={item} textScale={textScale} />}
       />
 
       <HomeButton bottomOffset={homeBtnBottom} />
@@ -137,23 +189,46 @@ const styles = StyleSheet.create({
   badgeCard: {
     flex: 1,
     margin: 6,
-    backgroundColor: Colors.backgroundCard,
     borderRadius: 20,
     padding: 20,
     alignItems: "center",
     gap: 8,
     borderWidth: 2,
-    borderColor: Colors.secondary + "44",
+    borderColor: Colors.border,
+  },
+  badgeCardLocked: {
+    borderColor: Colors.border,
+    opacity: 0.6,
   },
   badgeIconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: Colors.secondary + "18",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.backgroundCard,
     borderWidth: 2,
-    borderColor: Colors.secondary + "55",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  badgeIconCircleLocked: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  lockedSvgWrapper: {
+    opacity: 0.3,
+  },
+  lockOverlay: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
   badgeTitle: {
     color: Colors.text,
@@ -162,41 +237,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textAlign: "center",
   },
+  badgeTitleLocked: {
+    color: Colors.textMuted,
+  },
   badgeDate: {
     color: Colors.textMuted,
     fontSize: 11,
     fontFamily: "Nunito_400Regular",
   },
-  emptyState: {
-    alignItems: "center",
-    paddingTop: 60,
-    gap: 12,
-    paddingHorizontal: 32,
-  },
-  emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.backgroundCard,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  emptyTitle: {
-    color: Colors.text,
-    fontSize: 20,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
-    marginTop: 4,
-  },
-  emptySubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 14,
+  badgeUnearned: {
+    color: Colors.textMuted,
+    fontSize: 10,
     fontFamily: "Nunito_400Regular",
-    textAlign: "center",
-    lineHeight: 21,
+    letterSpacing: 0.5,
   },
   homeBtn: {
     position: "absolute",

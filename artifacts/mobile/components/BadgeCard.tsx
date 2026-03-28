@@ -1,23 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/constants/colors";
 import { Badge } from "@/context/AppContext";
-
-const BADGE_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
-  star: "star",
-  flame: "flame",
-  rocket: "rocket",
-  timer: "timer",
-};
-
-const BADGE_GRADIENT_MAP: Record<string, [string, string]> = {
-  star: [Colors.secondary, "#E8A800"],
-  flame: [Colors.primary, Colors.primaryDark],
-  rocket: [Colors.accent, "#26A36A"],
-  timer: [Colors.accentBlue, "#2196F3"],
-};
+import { getBadgeMeta } from "@/constants/badgeRegistry";
 
 interface BadgeCardProps {
   badge: Badge;
@@ -54,8 +40,11 @@ export function BadgeCard({ badge, index }: BadgeCardProps) {
     outputRange: ["-12deg", "0deg"],
   });
 
-  const iconName = BADGE_ICON_MAP[badge.icon] ?? "ribbon";
-  const gradientColors = BADGE_GRADIENT_MAP[badge.icon] ?? [Colors.primary, Colors.primaryDark];
+  const meta = getBadgeMeta(badge.id);
+  const gradientColors: [string, string] = meta
+    ? meta.gradientColors
+    : [Colors.primary, Colors.primaryDark];
+  const SvgComponent = meta?.SvgComponent;
 
   return (
     <Animated.View
@@ -70,15 +59,20 @@ export function BadgeCard({ badge, index }: BadgeCardProps) {
             styles.iconCircle,
             {
               shadowColor: gradientColors[0],
+              borderColor: gradientColors[0] + "88",
             },
           ]}
         >
-          <LinearGradient
-            colors={gradientColors}
-            style={styles.iconGradient}
-          >
-            <Ionicons name={iconName} size={38} color="#FFFFFF" />
-          </LinearGradient>
+          {SvgComponent ? (
+            <SvgComponent />
+          ) : (
+            <LinearGradient
+              colors={gradientColors}
+              style={styles.iconGradientFallback}
+            >
+              <Text style={styles.fallbackEmoji}>🏆</Text>
+            </LinearGradient>
+          )}
         </View>
         <Text style={styles.title}>{badge.title.toUpperCase()}</Text>
         <Text style={styles.description}>{badge.description}</Text>
@@ -112,16 +106,23 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginBottom: 12,
     overflow: "hidden",
+    borderWidth: 2,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 14,
     elevation: 8,
+    backgroundColor: Colors.backgroundCard,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  iconGradient: {
+  iconGradientFallback: {
     width: "100%",
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
+  },
+  fallbackEmoji: {
+    fontSize: 36,
   },
   title: {
     color: Colors.text,

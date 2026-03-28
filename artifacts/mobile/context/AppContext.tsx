@@ -322,37 +322,37 @@ function generateBadges(
 
   if (completed >= 1) {
     badges.push({
-      id: "first-mission",
-      title: "First Mission!",
+      id: "first-victory",
+      title: "First Victory",
       description: "Completed your first mission",
-      icon: "star",
+      icon: "first-victory",
       earnedAt: Date.now(),
     });
   }
   if (completed >= 3) {
     badges.push({
-      id: "triple",
-      title: "Triple Threat!",
+      id: "gearhead",
+      title: "Gearhead",
       description: "Completed 3 missions",
-      icon: "flame",
+      icon: "gearhead",
       earnedAt: Date.now(),
     });
   }
   if (completed === missions.length && missions.length > 0) {
     badges.push({
-      id: "perfect",
-      title: "Perfect Co-Pilot!",
+      id: "perfect-start",
+      title: "Perfect Start",
       description: "Completed all missions!",
-      icon: "rocket",
+      icon: "perfect-start",
       earnedAt: Date.now(),
     });
   }
   if (durationSeconds >= 300) {
     badges.push({
       id: "endurance",
-      title: "Endurance Champ",
+      title: "Endurance",
       description: "Stayed for 5+ minutes",
-      icon: "timer",
+      icon: "endurance",
       earnedAt: Date.now(),
     });
   }
