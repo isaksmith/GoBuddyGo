@@ -36,6 +36,8 @@ export default function HomeScreen() {
   const [editingName, setEditingName] = useState(false);
   const rocketAnim = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const hiddenTapCount = useRef(0);
+  const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -53,6 +55,20 @@ export default function HomeScreen() {
     await updateSettings({ childName: name.trim() });
     setEditingName(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleHiddenTap = () => {
+    hiddenTapCount.current += 1;
+    if (hiddenTapTimer.current) clearTimeout(hiddenTapTimer.current);
+    hiddenTapTimer.current = setTimeout(() => {
+      hiddenTapCount.current = 0;
+    }, 1500);
+    if (hiddenTapCount.current >= 5) {
+      hiddenTapCount.current = 0;
+      if (hiddenTapTimer.current) clearTimeout(hiddenTapTimer.current);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      router.push("/parent-mode");
+    }
   };
 
   const handleStartSession = () => {
@@ -80,23 +96,16 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Pressable
-            onPress={() => router.push("/parent-mode")}
-            style={styles.settingsBtn}
-            testID="settings-btn"
-            hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
-          >
-            <Ionicons name="lock-closed" size={14} color={Colors.border} />
-          </Pressable>
-        </View>
-
-        <Animated.View style={[styles.rocketContainer, { transform: [{ translateY: rocketAnim }] }]}>
+        <Animated.View
+          style={[styles.rocketContainer, { transform: [{ translateY: rocketAnim }] }]}
+        >
           <Ionicons name="rocket" size={80} color={Colors.primary} />
         </Animated.View>
 
         <Text style={styles.appTitle}>Buddy-Link</Text>
-        <Text style={styles.appSubtitle}>Co-Pilot Mode</Text>
+        <Pressable onPress={handleHiddenTap} testID="settings-btn">
+          <Text style={styles.appSubtitle}>Co-Pilot Mode</Text>
+        </Pressable>
 
         <View style={styles.nameSection}>
           {editingName ? (
@@ -185,23 +194,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
   },
-  header: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingVertical: 12,
-  },
-  settingsBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    opacity: 0.4,
-  },
   rocketContainer: {
-    marginTop: 20,
+    marginTop: 40,
     marginBottom: 10,
     alignItems: "center",
   },

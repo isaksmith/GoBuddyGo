@@ -65,10 +65,12 @@ function useAccelerometerProxy() {
 export default function ARScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const { sessionMissions, completeMission, sessionActive, startSession, endSession } = useApp();
+  const { sessionMissions, completeMission, sessionActive, startSession, endSession, settings, sessionStartTime } = useApp();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [speed, setSpeed] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [timeUp, setTimeUp] = useState(false);
   const proximityWarning = useAccelerometerProxy();
   const isNavigating = useRef(false);
 
@@ -97,6 +99,26 @@ export default function ARScreen() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!sessionStartTime || !settings.sessionDurationMinutes) return;
+    const totalSeconds = settings.sessionDurationMinutes * 60;
+
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const remaining = totalSeconds - elapsed;
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        setTimeUp(true);
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [sessionStartTime, settings.sessionDurationMinutes]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
@@ -173,8 +195,22 @@ export default function ARScreen() {
           <View style={styles.progressPill}>
             <Text style={styles.progressText}>{completed}/{total} Missions</Text>
           </View>
-          <View style={styles.statusDot} />
+          {timeLeft !== null && (
+            <View style={[styles.timerPill, timeLeft <= 60 && styles.timerPillWarning]}>
+              <Ionicons name="time-outline" size={13} color={timeLeft <= 60 ? Colors.secondary : "#FFFFFF"} />
+              <Text style={[styles.timerText, timeLeft <= 60 && styles.timerTextWarning]}>
+                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+              </Text>
+            </View>
+          )}
         </View>
+
+        {timeUp && !allDone && (
+          <View style={styles.timeUpBanner}>
+            <Ionicons name="alarm-outline" size={20} color={Colors.secondary} />
+            <Text style={styles.timeUpText}>Time's Up! Wrap up your mission</Text>
+          </View>
+        )}
 
         <MissionShield
           visible={!!currentMission}
@@ -330,15 +366,44 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Nunito_700Bold",
   },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.accent,
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
+  timerPill: {
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  timerPillWarning: {
+    borderColor: Colors.secondary,
+    backgroundColor: "rgba(255,107,43,0.3)",
+  },
+  timerText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+  },
+  timerTextWarning: {
+    color: Colors.secondary,
+  },
+  timeUpBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255,107,43,0.9)",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    justifyContent: "center",
+  },
+  timeUpText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontFamily: "Nunito_700Bold",
   },
   missionOverlay: {
     marginHorizontal: 20,
