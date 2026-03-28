@@ -213,51 +213,53 @@ export default function ARScreen() {
         style={[StyleSheet.absoluteFill, styles.overlay]}
         pointerEvents="box-none"
       >
-        <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-          <Pressable onPress={() => router.back()} style={styles.backCircle}>
-            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
-          </Pressable>
+        <View pointerEvents="box-none">
+          <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+            <Pressable onPress={() => router.back()} style={styles.backCircle}>
+              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+            </Pressable>
 
-          <View style={styles.hudCenter}>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
-            </View>
-            <Text style={styles.hudProgressText}>
-              {completed}/{total} MISSIONS
-            </Text>
-          </View>
-
-          {timeLeft !== null && (
-            <View style={[styles.timerPill, timeLeft <= 60 && styles.timerPillWarning]}>
-              <Ionicons
-                name="time"
-                size={13}
-                color={timeLeft <= 60 ? Colors.secondary : "#FFFFFF"}
-              />
-              <Text style={[styles.timerText, timeLeft <= 60 && styles.timerTextWarning]}>
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+            <View style={styles.hudCenter}>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+              </View>
+              <Text style={styles.hudProgressText}>
+                {completed}/{total} MISSIONS
               </Text>
             </View>
+
+            {timeLeft !== null && (
+              <View style={[styles.timerPill, timeLeft <= 60 && styles.timerPillWarning]}>
+                <Ionicons
+                  name="time"
+                  size={13}
+                  color={timeLeft <= 60 ? Colors.secondary : "#FFFFFF"}
+                />
+                <Text style={[styles.timerText, timeLeft <= 60 && styles.timerTextWarning]}>
+                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {timeUp && !allDone && (
+            <View style={styles.timeUpBanner}>
+              <Ionicons name="alarm" size={20} color={Colors.secondary} />
+              <Text style={styles.timeUpText}>⏰ TIME'S UP! FINISH UP!</Text>
+            </View>
+          )}
+
+          {currentMission && (
+            <Animated.View style={[styles.missionOverlay, pulseStyle]}>
+              <View style={styles.missionBadge}>
+                <Ionicons name="rocket" size={16} color={Colors.secondary} />
+                <Text style={styles.missionBadgeTitle}>ACTIVE MISSION</Text>
+              </View>
+              <Text style={styles.missionTitle}>{currentMission.title.toUpperCase()}</Text>
+              <Text style={styles.missionDesc}>{currentMission.description}</Text>
+            </Animated.View>
           )}
         </View>
-
-        {timeUp && !allDone && (
-          <View style={styles.timeUpBanner}>
-            <Ionicons name="alarm" size={20} color={Colors.secondary} />
-            <Text style={styles.timeUpText}>⏰ TIME'S UP! FINISH UP!</Text>
-          </View>
-        )}
-
-        {currentMission && (
-          <Animated.View style={[styles.missionOverlay, pulseStyle]}>
-            <View style={styles.missionBadge}>
-              <Ionicons name="rocket" size={16} color={Colors.secondary} />
-              <Text style={styles.missionBadgeTitle}>ACTIVE MISSION</Text>
-            </View>
-            <Text style={styles.missionTitle}>{currentMission.title.toUpperCase()}</Text>
-            <Text style={styles.missionDesc}>{currentMission.description}</Text>
-          </Animated.View>
-        )}
 
         <ProximityWarning visible={proximityWarning} />
 
