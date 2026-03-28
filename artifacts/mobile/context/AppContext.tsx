@@ -149,6 +149,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   parentPin: "1234",
 };
 
+export interface LastSessionResult {
+  missions: SessionMission[];
+  badges: Badge[];
+  completed: number;
+  total: number;
+  durationSeconds: number;
+  childName: string;
+}
+
 interface AppContextValue {
   settings: AppSettings;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
@@ -158,6 +167,7 @@ interface AppContextValue {
   sessionStartTime: number | null;
   sessionHistory: SessionRecord[];
   currentBadges: Badge[];
+  lastSessionResult: LastSessionResult | null;
   startSession: () => Promise<void>;
   endSession: () => Promise<void>;
   completeMission: (missionId: string) => void;
@@ -244,6 +254,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [currentBadges, setCurrentBadges] = useState<Badge[]>([]);
+  const [lastSessionResult, setLastSessionResult] = useState<LastSessionResult | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -317,12 +328,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!sessionStartTime) return;
     const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
     const badges = generateBadges(sessionMissions, duration);
+    const completedCount = sessionMissions.filter((m) => m.completed).length;
     setCurrentBadges(badges);
+
+    const snapshot: LastSessionResult = {
+      missions: sessionMissions,
+      badges,
+      completed: completedCount,
+      total: sessionMissions.length,
+      durationSeconds: duration,
+      childName: settings.childName,
+    };
+    setLastSessionResult(snapshot);
 
     const record: SessionRecord = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       date: Date.now(),
-      missionsCompleted: sessionMissions.filter((m) => m.completed).length,
+      missionsCompleted: completedCount,
       totalMissions: sessionMissions.length,
       durationSeconds: duration,
       badges,
@@ -351,6 +373,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sessionStartTime,
         sessionHistory,
         currentBadges,
+        lastSessionResult,
         startSession,
         endSession,
         completeMission,

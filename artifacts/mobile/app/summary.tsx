@@ -21,15 +21,20 @@ import { useApp } from "@/context/AppContext";
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
-  const { sessionMissions, currentBadges, settings, endSession, sessionActive } = useApp();
+  const { lastSessionResult } = useApp();
   const heroScale = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const recapRef = useRef<ViewShot>(null);
   const [sharing, setSharing] = useState(false);
 
-  const completed = sessionMissions.filter((m) => m.completed).length;
-  const total = sessionMissions.length;
+  const result = lastSessionResult;
+  const completed = result?.completed ?? 0;
+  const total = result?.total ?? 0;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const missions = result?.missions ?? [];
+  const badges = result?.badges ?? [];
+  const childName = result?.childName ?? "";
+
   const native = Platform.OS !== "web";
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -42,10 +47,7 @@ export default function SummaryScreen() {
     ]).start();
   }, []);
 
-  const handleDone = async () => {
-    if (sessionActive) {
-      await endSession();
-    }
+  const handleDone = () => {
     router.replace("/");
   };
 
@@ -61,9 +63,9 @@ export default function SummaryScreen() {
           dialogTitle: "Share your Co-Pilot recap!",
         });
       } else {
-        const driverLine = settings.childName ? `Driver: ${settings.childName}` : "";
-        const badgeLines = currentBadges.length > 0
-          ? `Badges: ${currentBadges.map((b) => b.title).join(", ")}`
+        const driverLine = childName ? `Driver: ${childName}` : "";
+        const badgeLines = badges.length > 0
+          ? `Badges: ${badges.map((b) => b.title).join(", ")}`
           : "More badges await next session!";
         const text = [
           "🚗 GoBabyGo Buddy-Link Co-Pilot Recap 🚗",
@@ -120,9 +122,9 @@ export default function SummaryScreen() {
                 <Ionicons name="trophy" size={64} color={Colors.secondary} />
               </View>
               <Text style={styles.heroTitle}>Mission Complete!</Text>
-              {settings.childName ? (
+              {childName ? (
                 <Text style={styles.heroSubtitle}>
-                  Great co-pilot session with {settings.childName}!
+                  Great co-pilot session with {childName}!
                 </Text>
               ) : (
                 <Text style={styles.heroSubtitle}>Amazing co-pilot work!</Text>
@@ -141,10 +143,10 @@ export default function SummaryScreen() {
               </View>
             </View>
 
-            {sessionMissions.length > 0 && (
+            {missions.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>What You Did</Text>
-                {sessionMissions.map((m) => (
+                {missions.map((m) => (
                   <View key={m.id} style={styles.missionRow}>
                     <Ionicons
                       name={m.completed ? "checkmark-circle" : "close-circle"}
@@ -164,7 +166,7 @@ export default function SummaryScreen() {
               </View>
             )}
 
-            {currentBadges.length > 0 && (
+            {badges.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Badges Earned</Text>
                 <ScrollView
@@ -172,14 +174,14 @@ export default function SummaryScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.badgesScroll}
                 >
-                  {currentBadges.map((badge, i) => (
+                  {badges.map((badge, i) => (
                     <BadgeCard key={badge.id} badge={badge} index={i} />
                   ))}
                 </ScrollView>
               </View>
             )}
 
-            {currentBadges.length === 0 && (
+            {badges.length === 0 && (
               <View style={styles.encourageCard}>
                 <Ionicons name="heart" size={28} color={Colors.primary} />
                 <Text style={styles.encourageText}>
