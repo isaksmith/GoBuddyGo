@@ -18,27 +18,78 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors, GlowShadows } from "@/constants/colors";
 import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
-function StatTile({
-  label,
-  value,
+function FloatingOrb({
   icon,
   color,
+  size,
+  startX,
+  startY,
+  delay,
 }: {
-  label: string;
-  value: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
+  size: number;
+  startX: number;
+  startY: number;
+  delay: number;
 }) {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0.7)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const native = Platform.OS !== "web";
+
+  useEffect(() => {
+    const driftX = (Math.random() - 0.5) * 30;
+    const driftY = 18 + Math.random() * 14;
+    const dur = 2200 + Math.random() * 1200;
+
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(translateY, { toValue: -driftY, duration: dur, useNativeDriver: native }),
+            Animated.timing(translateY, { toValue: 0, duration: dur, useNativeDriver: native }),
+          ]),
+          Animated.sequence([
+            Animated.timing(translateX, { toValue: driftX, duration: dur, useNativeDriver: native }),
+            Animated.timing(translateX, { toValue: 0, duration: dur, useNativeDriver: native }),
+          ]),
+          Animated.sequence([
+            Animated.timing(opacity, { toValue: 1, duration: dur * 0.5, useNativeDriver: native }),
+            Animated.timing(opacity, { toValue: 0.5, duration: dur * 0.5, useNativeDriver: native }),
+          ]),
+          Animated.sequence([
+            Animated.timing(scale, { toValue: 1.12, duration: dur, useNativeDriver: native }),
+            Animated.timing(scale, { toValue: 1, duration: dur, useNativeDriver: native }),
+          ]),
+        ]),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
   return (
-    <View style={[styles.statTile, { borderColor: color + "55" }]}>
-      <View style={[styles.statIconCircle, { backgroundColor: color + "22" }]}>
-        <Ionicons name={icon} size={22} color={color} />
+    <Animated.View
+      style={[
+        styles.orbContainer,
+        {
+          left: startX,
+          top: startY,
+          opacity,
+          transform: [{ translateY }, { translateX }, { scale }],
+        },
+      ]}
+      pointerEvents="none"
+    >
+      <View style={[styles.orbCircle, { width: size, height: size, borderRadius: size / 2, borderColor: color + "60", backgroundColor: color + "18" }]}>
+        <Ionicons name={icon} size={size * 0.46} color={color} />
       </View>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label.toUpperCase()}</Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -46,43 +97,22 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings, sessionHistory, missions } = useApp();
   const [name, setName] = useState(settings.childName);
-  const [editingName, setEditingName] = useState(false);
   const [missionWarning, setMissionWarning] = useState(false);
-  const rocketAnim = useRef(new Animated.Value(0)).current;
-  const rocketGlow = useRef(new Animated.Value(0.6)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const availableMissionCount = countAvailableSessionMissions(missions, settings);
+  const native = Platform.OS !== "web";
 
   useEffect(() => {
-    if (Platform.OS === "web") return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(rocketAnim, { toValue: -14, duration: 1400, useNativeDriver: true }),
-        Animated.timing(rocketAnim, { toValue: 0, duration: 1400, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
+    setName(settings.childName);
+  }, [settings.childName]);
 
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(rocketGlow, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(rocketGlow, { toValue: 0.5, duration: 900, useNativeDriver: true }),
-      ])
-    );
-    glowLoop.start();
-
-    return () => {
-      loop.stop();
-      glowLoop.stop();
-    };
-  }, []);
-
-  const handleSaveName = async () => {
-    await updateSettings({ childName: name.trim() });
-    setEditingName(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleSaveName = async (newName: string) => {
+    if (newName.trim()) {
+      await updateSettings({ childName: newName.trim() });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const handleHiddenTap = () => {
@@ -107,7 +137,6 @@ export default function HomeScreen() {
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const native = Platform.OS !== "web";
     Animated.sequence([
       Animated.timing(buttonScale, { toValue: 0.92, duration: 80, useNativeDriver: native }),
       Animated.timing(buttonScale, { toValue: 1, duration: 140, useNativeDriver: native }),
@@ -119,84 +148,73 @@ export default function HomeScreen() {
   const totalMissions = sessionHistory.reduce((sum, s) => sum + s.missionsCompleted, 0);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const orbConfigs = [
+    { icon: "star" as const, color: Colors.secondary, size: 56, startX: width * 0.04, startY: height * 0.04, delay: 0 },
+    { icon: "shield-checkmark" as const, color: Colors.primary, size: 50, startX: width * 0.74, startY: height * 0.04, delay: 400 },
+    { icon: "rocket" as const, color: Colors.accentBlue, size: 40, startX: width * 0.04, startY: height * 0.55, delay: 700 },
+    { icon: "star" as const, color: Colors.accent, size: 38, startX: width * 0.80, startY: height * 0.48, delay: 200 },
+    { icon: "flash" as const, color: Colors.secondary, size: 34, startX: width * 0.50, startY: height * 0.72, delay: 900 },
+  ];
 
   return (
     <LinearGradient
       colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-      style={[styles.container, { paddingTop: topPad }]}
+      style={styles.container}
     >
+      {orbConfigs.map((orb, i) => (
+        <FloatingOrb key={i} {...orb} />
+      ))}
+
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topPad + 20, paddingBottom: bottomPad + 120 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          style={[styles.rocketContainer, { transform: [{ translateY: rocketAnim }] }]}
-        >
-          <Animated.View
-            style={[styles.rocketGlowRing, { opacity: rocketGlow }]}
-          />
-          <View style={styles.rocketCircle}>
-            <Ionicons name="rocket" size={56} color={Colors.primary} />
-          </View>
-        </Animated.View>
-
-        <Text style={styles.appTitle}>GoBuddyGo</Text>
         <Pressable onPress={handleHiddenTap} testID="settings-btn">
+          <Text style={styles.appTitle}>GoBuddyGo</Text>
           <Text style={styles.appSubtitle}>⭐ CO-PILOT MODE ⭐</Text>
         </Pressable>
 
-        <View style={styles.nameSection}>
-          {editingName ? (
-            <View style={styles.nameInputRow}>
-              <TextInput
-                style={styles.nameInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="Driver's name..."
-                placeholderTextColor={Colors.textMuted}
-                autoFocus
-                onSubmitEditing={handleSaveName}
-                returnKeyType="done"
-                testID="name-input"
-              />
-              <Pressable onPress={handleSaveName} style={styles.saveBtn}>
-                <Ionicons name="checkmark" size={22} color="#FFFFFF" />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={() => setEditingName(true)} style={styles.nameRow}>
-              <Ionicons name="person-circle" size={24} color={Colors.accentBlue} />
-              <Text style={styles.nameLabel}>
-                {settings.childName
-                  ? `DRIVER: ${settings.childName.toUpperCase()}`
-                  : "TAP TO SET DRIVER NAME"}
-              </Text>
-              <Ionicons name="pencil" size={16} color={Colors.primary} />
-            </Pressable>
-          )}
+        <View style={styles.nameCard}>
+          <Text style={styles.namePrompt}>ENTER YOUR NAME, BUDDY!</Text>
+          <TextInput
+            style={styles.nameInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="Type your name here..."
+            placeholderTextColor={Colors.textMuted}
+            onSubmitEditing={() => handleSaveName(name)}
+            onBlur={() => handleSaveName(name)}
+            returnKeyType="done"
+            testID="name-input"
+            autoCorrect={false}
+          />
         </View>
 
         {totalSessions > 0 && (
           <View style={styles.statsRow}>
-            <StatTile
-              label="Rides"
-              value={String(totalSessions)}
-              icon="car-sport"
-              color={Colors.accentBlue}
-            />
-            <StatTile
-              label="Missions"
-              value={String(totalMissions)}
-              icon="checkmark-circle"
-              color={Colors.accent}
-            />
-            <StatTile
-              label="Badges"
-              value={String(totalBadges)}
-              icon="star"
-              color={Colors.secondary}
-            />
+            <View style={[styles.statTile, { borderColor: Colors.accentBlue + "55" }]}>
+              <View style={[styles.statIconCircle, { backgroundColor: Colors.accentBlue + "22" }]}>
+                <Ionicons name="car-sport" size={22} color={Colors.accentBlue} />
+              </View>
+              <Text style={[styles.statValue, { color: Colors.accentBlue }]}>{totalSessions}</Text>
+              <Text style={styles.statLabel}>RIDES</Text>
+            </View>
+            <View style={[styles.statTile, { borderColor: Colors.accent + "55" }]}>
+              <View style={[styles.statIconCircle, { backgroundColor: Colors.accent + "22" }]}>
+                <Ionicons name="checkmark-circle" size={22} color={Colors.accent} />
+              </View>
+              <Text style={[styles.statValue, { color: Colors.accent }]}>{totalMissions}</Text>
+              <Text style={styles.statLabel}>MISSIONS</Text>
+            </View>
+            <View style={[styles.statTile, { borderColor: Colors.secondary + "55" }]}>
+              <View style={[styles.statIconCircle, { backgroundColor: Colors.secondary + "22" }]}>
+                <Ionicons name="star" size={22} color={Colors.secondary} />
+              </View>
+              <Text style={[styles.statValue, { color: Colors.secondary }]}>{totalBadges}</Text>
+              <Text style={styles.statLabel}>BADGES</Text>
+            </View>
           </View>
         )}
 
@@ -222,6 +240,11 @@ export default function HomeScreen() {
             </LinearGradient>
           </Pressable>
         </Animated.View>
+
+        <Pressable onPress={() => router.push("/parent-mode")} style={styles.parentModeBtn} testID="parent-mode-btn">
+          <Ionicons name="lock-closed" size={16} color={Colors.textMuted} />
+          <Text style={styles.parentModeBtnText}>PARENT MODE</Text>
+        </Pressable>
 
         {sessionHistory.length > 0 && (
           <View style={styles.recentSection}>
@@ -275,113 +298,79 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  orbContainer: {
+    position: "absolute",
+    zIndex: 0,
+  },
+  orbCircle: {
+    borderWidth: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
+  },
   scroll: {
     alignItems: "center",
     paddingHorizontal: 20,
-  },
-  rocketContainer: {
-    marginTop: 32,
-    marginBottom: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rocketGlowRing: {
-    position: "absolute",
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: Colors.primary + "33",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 0,
-  },
-  rocketCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: Colors.backgroundCard,
-    borderWidth: 3,
-    borderColor: Colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 18,
-    elevation: 12,
+    zIndex: 1,
   },
   appTitle: {
     color: Colors.text,
-    fontSize: 40,
+    fontSize: 42,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 4,
     marginBottom: 4,
+    textAlign: "center",
     textShadowColor: Colors.primary + "88",
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
+    textShadowRadius: 14,
   },
   appSubtitle: {
     color: Colors.secondary,
     fontSize: 13,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 2,
-    marginBottom: 28,
-  },
-  nameSection: {
-    width: "100%",
-    marginBottom: 24,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 50,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderWidth: 2,
-    borderColor: Colors.border,
-  },
-  nameLabel: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-    flex: 1,
+    marginBottom: 32,
     textAlign: "center",
   },
-  nameInputRow: {
-    flexDirection: "row",
+  nameCard: {
+    width: "100%",
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    marginBottom: 24,
     alignItems: "center",
-    gap: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  namePrompt: {
+    color: Colors.text,
+    fontSize: 15,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
+    marginBottom: 14,
+    textAlign: "center",
   },
   nameInput: {
-    flex: 1,
-    backgroundColor: Colors.backgroundCard,
+    width: "100%",
+    backgroundColor: Colors.background,
     borderRadius: 50,
     paddingVertical: 14,
     paddingHorizontal: 22,
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "Nunito_700Bold",
     borderWidth: 2,
     borderColor: Colors.primary,
-  },
-  saveBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 8,
+    textAlign: "center",
   },
   statsRow: {
     flexDirection: "row",
@@ -442,7 +431,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     overflow: "hidden",
     ...GlowShadows.strong,
-    marginBottom: 32,
+    marginBottom: 14,
   },
   startButtonGradient: {
     flexDirection: "row",
@@ -457,6 +446,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 2,
+  },
+  parentModeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    marginBottom: 32,
+  },
+  parentModeBtnText: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
   recentSection: {
     width: "100%",

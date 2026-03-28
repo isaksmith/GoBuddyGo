@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -23,7 +24,7 @@ import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { SparkleEffect } from "@/components/AROverlay";
 import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
-import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
+import { useApp, countAvailableSessionMissions, SessionMission } from "@/context/AppContext";
 
 type AccelerometerData = { x: number; y: number; z: number };
 type AccelerometerSubscription = { remove: () => void };
@@ -63,6 +64,57 @@ function useAccelerometerProxy() {
   }, []);
 
   return shaking;
+}
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: Colors.accent,
+  medium: Colors.secondary,
+  hard: Colors.primary,
+};
+
+function MissionCard({
+  mission,
+  onComplete,
+}: {
+  mission: SessionMission;
+  onComplete: (id: string) => void;
+}) {
+  const isCompleted = mission.completed;
+
+  return (
+    <Pressable
+      onPress={() => {
+        if (!isCompleted) onComplete(mission.id);
+      }}
+      style={[
+        styles.missionCard,
+        isCompleted && styles.missionCardDone,
+      ]}
+      testID={`mission-card-${mission.id}`}
+    >
+      <View style={[styles.missionCardIconCircle, { borderColor: isCompleted ? Colors.accent + "60" : Colors.primary + "60" }]}>
+        {isCompleted ? (
+          <Ionicons name="checkmark-circle" size={28} color={Colors.accent} />
+        ) : (
+          <Ionicons name={mission.icon as keyof typeof Ionicons.glyphMap} size={26} color={Colors.text} />
+        )}
+      </View>
+      <Text
+        style={[styles.missionCardTitle, isCompleted && styles.missionCardTitleDone]}
+        numberOfLines={2}
+      >
+        {mission.title}
+      </Text>
+      <View style={[styles.difficultyChip, { backgroundColor: DIFFICULTY_COLORS[mission.difficulty] + "28", borderColor: DIFFICULTY_COLORS[mission.difficulty] + "80" }]}>
+        <Text style={[styles.difficultyChipText, { color: DIFFICULTY_COLORS[mission.difficulty] }]}>
+          {mission.difficulty.toUpperCase()}
+        </Text>
+      </View>
+      <Text style={[styles.missionCardTapLabel, isCompleted && styles.missionCardTapLabelDone]}>
+        {isCompleted ? "✓ DONE" : "Tap to complete"}
+      </Text>
+    </Pressable>
+  );
 }
 
 export default function ARScreen() {
@@ -158,17 +210,18 @@ export default function ARScreen() {
     transform: [{ scale: pulseScale.value }],
   }));
 
-  const currentMission = sessionMissions.find((m) => !m.completed);
   const completed = sessionMissions.filter((m) => m.completed).length;
   const total = sessionMissions.length;
-  const allDone = !currentMission && total > 0;
+  const allDone = completed === total && total > 0;
   const progressPct = total > 0 ? (completed / total) * 100 : 0;
+  const currentMission = sessionMissions.find((m) => !m.completed);
 
-  const handleCompleteMission = () => {
-    if (!currentMission) return;
+  const handleCompleteMission = (missionId: string) => {
+    const mission = sessionMissions.find((m) => m.id === missionId);
+    if (!mission || mission.completed) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    completeMission(currentMission.id);
-    setCelebratingTitle(currentMission.title);
+    completeMission(missionId);
+    setCelebratingTitle(mission.title);
     setCelebrationVisible(true);
   };
 
@@ -262,7 +315,7 @@ export default function ARScreen() {
             )}
           </View>
 
-          {currentMission && (
+          {currentMission && !allDone && (
             <Animated.View style={[styles.missionOverlay, pulseStyle]}>
               <View style={styles.missionBadge}>
                 <Ionicons name="rocket" size={16} color={Colors.secondary} />
@@ -276,51 +329,53 @@ export default function ARScreen() {
 
         <ProximityWarning visible={proximityWarning} />
 
-        {currentMission && (
-          <View style={[styles.completeArea, { paddingBottom: insets.bottom + 20 }]}>
-            <Pressable
-              onPress={handleCompleteMission}
-              style={styles.completeBtn}
-              testID="complete-mission-btn"
-            >
-              <LinearGradient
-                colors={[Colors.accent, "#2DB87A"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.completeBtnGradient}
+        <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 12 }]}>
+          {allDone ? (
+            <View style={styles.allDoneContainer}>
+              <View style={styles.allDoneBadge}>
+                <Ionicons name="trophy" size={26} color={Colors.secondary} />
+                <Text style={styles.allDoneText}>ALL DONE! AMAZING! 🎉</Text>
+              </View>
+              <Pressable
+                onPress={handleGoToSummary}
+                style={styles.summaryBtn}
+                testID="see-summary-btn"
               >
-                <Ionicons name="checkmark-circle" size={30} color="#FFFFFF" />
-                <Text style={styles.completeBtnText}>MISSION DONE! ✓</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        )}
-
-        {allDone && (
-          <View style={[styles.completeArea, { paddingBottom: insets.bottom + 20 }]}>
-            <View style={styles.allDoneBadge}>
-              <Ionicons name="trophy" size={26} color={Colors.secondary} />
-              <Text style={styles.allDoneText}>ALL DONE! AMAZING! 🎉</Text>
+                <LinearGradient
+                  colors={[Colors.secondary, "#D4A800"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.summaryBtnGradient}
+                >
+                  <Ionicons name="star" size={22} color="#FFFFFF" />
+                  <Text style={styles.summaryBtnText}>SEE RESULTS!</Text>
+                </LinearGradient>
+              </Pressable>
             </View>
-            <Pressable
-              onPress={handleGoToSummary}
-              style={styles.summaryBtn}
-              testID="see-summary-btn"
-            >
-              <LinearGradient
-                colors={[Colors.secondary, "#D4A800"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.summaryBtnGradient}
-              >
-                <Ionicons name="star" size={22} color="#FFFFFF" />
-                <Text style={styles.summaryBtnText}>SEE RESULTS!</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        )}
+          ) : (
+            sessionMissions.length > 0 && (
+              <View style={styles.missionStripWrapper}>
+                <Text style={styles.missionStripLabel}>MISSIONS</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.missionStripScroll}
+                  testID="mission-cards-scroll"
+                >
+                  {sessionMissions.map((mission) => (
+                    <MissionCard
+                      key={mission.id}
+                      mission={mission}
+                      onComplete={handleCompleteMission}
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            )
+          )}
+        </View>
 
-        <SparkleEffect active={!!currentMission} />
+        <SparkleEffect active={!!currentMission && !allDone} />
 
         <CelebrationOverlay
           visible={celebrationVisible}
@@ -536,32 +591,13 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_400Regular",
     lineHeight: 21,
   },
-  completeArea: {
-    paddingHorizontal: 16,
+  bottomArea: {
+    paddingHorizontal: 0,
     gap: 10,
   },
-  completeBtn: {
-    borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.7,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  completeBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 20,
-    borderRadius: 50,
-  },
-  completeBtnText: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
+  allDoneContainer: {
+    paddingHorizontal: 16,
+    gap: 10,
   },
   allDoneBadge: {
     flexDirection: "row",
@@ -607,5 +643,81 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1,
+  },
+  missionStripWrapper: {
+    gap: 6,
+  },
+  missionStripLabel: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 10,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
+    paddingHorizontal: 16,
+  },
+  missionStripScroll: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    gap: 10,
+  },
+  missionCard: {
+    width: 130,
+    backgroundColor: "rgba(9, 25, 42, 0.88)",
+    borderRadius: 18,
+    padding: 14,
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 2,
+    borderColor: Colors.primary + "80",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  missionCardDone: {
+    opacity: 0.55,
+    borderColor: Colors.accent + "60",
+    shadowColor: Colors.accent,
+  },
+  missionCardIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  missionCardTitle: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    textAlign: "center",
+    letterSpacing: 0.3,
+    lineHeight: 17,
+  },
+  missionCardTitleDone: {
+    color: Colors.textMuted,
+  },
+  difficultyChip: {
+    borderRadius: 50,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderWidth: 1,
+  },
+  difficultyChipText: {
+    fontSize: 9,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
+  },
+  missionCardTapLabel: {
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontFamily: "Nunito_600SemiBold",
+    letterSpacing: 0.5,
+  },
+  missionCardTapLabelDone: {
+    color: Colors.accent,
+    fontFamily: "Nunito_700Bold",
   },
 });
