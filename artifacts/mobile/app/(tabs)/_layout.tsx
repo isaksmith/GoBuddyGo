@@ -20,7 +20,7 @@ function NativeTabLayout() {
         <Label>Missions</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="history">
-        <Icon sf={{ default: "clock", selected: "clock.fill" }} />
+        <Icon sf={{ default: "trophy", selected: "trophy.fill" }} />
         <Label>History</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
