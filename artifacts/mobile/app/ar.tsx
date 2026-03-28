@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -67,6 +67,7 @@ function useAccelerometerProxy() {
 
 export default function ARScreen() {
   const insets = useSafeAreaInsets();
+  const { missionId } = useLocalSearchParams<{ missionId?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const {
     missions,
@@ -74,6 +75,7 @@ export default function ARScreen() {
     completeMission,
     sessionActive,
     startSession,
+    startSingleMission,
     endSession,
     settings,
     sessionStartTime,
@@ -86,11 +88,31 @@ export default function ARScreen() {
   const isNavigating = useRef(false);
   const hasAutoStarted = useRef(false);
 
+  const isSingleMissionMode = !!missionId;
+
   const pulseScale = useSharedValue(1);
 
   useEffect(() => {
     if (!isLoaded) return;
     if (!permission?.granted) return;
+
+    if (isSingleMissionMode) {
+      if (!hasAutoStarted.current) {
+        hasAutoStarted.current = true;
+        startSingleMission(missionId)
+          .then((started) => {
+            if (!started) {
+              router.replace("/");
+            }
+          })
+          .catch((e) => {
+            console.warn("[AR] startSingleMission failed:", e);
+            router.replace("/");
+          });
+      }
+      return;
+    }
+
     const available = countAvailableSessionMissions(missions, settings);
     if (available < 3) {
       router.replace("/");
@@ -100,7 +122,7 @@ export default function ARScreen() {
       hasAutoStarted.current = true;
       startSession().catch((e) => console.warn("[AR] startSession failed:", e));
     }
-  }, [isLoaded, permission?.granted, sessionActive, missions, settings, startSession]);
+  }, [isLoaded, permission?.granted, sessionActive, missions, settings, startSession, startSingleMission, missionId, isSingleMissionMode]);
 
   useEffect(() => {
     pulseScale.value = withRepeat(

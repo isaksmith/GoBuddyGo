@@ -213,6 +213,7 @@ interface AppContextValue {
   currentBadges: Badge[];
   lastSessionResult: LastSessionResult | null;
   startSession: () => Promise<void>;
+  startSingleMission: (missionId: string) => Promise<boolean>;
   endSession: () => Promise<void>;
   completeMission: (missionId: string) => void;
   isLoaded: boolean;
@@ -468,6 +469,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   }, [settings]);
 
+  const startSingleMission = useCallback(async (missionId: string): Promise<boolean> => {
+    const enabled = ALL_MISSIONS.filter(
+      (m) => settings.enabledMissionIds.includes(m.id) && m.enabled
+    );
+    const filtered =
+      settings.difficulty === "all"
+        ? enabled
+        : enabled.filter(
+            (m) => m.difficulty === settings.difficulty || m.difficulty === "easy"
+          );
+    const mission = filtered.find((m) => m.id === missionId);
+    if (!mission) return false;
+    const missions: SessionMission[] = [{ ...mission, completed: false }];
+    const startTime = Date.now();
+    setSessionMissions(missions);
+    setSessionActive(true);
+    setSessionStartTime(startTime);
+    setCurrentBadges([]);
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.session,
+      JSON.stringify({ missions, active: true, startTime })
+    );
+    return true;
+  }, [settings]);
+
   const completeMission = useCallback(
     (missionId: string) => {
       setSessionMissions((prev) => {
@@ -535,6 +561,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currentBadges,
         lastSessionResult,
         startSession,
+        startSingleMission,
         endSession,
         completeMission,
         isLoaded,

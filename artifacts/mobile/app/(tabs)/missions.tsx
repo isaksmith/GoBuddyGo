@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import { router } from "expo-router";
+import React, { useCallback } from "react";
 import {
   Platform,
   ScrollView,
@@ -11,11 +12,24 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MissionCard from "@/components/MissionCard";
 import { Colors } from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, SessionMission } from "@/context/AppContext";
 
 export default function MissionsScreen() {
   const insets = useSafeAreaInsets();
-  const { sessionMissions } = useApp();
+  const { missions, settings } = useApp();
+
+  const availableMissions: SessionMission[] = missions
+    .filter((m) => m.enabled && settings.enabledMissionIds.includes(m.id))
+    .filter((m) =>
+      settings.difficulty === "all"
+        ? true
+        : m.difficulty === settings.difficulty || m.difficulty === "easy"
+    )
+    .map((m) => ({ ...m, completed: false }));
+
+  const handlePlay = useCallback((missionId: string) => {
+    router.push({ pathname: "/ar", params: { missionId } });
+  }, []);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -37,11 +51,12 @@ export default function MissionsScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110 }]}
         showsVerticalScrollIndicator={false}
       >
-        {sessionMissions.map((mission, i) => (
+        {availableMissions.map((mission, i) => (
           <MissionCard
             key={mission.id}
             mission={mission}
             index={i}
+            onPlay={handlePlay}
           />
         ))}
       </ScrollView>

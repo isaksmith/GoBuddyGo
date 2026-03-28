@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/constants/colors";
 import { SessionMission } from "@/context/AppContext";
 
 interface MissionCardProps {
   mission: SessionMission;
   index: number;
+  onPlay?: (missionId: string) => void;
 }
 
 const ICON_COLORS = [
@@ -17,7 +19,7 @@ const ICON_COLORS = [
   Colors.glowTeal,
 ];
 
-function AnimatedMissionCard({ mission, index }: MissionCardProps) {
+function AnimatedMissionCard({ mission, index, onPlay }: MissionCardProps) {
   const slideIn = useRef(new Animated.Value(80)).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
 
@@ -106,6 +108,23 @@ function AnimatedMissionCard({ mission, index }: MissionCardProps) {
             </View>
           )}
         </View>
+
+        {onPlay && (
+          <Pressable
+            onPress={() => onPlay(mission.id)}
+            style={styles.playBtn}
+          >
+            <LinearGradient
+              colors={[Colors.accent, "#2DB87A"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.playBtnGradient}
+            >
+              <Ionicons name="play" size={14} color="#FFFFFF" />
+              <Text style={styles.playBtnText}>PLAY!</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );
@@ -167,6 +186,30 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: 9,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+  },
+  playBtn: {
+    borderRadius: 50,
+    overflow: "hidden",
+    flexShrink: 0,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  playBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 50,
+  },
+  playBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1,
   },
