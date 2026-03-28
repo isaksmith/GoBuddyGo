@@ -1,0 +1,112 @@
+Gemini said
+Implementing an AR prototype in Replit is highly feasible using web-based AR frameworks. For a web environment, the best tech stack is HTML/JavaScript using A-Frame combined with AR.js or MindAR. This allows you to build a lightweight WebAR experience that runs directly in the sibling's mobile browser without requiring app store deployment for the initial testing phases.
+
+Here is the technical blueprint for implementing the "Mario coin collection" feature in Replit.
+
+1. Project Setup in Replit
+Template: Create a new Replit project using the standard HTML, CSS, JS template.
+
+Dependencies: You will rely on CDN links in your index.html file to pull in the necessary libraries.
+
+A-Frame: Handles the 3D rendering and entity-component system.
+
+AR.js (or MindAR): Handles the camera feed and marker tracking.
+
+2. Scene and Marker Configuration (HTML)
+The PRD mentions using a GoBabyGo sticker as an AR anchor. In AR.js, you can train a custom image tracking marker (like the sticker) or use a standard barcode/Hiro marker for prototyping.
+
+In your index.html, you will set up the AR scene, the camera, the car's marker, and the coins.
+
+HTML
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="script.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      
+      <a-marker preset="hiro" id="car-marker">
+        <a-box position="0 0.5 0" opacity="0.2" color="blue"></a-box>
+      </a-marker>
+
+      <a-cylinder class="coin" position="0 1 -3" radius="0.3" height="0.05" color="gold" rotation="90 0 0" 
+                  animation="property: rotation; to: 90 360 0; loop: true; dur: 2000" coin-collector>
+      </a-cylinder>
+      <a-cylinder class="coin" position="2 1 -4" radius="0.3" height="0.05" color="gold" rotation="90 0 0" 
+                  animation="property: rotation; to: 90 360 0; loop: true; dur: 2000" coin-collector>
+      </a-cylinder>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+  </body>
+</html>
+3. The Collision Logic (JavaScript)
+Because both the camera (sibling) and the car (driver) are moving, you need to calculate the distance between the physical car's AR marker and the virtual coins in 3D space.
+
+In A-Frame, you do this by writing a custom component in your script.js file that utilizes the tick lifecycle method to check positions every frame.
+
+JavaScript
+// script.js
+AFRAME.registerComponent('coin-collector', {
+  schema: {
+    threshold: {type: 'number', default: 1.5} // Distance to trigger collection
+  },
+
+  init: function () {
+    // Reference to the car's tracked marker
+    this.carMarker = document.querySelector('#car-marker');
+    this.collected = false;
+  },
+
+  tick: function () {
+    if (this.collected) return;
+
+    // Make sure the camera can actually see the car's marker
+    if (!this.carMarker.object3D.visible) return;
+
+    // Get 3D vectors for the coin and the car marker
+    let coinPosition = new THREE.Vector3();
+    this.el.object3D.getWorldPosition(coinPosition);
+
+    let carPosition = new THREE.Vector3();
+    this.carMarker.object3D.getWorldPosition(carPosition);
+
+    // Calculate the distance
+    let distance = coinPosition.distanceTo(carPosition);
+
+    // Trigger collection if the car is close enough
+    if (distance < this.data.threshold) {
+      this.collectCoin();
+    }
+  },
+
+  collectCoin: function () {
+    this.collected = true;
+    
+    // 1. Play a sound (Optional)
+    // let audio = new Audio('coin-sound.mp3');
+    // audio.play();
+
+    // 2. Hide or remove the coin
+    this.el.setAttribute('visible', 'false');
+    
+    // 3. Update the UI or Resource Management (Fuel Gauge)
+    console.log("Coin Collected! Fuel increased.");
+    
+    // 4. Remove the element from the DOM to save memory
+    setTimeout(() => {
+      this.el.parentNode.removeChild(this.el);
+    }, 500);
+  }
+});
+4. Testing and Iteration loop
+To test this effectively, you will need to map the virtual to the physical.
+
+Run the Replit project and open the webview URL on your phone or tablet.
+
+Print out the Hiro marker (or your custom trained AR.js marker) and tape it to a box or RC car representing the GoBabyGo vehicle.
+
+Walk around the room with your phone while someone moves the "car." As the car's marker gets close to the virtual coordinates of the coins, the JavaScript collision threshold will trigger, and the coins will disappear.
