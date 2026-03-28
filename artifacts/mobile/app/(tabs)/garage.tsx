@@ -210,7 +210,6 @@ export default function GarageScreen() {
     [removeSticker]
   );
 
-  const totalBadges = 0;
   const unlockedCount = STICKER_CATALOG.filter((s) => isStickerUnlocked(s)).length;
 
   return (

@@ -3,6 +3,7 @@ import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
+import type { SFSymbol } from "expo-symbols";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
@@ -38,7 +39,7 @@ const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inacti
   history: { active: "trophy", inactive: "trophy-outline" },
 };
 
-const IOS_SYMBOLS: Record<string, { active: string; inactive: string }> = {
+const IOS_SYMBOLS: Record<string, { active: SFSymbol; inactive: SFSymbol }> = {
   index: { active: "house.fill", inactive: "house" },
   missions: { active: "checkmark.circle.fill", inactive: "checkmark.circle" },
   garage: { active: "car.fill", inactive: "car" },
