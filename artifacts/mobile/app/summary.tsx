@@ -28,7 +28,7 @@ export default function SummaryScreen() {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
-  const latestHistory = sessionHistory.length > 0 ? sessionHistory[sessionHistory.length - 1] : null;
+  const latestHistory = sessionHistory.length > 0 ? sessionHistory[0] : null;
   const result = lastSessionResult ?? (latestHistory
     ? {
         completed: latestHistory.missionsCompleted,

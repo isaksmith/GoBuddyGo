@@ -81,6 +81,7 @@ export default function ARScreen() {
 
   useEffect(() => {
     if (!isLoaded) return;
+    if (!permission?.granted) return;
     const available = countAvailableSessionMissions(missions, settings);
     if (available < 3) {
       router.replace("/");
@@ -90,7 +91,7 @@ export default function ARScreen() {
       hasAutoStarted.current = true;
       startSession().catch((e) => console.warn("[AR] startSession failed:", e));
     }
-  }, [isLoaded, sessionActive, missions, settings, startSession]);
+  }, [isLoaded, permission?.granted, sessionActive, missions, settings, startSession]);
 
   useEffect(() => {
     pulseScale.value = withRepeat(
