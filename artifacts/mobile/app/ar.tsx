@@ -20,7 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
-import { MissionShield, SparkleEffect } from "@/components/AROverlay";
+import { SparkleEffect } from "@/components/AROverlay";
 import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
 import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
@@ -247,11 +247,6 @@ export default function ARScreen() {
             <Text style={styles.timeUpText}>⏰ TIME'S UP! FINISH UP!</Text>
           </View>
         )}
-
-        <MissionShield
-          visible={!!currentMission}
-          label={currentMission ? currentMission.title : ""}
-        />
 
         {currentMission && (
           <Animated.View style={[styles.missionOverlay, pulseStyle]}>
