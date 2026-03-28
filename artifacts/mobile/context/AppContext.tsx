@@ -158,7 +158,7 @@ interface AppContextValue {
   sessionStartTime: number | null;
   sessionHistory: SessionRecord[];
   currentBadges: Badge[];
-  startSession: () => void;
+  startSession: () => Promise<void>;
   endSession: () => Promise<void>;
   completeMission: (missionId: string) => void;
   isLoaded: boolean;
@@ -169,6 +169,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 const STORAGE_KEYS = {
   settings: "@gobabygobr_settings",
   history: "@gobabygobr_history",
+  session: "@gobabygobr_session",
 };
 
 function selectSessionMissions(
@@ -248,12 +249,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const [rawSettings, rawHistory] = await Promise.all([
+        const [rawSettings, rawHistory, rawSession] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.settings),
           AsyncStorage.getItem(STORAGE_KEYS.history),
+          AsyncStorage.getItem(STORAGE_KEYS.session),
         ]);
         if (rawSettings) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) });
         if (rawHistory) setSessionHistory(JSON.parse(rawHistory));
+        if (rawSession) {
+          const session = JSON.parse(rawSession) as {
+            missions: SessionMission[];
+            active: boolean;
+            startTime: number | null;
+          };
+          if (session.active) {
+            setSessionMissions(session.missions);
+            setSessionActive(true);
+            setSessionStartTime(session.startTime);
+          }
+        }
       } finally {
         setIsLoaded(true);
       }
@@ -269,21 +283,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [settings]
   );
 
-  const startSession = useCallback(() => {
+  const startSession = useCallback(async () => {
     const selected = selectSessionMissions(ALL_MISSIONS, settings);
-    setSessionMissions(selected.map((m) => ({ ...m, completed: false })));
+    const missions: SessionMission[] = selected.map((m) => ({ ...m, completed: false }));
+    const startTime = Date.now();
+    setSessionMissions(missions);
     setSessionActive(true);
-    setSessionStartTime(Date.now());
+    setSessionStartTime(startTime);
     setCurrentBadges([]);
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.session,
+      JSON.stringify({ missions, active: true, startTime })
+    );
   }, [settings]);
 
-  const completeMission = useCallback((missionId: string) => {
-    setSessionMissions((prev) =>
-      prev.map((m) =>
-        m.id === missionId ? { ...m, completed: true, completedAt: Date.now() } : m
-      )
-    );
-  }, []);
+  const completeMission = useCallback(
+    (missionId: string) => {
+      setSessionMissions((prev) => {
+        const updated = prev.map((m) =>
+          m.id === missionId ? { ...m, completed: true, completedAt: Date.now() } : m
+        );
+        AsyncStorage.setItem(
+          STORAGE_KEYS.session,
+          JSON.stringify({ missions: updated, active: true, startTime: sessionStartTime })
+        ).catch(() => {});
+        return updated;
+      });
+    },
+    [sessionStartTime]
+  );
 
   const endSession = useCallback(async () => {
     if (!sessionStartTime) return;
@@ -303,9 +331,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const newHistory = [record, ...sessionHistory].slice(0, 50);
     setSessionHistory(newHistory);
-    await AsyncStorage.setItem(STORAGE_KEYS.history, JSON.stringify(newHistory));
+    await Promise.all([
+      AsyncStorage.setItem(STORAGE_KEYS.history, JSON.stringify(newHistory)),
+      AsyncStorage.removeItem(STORAGE_KEYS.session),
+    ]);
     setSessionActive(false);
     setSessionStartTime(null);
+    setSessionMissions([]);
   }, [sessionStartTime, sessionMissions, sessionHistory, settings.childName]);
 
   return (
