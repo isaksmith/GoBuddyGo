@@ -375,51 +375,63 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setVehiclePhoto = useCallback(
     async (uri: string) => {
-      const next = { ...garage, photoUri: uri };
-      setGarageState(next);
+      let next: GarageVehicle = DEFAULT_GARAGE;
+      setGarageState((prev) => {
+        next = { ...prev, photoUri: uri };
+        return next;
+      });
       await persistGarage(next);
     },
-    [garage, persistGarage]
+    [persistGarage]
   );
 
   const setVehicleName = useCallback(
     async (name: string) => {
-      const next = { ...garage, vehicleName: name };
-      setGarageState(next);
+      let next: GarageVehicle = DEFAULT_GARAGE;
+      setGarageState((prev) => {
+        next = { ...prev, vehicleName: name };
+        return next;
+      });
       await persistGarage(next);
     },
-    [garage, persistGarage]
+    [persistGarage]
   );
 
   const placeSticker = useCallback(
     async (stickerId: string, x: number, y: number) => {
       const newSticker: PlacedSticker = { uid: makeStickerUid(), stickerId, x, y };
-      const next = { ...garage, stickers: [...garage.stickers, newSticker] };
-      setGarageState(next);
+      let next: GarageVehicle = DEFAULT_GARAGE;
+      setGarageState((prev) => {
+        next = { ...prev, stickers: [...prev.stickers, newSticker] };
+        return next;
+      });
       await persistGarage(next);
     },
-    [garage, persistGarage]
+    [persistGarage]
   );
 
   const removeSticker = useCallback(
     async (uid: string) => {
-      const next = { ...garage, stickers: garage.stickers.filter((s) => s.uid !== uid) };
-      setGarageState(next);
+      let next: GarageVehicle = DEFAULT_GARAGE;
+      setGarageState((prev) => {
+        next = { ...prev, stickers: prev.stickers.filter((s) => s.uid !== uid) };
+        return next;
+      });
       await persistGarage(next);
     },
-    [garage, persistGarage]
+    [persistGarage]
   );
 
   const moveSticker = useCallback(
     async (uid: string, x: number, y: number) => {
-      const next = {
-        ...garage,
-        stickers: garage.stickers.map((s) => (s.uid === uid ? { ...s, x, y } : s)),
-      };
-      setGarageState(next);
+      let next: GarageVehicle = DEFAULT_GARAGE;
+      setGarageState((prev) => {
+        next = { ...prev, stickers: prev.stickers.map((s) => (s.uid === uid ? { ...s, x, y } : s)) };
+        return next;
+      });
       await persistGarage(next);
     },
-    [garage, persistGarage]
+    [persistGarage]
   );
 
   const isStickerUnlocked = useCallback(

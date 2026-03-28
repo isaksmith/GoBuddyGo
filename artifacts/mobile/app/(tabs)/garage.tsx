@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -40,9 +40,14 @@ function DraggableSticker({
   const pan = useRef(new Animated.ValueXY({ x: placed.x, y: placed.y })).current;
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  pan.addListener((value) => {
-    position.current = value;
-  });
+  useEffect(() => {
+    const listenerId = pan.addListener((value) => {
+      position.current = value;
+    });
+    return () => {
+      pan.removeListener(listenerId);
+    };
+  }, [pan]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -106,6 +111,12 @@ export default function GarageScreen() {
   const [nameInput, setNameInput] = useState(garage.vehicleName);
   const [photoAreaLayout, setPhotoAreaLayout] = useState({ width: SCREEN_WIDTH - 32, height: PHOTO_AREA_HEIGHT });
   const slideAnim = useRef(new Animated.Value(400)).current;
+
+  useEffect(() => {
+    if (!editingName) {
+      setNameInput(garage.vehicleName);
+    }
+  }, [garage.vehicleName, editingName]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
