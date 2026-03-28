@@ -129,7 +129,7 @@ const ALL_MISSIONS: Mission[] = [
     description: "Count how many times the wheels spin",
     icon: "sync",
     category: "count",
-    difficulty: "medium",
+    difficulty: "easy",
     enabled: true,
   },
   {
@@ -138,7 +138,7 @@ const ALL_MISSIONS: Mission[] = [
     description: "Run alongside and cheer for a full lap",
     icon: "trophy",
     category: "move",
-    difficulty: "hard",
+    difficulty: "easy",
     enabled: true,
   },
 ];
