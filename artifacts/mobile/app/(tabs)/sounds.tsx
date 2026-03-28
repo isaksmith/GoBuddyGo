@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useRef, useState } from "react";
 import {
@@ -12,120 +13,68 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors } from "@/constants/colors";
 
 const { width } = Dimensions.get("window");
 const COLS = 3;
 const H_PAD = 16;
 const GAP = 12;
 const CELL = (width - H_PAD * 2 - GAP * (COLS - 1)) / COLS;
+const native = Platform.OS !== "web";
+
+const SOUND_SOURCES = {
+  vroom:   require("../../assets/sounds/vroom.wav"),
+  beep:    require("../../assets/sounds/beep.wav"),
+  siren:   require("../../assets/sounds/siren.wav"),
+  zoom:    require("../../assets/sounds/zoom.wav"),
+  screech: require("../../assets/sounds/screech.wav"),
+  rev:     require("../../assets/sounds/rev.wav"),
+  crash:   require("../../assets/sounds/crash.wav"),
+  thunk:   require("../../assets/sounds/thunk.wav"),
+  win:     require("../../assets/sounds/win.wav"),
+  rumble:  require("../../assets/sounds/rumble.wav"),
+  honk:    require("../../assets/sounds/honk.wav"),
+  race:    require("../../assets/sounds/race.wav"),
+} as const;
+
+type SoundId = keyof typeof SOUND_SOURCES;
 
 type SoundButton = {
-  id: string;
+  id: SoundId;
   emoji: string;
   label: string;
   sublabel: string;
   gradient: [string, string];
-  haptic: () => void;
 };
 
-function doVroom() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 90);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 180);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 280);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 380);
-}
-
-function doBeepBeep() {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 350);
-}
-
-function doSiren() {
-  for (let i = 0; i < 6; i++) {
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), i * 130);
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), i * 130 + 65);
-  }
-}
-
-function doZoom() {
-  for (let i = 0; i < 5; i++) {
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), i * 60);
-  }
-}
-
-function doScreech() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 60);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 130);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 220);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 320);
-}
-
-function doRev() {
-  for (let i = 0; i < 4; i++) {
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), i * 100);
-  }
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 500);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 580);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 660);
-}
-
-function doCrash() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 50);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 120);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 220);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 350);
-  setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 500);
-}
-
-function doWin() {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 300);
-  setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 600);
-}
-
-function doTrunk() {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-}
-
-function doRumble() {
-  for (let i = 0; i < 8; i++) {
-    setTimeout(() => Haptics.impactAsync(
-      i % 2 === 0 ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium
-    ), i * 80);
-  }
-}
-
 const SOUNDS: SoundButton[] = [
-  { id: "vroom",   emoji: "🚗",  label: "VROOM!",    sublabel: "Engine roar",   gradient: ["#F4633A", "#D94E28"], haptic: doVroom },
-  { id: "beep",    emoji: "📯",  label: "BEEP BEEP", sublabel: "Car horn",      gradient: ["#FFD93D", "#F5A623"], haptic: doBeepBeep },
-  { id: "siren",   emoji: "🚨",  label: "WEEOO!",    sublabel: "Police siren",  gradient: ["#EF4444", "#B91C1C"], haptic: doSiren },
-  { id: "zoom",    emoji: "💨",  label: "ZOOM!",     sublabel: "Speed burst",   gradient: ["#38BDF8", "#0284C7"], haptic: doZoom },
-  { id: "screech", emoji: "🛑",  label: "SCREECH!",  sublabel: "Hard brakes",   gradient: ["#A855F7", "#7C3AED"], haptic: doScreech },
-  { id: "rev",     emoji: "🏎️",  label: "REV IT!",   sublabel: "Engine rev",    gradient: ["#3ECF8E", "#15803D"], haptic: doRev },
-  { id: "crash",   emoji: "💥",  label: "CRASH!",    sublabel: "Bumper bang",   gradient: ["#FB923C", "#C2410C"], haptic: doCrash },
-  { id: "trunk",   emoji: "🚙",  label: "THUNK!",    sublabel: "Car door",      gradient: ["#4F8EF7", "#1D4ED8"], haptic: doTrunk },
-  { id: "win",     emoji: "🏆",  label: "WINNER!",   sublabel: "Victory cheer", gradient: ["#F59E0B", "#B45309"], haptic: doWin },
-  { id: "rumble",  emoji: "🔧",  label: "RUMBLE!",   sublabel: "Rough road",    gradient: ["#C084FC", "#9333EA"], haptic: doRumble },
-  { id: "truck",   emoji: "🚛",  label: "HONK!",     sublabel: "Big truck",     gradient: ["#34D399", "#059669"], haptic: doBeepBeep },
-  { id: "race",    emoji: "🏁",  label: "GO GO GO!", sublabel: "Race start",    gradient: ["#F472B6", "#BE185D"], haptic: doVroom },
+  { id: "vroom",   emoji: "🚗",  label: "VROOM!",    sublabel: "Engine roar",   gradient: ["#F4633A", "#D94E28"] },
+  { id: "beep",    emoji: "📯",  label: "BEEP BEEP", sublabel: "Car horn",      gradient: ["#FFD93D", "#F5A623"] },
+  { id: "siren",   emoji: "🚨",  label: "WEEOO!",    sublabel: "Police siren",  gradient: ["#EF4444", "#B91C1C"] },
+  { id: "zoom",    emoji: "💨",  label: "ZOOM!",     sublabel: "Speed burst",   gradient: ["#38BDF8", "#0284C7"] },
+  { id: "screech", emoji: "🛑",  label: "SCREECH!",  sublabel: "Hard brakes",   gradient: ["#A855F7", "#7C3AED"] },
+  { id: "rev",     emoji: "🏎️",  label: "REV IT!",   sublabel: "Engine rev",    gradient: ["#3ECF8E", "#15803D"] },
+  { id: "crash",   emoji: "💥",  label: "CRASH!",    sublabel: "Bumper bang",   gradient: ["#FB923C", "#C2410C"] },
+  { id: "thunk",   emoji: "🚙",  label: "THUNK!",    sublabel: "Car door",      gradient: ["#4F8EF7", "#1D4ED8"] },
+  { id: "win",     emoji: "🏆",  label: "WINNER!",   sublabel: "Victory cheer", gradient: ["#F59E0B", "#B45309"] },
+  { id: "rumble",  emoji: "🔧",  label: "RUMBLE!",   sublabel: "Rough road",    gradient: ["#C084FC", "#9333EA"] },
+  { id: "honk",    emoji: "🚛",  label: "HONK!",     sublabel: "Big truck",     gradient: ["#34D399", "#059669"] },
+  { id: "race",    emoji: "🏁",  label: "GO GO GO!", sublabel: "Race start",    gradient: ["#F472B6", "#BE185D"] },
 ];
 
 function SoundPad({ btn }: { btn: SoundButton }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const native = Platform.OS !== "web";
   const [flash, setFlash] = useState(false);
+  const player = useAudioPlayer(SOUND_SOURCES[btn.id]);
 
   const handlePress = () => {
-    btn.haptic();
+    player.seekTo(0);
+    player.play();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setFlash(true);
-    setTimeout(() => setFlash(false), 200);
+    setTimeout(() => setFlash(false), 180);
     Animated.sequence([
-      Animated.timing(scale, { toValue: 0.88, duration: 70, useNativeDriver: native }),
-      Animated.spring(scale, { toValue: 1, friction: 4, tension: 200, useNativeDriver: native }),
+      Animated.timing(scale, { toValue: 0.86, duration: 65, useNativeDriver: native }),
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 220, useNativeDriver: native }),
     ]).start();
   };
 
@@ -133,14 +82,14 @@ function SoundPad({ btn }: { btn: SoundButton }) {
     <Pressable onPress={handlePress} style={styles.padWrap}>
       <Animated.View style={{ transform: [{ scale }], borderRadius: CELL / 2, overflow: "hidden" }}>
         <LinearGradient
-          colors={flash ? ["#FFFFFF", "#FFFFFF"] : btn.gradient}
+          colors={flash ? ["#FFFFFF", "#F0F0F0"] : btn.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.pad, { width: CELL, height: CELL, borderRadius: CELL / 2 }]}
         >
           <Text style={styles.padEmoji}>{btn.emoji}</Text>
-          <Text style={styles.padLabel}>{btn.label}</Text>
-          <Text style={styles.padSublabel}>{btn.sublabel}</Text>
+          <Text style={[styles.padLabel, flash && { color: btn.gradient[0] }]}>{btn.label}</Text>
+          <Text style={[styles.padSublabel, flash && { color: btn.gradient[1] + "BB" }]}>{btn.sublabel}</Text>
         </LinearGradient>
       </Animated.View>
     </Pressable>
