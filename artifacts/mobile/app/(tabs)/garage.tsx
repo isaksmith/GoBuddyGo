@@ -226,6 +226,33 @@ const cardStyles = StyleSheet.create({
   },
 });
 
+function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.replace("/");
+      }}
+      style={({ pressed }) => [
+        styles.homeBtn,
+        { bottom: bottomOffset },
+        pressed && styles.homeBtnPressed,
+      ]}
+      testID="home-btn-garage"
+    >
+      <LinearGradient
+        colors={["#F4633A", "#C13E20"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.homeBtnGradient}
+      >
+        <Ionicons name="home" size={28} color="#FFFFFF" />
+        <Text style={styles.homeBtnText}>HOME</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
 type Tab = "cars" | "designs";
 
 export default function GarageScreen() {
@@ -394,9 +421,6 @@ export default function GarageScreen() {
               {savedCars.length} {savedCars.length === 1 ? "CAR" : "CARS"} · {designs.length} {designs.length === 1 ? "DESIGN" : "DESIGNS"}
             </Text>
           </View>
-          <Pressable onPress={() => router.replace("/")} style={styles.homeBtn} hitSlop={8}>
-            <Ionicons name="home" size={20} color={Colors.text} />
-          </Pressable>
         </View>
 
         <View style={styles.tabContainer}>
@@ -492,6 +516,8 @@ export default function GarageScreen() {
         </View>
       </ScrollView>
 
+      <HomeButton bottomOffset={homeBtnBottom} />
+
       {renameId && (
         <View style={styles.renameOverlay}>
           <Pressable style={styles.renameBackdrop} onPress={() => setRenameId(null)} />
@@ -528,7 +554,6 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 16 },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 20,
   },
@@ -549,14 +574,35 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   homeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundCard,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    justifyContent: "center",
+    position: "absolute",
+    left: 20,
+    right: 20,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: "#F4633A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 100,
+  },
+  homeBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  homeBtnGradient: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  homeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
   },
   tabContainer: {
     flexDirection: "row",
