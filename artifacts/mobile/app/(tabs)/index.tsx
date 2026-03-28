@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
 const { width } = Dimensions.get("window");
 
@@ -39,7 +39,7 @@ export default function HomeScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const enabledMissionCount = missions.filter((m) => settings.enabledMissionIds.includes(m.id)).length;
+  const availableMissionCount = countAvailableSessionMissions(missions, settings);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -74,7 +74,7 @@ export default function HomeScreen() {
   };
 
   const handleStartSession = () => {
-    if (enabledMissionCount < 3) {
+    if (availableMissionCount < 3) {
       setMissionWarning(true);
       setTimeout(() => setMissionWarning(false), 3500);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

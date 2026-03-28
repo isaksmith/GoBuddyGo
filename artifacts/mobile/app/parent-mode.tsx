@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
 const DURATIONS = [5, 10, 15, 20, 30];
 const DIFFICULTIES = [
@@ -167,7 +167,7 @@ export default function ParentModeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
   const usingDefaultPin = settings.parentPin === "1234";
-  const enabledCount = missions.filter((m) => settings.enabledMissionIds.includes(m.id)).length;
+  const availableCount = countAvailableSessionMissions(missions, settings);
 
   const toggleMission = async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -229,11 +229,11 @@ export default function ParentModeScreen() {
             </Text>
           </View>
         )}
-        {enabledCount < 3 && (
+        {availableCount < 3 && (
           <View style={styles.warningBanner}>
             <Ionicons name="alert-circle-outline" size={18} color={Colors.secondary} />
             <Text style={styles.warningText}>
-              Only {enabledCount} mission{enabledCount !== 1 ? "s" : ""} enabled — enable at least 3 for a full session.
+              Only {availableCount} mission{availableCount !== 1 ? "s" : ""} available for current settings — enable at least 3 for a full session.
             </Text>
           </View>
         )}

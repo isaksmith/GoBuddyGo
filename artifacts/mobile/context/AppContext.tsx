@@ -182,6 +182,19 @@ const STORAGE_KEYS = {
   session: "@gobabygobr_session",
 };
 
+export function countAvailableSessionMissions(missions: Mission[], settings: AppSettings): number {
+  const enabled = missions.filter(
+    (m) => settings.enabledMissionIds.includes(m.id) && m.enabled
+  );
+  const filtered =
+    settings.difficulty === "all"
+      ? enabled
+      : enabled.filter(
+          (m) => m.difficulty === settings.difficulty || m.difficulty === "easy"
+        );
+  return filtered.length;
+}
+
 function selectSessionMissions(
   missions: Mission[],
   settings: AppSettings
@@ -197,6 +210,9 @@ function selectSessionMissions(
             m.difficulty === settings.difficulty ||
             m.difficulty === "easy"
         );
+  if (filtered.length < 3) {
+    return [];
+  }
   const shuffled = [...filtered].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 5);
 }

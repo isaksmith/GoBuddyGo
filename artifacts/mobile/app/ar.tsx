@@ -65,7 +65,7 @@ function useAccelerometerProxy() {
 export default function ARScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const { sessionMissions, completeMission, sessionActive, startSession, endSession, settings, sessionStartTime } = useApp();
+  const { sessionMissions, completeMission, sessionActive, startSession, endSession, settings, sessionStartTime, isLoaded } = useApp();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [speed, setSpeed] = useState(0);
@@ -77,10 +77,11 @@ export default function ARScreen() {
   const pulseScale = useSharedValue(1);
 
   useEffect(() => {
+    if (!isLoaded) return;
     if (!sessionActive) {
       startSession();
     }
-  }, []);
+  }, [isLoaded]);
 
   useEffect(() => {
     pulseScale.value = withRepeat(
