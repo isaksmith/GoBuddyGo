@@ -150,7 +150,7 @@ function AnimatedMissionCard({ mission, onComplete, index }: MissionCardProps) {
               end={{ x: 1, y: 0 }}
               style={styles.doneBtnGradient}
             >
-              <Text style={styles.doneBtnText}>DONE!</Text>
+              <Text style={styles.doneBtnText}>PLAY!</Text>
             </LinearGradient>
           </Pressable>
         ) : (
