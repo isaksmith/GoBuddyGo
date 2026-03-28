@@ -312,6 +312,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const startSession = useCallback(async () => {
     const selected = selectSessionMissions(ALL_MISSIONS, settings);
+    if (selected.length < 3) {
+      return;
+    }
     const missions: SessionMission[] = selected.map((m) => ({ ...m, completed: false }));
     const startTime = Date.now();
     setSessionMissions(missions);

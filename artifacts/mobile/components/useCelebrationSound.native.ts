@@ -7,6 +7,8 @@ export function useCelebrationSound() {
     try {
       player.seekTo(0);
       player.play();
-    } catch (_e) {}
+    } catch (e) {
+      console.warn("[CelebrationSound] Audio playback failed:", e);
+    }
   };
 }

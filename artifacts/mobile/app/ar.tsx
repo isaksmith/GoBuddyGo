@@ -51,7 +51,9 @@ function useAccelerometerProxy() {
             setTimeout(() => setShaking(false), 2000);
           }
         });
-      } catch (_e) {}
+      } catch (e) {
+        console.warn("[AR] Accelerometer unavailable:", e);
+      }
     })();
 
     return () => {
@@ -85,7 +87,7 @@ export default function ARScreen() {
       return;
     }
     if (!sessionActive) {
-      startSession().catch(() => {});
+      startSession().catch((e) => console.warn("[AR] startSession failed:", e));
     }
   }, [isLoaded]);
 
