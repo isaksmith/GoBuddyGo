@@ -19,6 +19,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
         <Label>Missions</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="garage">
+        <Icon sf={{ default: "car", selected: "car.fill" }} />
+        <Label>Garage</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="history">
         <Icon sf={{ default: "trophy", selected: "trophy.fill" }} />
         <Label>History</Label>
@@ -30,7 +34,15 @@ function NativeTabLayout() {
 const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   index: { active: "home", inactive: "home-outline" },
   missions: { active: "checkmark-circle", inactive: "checkmark-circle-outline" },
+  garage: { active: "car-sport", inactive: "car-sport-outline" },
   history: { active: "trophy", inactive: "trophy-outline" },
+};
+
+const IOS_SYMBOLS: Record<string, { active: string; inactive: string }> = {
+  index: { active: "house.fill", inactive: "house" },
+  missions: { active: "checkmark.circle.fill", inactive: "checkmark.circle" },
+  garage: { active: "car.fill", inactive: "car" },
+  history: { active: "trophy.fill", inactive: "trophy" },
 };
 
 function ClassicTabLayout() {
@@ -72,18 +84,8 @@ function ClassicTabLayout() {
         tabBarIcon: ({ color, focused }) => {
           const icons = TAB_ICONS[route.name] ?? TAB_ICONS["index"];
           const iconName = focused ? icons.active : icons.inactive;
-          const iosName =
-            route.name === "index"
-              ? focused
-                ? "house.fill"
-                : "house"
-              : route.name === "missions"
-              ? focused
-                ? "checkmark.circle.fill"
-                : "checkmark.circle"
-              : focused
-              ? "trophy.fill"
-              : "trophy";
+          const iosSymbols = IOS_SYMBOLS[route.name] ?? IOS_SYMBOLS["index"];
+          const iosName = focused ? iosSymbols.active : iosSymbols.inactive;
           return (
             <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
               {isIOS ? (
@@ -98,6 +100,7 @@ function ClassicTabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="missions" options={{ title: "Missions" }} />
+      <Tabs.Screen name="garage" options={{ title: "Garage" }} />
       <Tabs.Screen name="history" options={{ title: "History" }} />
     </Tabs>
   );
