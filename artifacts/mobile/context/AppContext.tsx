@@ -142,15 +142,6 @@ const ALL_MISSIONS: Mission[] = [
     enabled: true,
   },
   {
-    id: "m7",
-    title: "Steer Together",
-    description: "Point left and right as the driver turns",
-    icon: "navigate",
-    category: "interact",
-    difficulty: "medium",
-    enabled: true,
-  },
-  {
     id: "m8",
     title: "Count Wheels",
     description: "Count how many times the wheels spin",
