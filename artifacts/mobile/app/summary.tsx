@@ -21,14 +21,23 @@ import { useApp } from "@/context/AppContext";
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
-  const { lastSessionResult } = useApp();
+  const { lastSessionResult, sessionHistory } = useApp();
   const heroScale = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const recapRef = useRef<ViewShot>(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
-  const result = lastSessionResult;
+  const latestHistory = sessionHistory.length > 0 ? sessionHistory[sessionHistory.length - 1] : null;
+  const result = lastSessionResult ?? (latestHistory
+    ? {
+        completed: latestHistory.missionsCompleted,
+        total: latestHistory.totalMissions,
+        missions: [],
+        badges: latestHistory.badges,
+        childName: latestHistory.childName,
+      }
+    : null);
   const completed = result?.completed ?? 0;
   const total = result?.total ?? 0;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;

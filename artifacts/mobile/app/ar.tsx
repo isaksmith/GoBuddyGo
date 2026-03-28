@@ -75,21 +75,22 @@ export default function ARScreen() {
   const [timeUp, setTimeUp] = useState(false);
   const proximityWarning = useAccelerometerProxy();
   const isNavigating = useRef(false);
+  const hasAutoStarted = useRef(false);
 
   const pulseScale = useSharedValue(1);
 
-  const insufficientMissions = isLoaded && countAvailableSessionMissions(missions, settings) < 3;
-
   useEffect(() => {
     if (!isLoaded) return;
-    if (insufficientMissions) {
+    const available = countAvailableSessionMissions(missions, settings);
+    if (available < 3) {
       router.replace("/");
       return;
     }
-    if (!sessionActive) {
+    if (!sessionActive && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
       startSession().catch((e) => console.warn("[AR] startSession failed:", e));
     }
-  }, [isLoaded]);
+  }, [isLoaded, sessionActive, missions, settings, startSession]);
 
   useEffect(() => {
     pulseScale.value = withRepeat(
