@@ -106,15 +106,6 @@ const ALL_MISSIONS: Mission[] = [
     enabled: true,
   },
   {
-    id: "m3",
-    title: "Count to 10!",
-    description: "Count to 10 out loud together",
-    icon: "calculator",
-    category: "count",
-    difficulty: "easy",
-    enabled: true,
-  },
-  {
     id: "m4",
     title: "Do a Dance!",
     description: "Do a little dance while they drive",
