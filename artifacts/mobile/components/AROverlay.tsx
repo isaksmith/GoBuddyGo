@@ -173,48 +173,6 @@ export function MissionShield({ visible, label }: MissionShieldProps) {
   );
 }
 
-interface SpeedStarProps {
-  speed: number;
-}
-
-export function SpeedStar({ speed }: SpeedStarProps) {
-  const pulse = useRef(new Animated.Value(1)).current;
-  const glowOpacity = useRef(new Animated.Value(0.6)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.18, duration: 550, useNativeDriver: native }),
-        Animated.timing(pulse, { toValue: 1.0, duration: 550, useNativeDriver: native }),
-      ])
-    );
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowOpacity, { toValue: 1, duration: 700, useNativeDriver: native }),
-        Animated.timing(glowOpacity, { toValue: 0.4, duration: 700, useNativeDriver: native }),
-      ])
-    );
-    loop.start();
-    glowLoop.start();
-    return () => {
-      loop.stop();
-      glowLoop.stop();
-    };
-  }, []);
-
-  return (
-    <Animated.View
-      style={[styles.speedStar, { transform: [{ scale: pulse }] }]}
-    >
-      <Animated.View style={[styles.speedStarGlowRing, { opacity: glowOpacity }]} />
-      <View style={styles.speedStarInner}>
-        <Animated.Text style={styles.speedStarLabel}>CO-PILOT</Animated.Text>
-        <Animated.Text style={styles.speedStarValue}>{speed}</Animated.Text>
-        <Animated.Text style={styles.speedStarUnit}>MPH</Animated.Text>
-      </View>
-    </Animated.View>
-  );
-}
 
 const styles = StyleSheet.create({
   particle: {
@@ -255,53 +213,5 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     textAlign: "center",
     letterSpacing: 0.5,
-  },
-  speedStar: {
-    position: "absolute",
-    bottom: 170,
-    right: 16,
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: Colors.secondary,
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.secondary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 14,
-  },
-  speedStarGlowRing: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.secondary + "44",
-    top: -12,
-    left: -12,
-  },
-  speedStarInner: {
-    alignItems: "center",
-  },
-  speedStarLabel: {
-    color: Colors.primaryDark,
-    fontSize: 8,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  speedStarValue: {
-    color: Colors.primaryDark,
-    fontSize: 30,
-    fontFamily: "Nunito_700Bold",
-    lineHeight: 34,
-  },
-  speedStarUnit: {
-    color: Colors.primaryDark,
-    fontSize: 8,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
   },
 });
