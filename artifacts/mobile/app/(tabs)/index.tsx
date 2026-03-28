@@ -141,7 +141,7 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        <Text style={styles.appTitle}>BUDDY-LINK</Text>
+        <Text style={styles.appTitle}>GoBuddyGo</Text>
         <Pressable onPress={handleHiddenTap} testID="settings-btn">
           <Text style={styles.appSubtitle}>⭐ CO-PILOT MODE ⭐</Text>
         </Pressable>
