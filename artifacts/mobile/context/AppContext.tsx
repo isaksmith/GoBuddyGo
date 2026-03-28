@@ -425,7 +425,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const isStickerUnlocked = useCallback(
     (sticker: StickerDefinition): boolean => {
       if (!sticker.unlockCondition) return true;
-      const totalBadges = sessionHistory.reduce((sum, r) => sum + r.badges.length, 0);
+      const historicBadges = sessionHistory.reduce((sum, r) => sum + r.badges.length, 0);
+      const totalBadges = historicBadges + currentBadges.length;
       const totalSessions = sessionHistory.length;
       if (sticker.unlockCondition.type === "sessions") {
         return totalSessions >= sticker.unlockCondition.count;
@@ -435,7 +436,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     },
-    [sessionHistory]
+    [sessionHistory, currentBadges]
   );
 
   const startSession = useCallback(async () => {

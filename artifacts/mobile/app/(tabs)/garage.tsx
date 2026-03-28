@@ -36,15 +36,20 @@ function DraggableSticker({
   onRemove: (uid: string) => void;
 }) {
   const sticker = STICKER_CATALOG.find((s) => s.id === placed.stickerId);
+  const position = useRef({ x: placed.x, y: placed.y });
   const pan = useRef(new Animated.ValueXY({ x: placed.x, y: placed.y })).current;
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  pan.addListener((value) => {
+    position.current = value;
+  });
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        pan.setOffset({ x: (pan.x as any)._value, y: (pan.y as any)._value });
+        pan.setOffset(position.current);
         pan.setValue({ x: 0, y: 0 });
         longPressTimer.current = setTimeout(() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -61,15 +66,13 @@ function DraggableSticker({
           gestureState
         );
       },
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: () => {
         if (longPressTimer.current) {
           clearTimeout(longPressTimer.current);
           longPressTimer.current = null;
         }
         pan.flattenOffset();
-        const newX = (pan.x as any)._value;
-        const newY = (pan.y as any)._value;
-        onMove(placed.uid, newX, newY);
+        onMove(placed.uid, position.current.x, position.current.y);
       },
     })
   ).current;
