@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import {
   Platform,
   Pressable,
@@ -13,9 +13,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import MissionCard from "@/components/MissionCard";
 import { Colors } from "@/constants/colors";
-import { useApp, SessionMission } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   return (
@@ -44,58 +43,15 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   );
 }
 
-type Difficulty = "easy" | "medium" | "hard";
-
-const DIFFICULTY_CONFIG: {
-  level: Difficulty;
-  label: string;
-  tagline: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  gradientColors: [string, string];
-}[] = [
-  {
-    level: "easy",
-    label: "EASY",
-    tagline: "Fun for everyone!",
-    icon: "star",
-    gradientColors: ["#3ECF8E", "#2DB87A"],
-  },
-  {
-    level: "medium",
-    label: "MEDIUM",
-    tagline: "A bit more challenging",
-    icon: "flash",
-    gradientColors: ["#F5C518", "#D4A800"],
-  },
-  {
-    level: "hard",
-    label: "HARD",
-    tagline: "For the bravest co-pilots!",
-    icon: "flame",
-    gradientColors: ["#F4633A", "#D94E28"],
-  },
-];
-
 export default function GamesScreen() {
   const insets = useSafeAreaInsets();
   const { missions, settings } = useApp();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : 0;
   const homeBtnBottom = insets.bottom + 82;
 
-  const handleSelectDifficulty = (level: Difficulty) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDifficulty(level);
-  };
-
-  const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedDifficulty(null);
-  };
-
   const handlePlay = useCallback((missionId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (missionId === "coin-dash") {
       router.push("/coin-dash");
     } else {
@@ -103,65 +59,15 @@ export default function GamesScreen() {
     }
   }, []);
 
-  if (selectedDifficulty === null) {
-    return (
-      <LinearGradient
-        colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-        style={styles.container}
-      >
-        <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-          <View style={styles.headerRow}>
-            <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="games-home-btn">
-              <Ionicons name="arrow-back" size={26} color={Colors.text} />
-            </Pressable>
-            <Ionicons name="game-controller" size={24} color={Colors.primary} />
-            <Text style={styles.headerTitle}>GAME MODES</Text>
-          </View>
-          <Text style={styles.headerSub}>Choose your difficulty level</Text>
-        </View>
+  const enabledIds = settings.enabledMissionIds;
 
-        <ScrollView
-          contentContainerStyle={[styles.pickerList, { paddingBottom: homeBtnBottom + 76 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {DIFFICULTY_CONFIG.map((config) => (
-            <Pressable
-              key={config.level}
-              onPress={() => handleSelectDifficulty(config.level)}
-              style={({ pressed }) => [
-                styles.difficultyCard,
-                pressed && styles.difficultyCardPressed,
-              ]}
-            >
-              <LinearGradient
-                colors={config.gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.difficultyCardGradient}
-              >
-                <View style={styles.difficultyIconCircle}>
-                  <Ionicons name={config.icon} size={38} color="#FFFFFF" />
-                </View>
-                <View style={styles.difficultyCardContent}>
-                  <Text style={styles.difficultyLabel}>{config.label}</Text>
-                  <Text style={styles.difficultyTagline}>{config.tagline}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
-              </LinearGradient>
-            </Pressable>
-          ))}
-        </ScrollView>
-        <HomeButton bottomOffset={homeBtnBottom} />
-      </LinearGradient>
-    );
-  }
+  const mediumGames = missions.filter(
+    (m) => m.enabled && enabledIds.includes(m.id) && m.difficulty === "medium"
+  );
 
-  const config = DIFFICULTY_CONFIG.find((c) => c.level === selectedDifficulty)!;
-
-  const filteredMissions: SessionMission[] = missions
-    .filter((m) => m.enabled && settings.enabledMissionIds.includes(m.id))
-    .filter((m) => m.difficulty === selectedDifficulty)
-    .map((m) => ({ ...m, completed: false }));
+  const easyGames = missions.filter(
+    (m) => m.enabled && enabledIds.includes(m.id) && m.difficulty === "easy"
+  );
 
   return (
     <LinearGradient
@@ -169,43 +75,120 @@ export default function GamesScreen() {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <View style={styles.headerRow}>
-          <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={12}>
-            <Ionicons name="chevron-back" size={26} color={Colors.text} />
-          </Pressable>
-          <Ionicons name={config.icon} size={22} color={config.gradientColors[0]} />
-          <Text style={[styles.headerTitle, { color: config.gradientColors[0] }]}>
-            {config.label}
-          </Text>
-        </View>
-        <Text style={styles.headerSub}>{config.tagline}</Text>
+        <Ionicons name="game-controller" size={26} color={Colors.primary} />
+        <Text style={styles.headerTitle}>GAMES</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: homeBtnBottom + 76 }]}
         showsVerticalScrollIndicator={false}
       >
-        {filteredMissions.length > 0 ? (
-          filteredMissions.map((mission, i) => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              index={i}
-              onPlay={handlePlay}
-            />
+        {/* ── GAMES section (medium) ─────────────────────────── */}
+        <View style={styles.sectionHeader}>
+          <LinearGradient
+            colors={["#F5C518", "#D4A800"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.sectionBadge}
+          >
+            <Ionicons name="flash" size={14} color="#FFF" />
+            <Text style={styles.sectionBadgeText}>GAMES</Text>
+          </LinearGradient>
+        </View>
+
+        {mediumGames.length > 0 ? (
+          mediumGames.map((game) => (
+            <Pressable
+              key={game.id}
+              onPress={() => handlePlay(game.id)}
+              style={({ pressed }) => [
+                styles.featuredCard,
+                pressed && styles.featuredCardPressed,
+              ]}
+              testID={`game-${game.id}`}
+            >
+              <LinearGradient
+                colors={["#F5C518CC", "#D4A80033"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.featuredCardGradient}
+              >
+                <View style={styles.featuredIconCircle}>
+                  <Ionicons
+                    name={(game.icon as keyof typeof Ionicons.glyphMap) ?? "game-controller"}
+                    size={46}
+                    color="#F5C518"
+                  />
+                </View>
+                <View style={styles.featuredInfo}>
+                  <Text style={styles.featuredTitle}>{game.title}</Text>
+                  <Text style={styles.featuredDesc}>{game.description}</Text>
+                  <View style={styles.featuredPlayRow}>
+                    <View style={styles.featuredPlayBtn}>
+                      <Ionicons name="play" size={14} color="#FFFFFF" />
+                      <Text style={styles.featuredPlayText}>PLAY NOW</Text>
+                    </View>
+                  </View>
+                </View>
+              </LinearGradient>
+            </Pressable>
           ))
         ) : (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIconCircle, { borderColor: config.gradientColors[0] + "44", backgroundColor: config.gradientColors[0] + "11" }]}>
-              <Ionicons name="time-outline" size={48} color={config.gradientColors[0]} />
+          <View style={styles.emptyCard}>
+            <Ionicons name="time-outline" size={36} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>More games coming soon!</Text>
+          </View>
+        )}
+
+        {/* ── MINI GAMES section (easy) ──────────────────────── */}
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <LinearGradient
+            colors={["#3ECF8E", "#2DB87A"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.sectionBadge}
+          >
+            <Ionicons name="star" size={14} color="#FFF" />
+            <Text style={styles.sectionBadgeText}>MINI GAMES</Text>
+          </LinearGradient>
+          <Text style={styles.sectionSub}>Fun for everyone!</Text>
+        </View>
+
+        {easyGames.map((game) => (
+          <Pressable
+            key={game.id}
+            onPress={() => handlePlay(game.id)}
+            style={({ pressed }) => [
+              styles.miniCard,
+              pressed && styles.miniCardPressed,
+            ]}
+            testID={`game-${game.id}`}
+          >
+            <View style={styles.miniIconCircle}>
+              <Ionicons
+                name={(game.icon as keyof typeof Ionicons.glyphMap) ?? "star"}
+                size={28}
+                color="#3ECF8E"
+              />
             </View>
-            <Text style={styles.emptyTitle}>COMING SOON</Text>
-            <Text style={styles.emptySubtitle}>
-              {config.label} games are on their way! Check back for new adventures.
-            </Text>
+            <View style={styles.miniInfo}>
+              <Text style={styles.miniTitle}>{game.title}</Text>
+              <Text style={styles.miniDesc} numberOfLines={1}>{game.description}</Text>
+            </View>
+            <View style={styles.miniPlayBtn}>
+              <Ionicons name="play-circle" size={38} color="#3ECF8E" />
+            </View>
+          </Pressable>
+        ))}
+
+        {easyGames.length === 0 && (
+          <View style={styles.emptyCard}>
+            <Ionicons name="star-outline" size={36} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>No mini games available</Text>
           </View>
         )}
       </ScrollView>
+
       <HomeButton bottomOffset={homeBtnBottom} />
     </LinearGradient>
   );
@@ -216,113 +199,179 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  headerRow: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 8,
     gap: 10,
-    marginBottom: 4,
-  },
-  backBtn: {
-    marginRight: 2,
   },
   headerTitle: {
     color: Colors.text,
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
-  headerSub: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontFamily: "Nunito_400Regular",
-    marginTop: 2,
-    marginLeft: 36,
-  },
-  pickerList: {
+  scroll: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 16,
+    paddingTop: 4,
   },
-  difficultyCard: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  sectionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 50,
+  },
+  sectionBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
+  },
+  sectionSub: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontFamily: "Nunito_400Regular",
+  },
+  featuredCard: {
     borderRadius: 24,
     overflow: "hidden",
-    shadowColor: "#000",
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#F5C51855",
+    shadowColor: "#F5C518",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 14,
     elevation: 10,
+    backgroundColor: Colors.backgroundCard,
   },
-  difficultyCardPressed: {
+  featuredCardPressed: {
     opacity: 0.88,
     transform: [{ scale: 0.97 }],
   },
-  difficultyCardGradient: {
+  featuredCardGradient: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 20,
+    padding: 20,
     gap: 16,
-    borderRadius: 24,
   },
-  difficultyIconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: "rgba(255,255,255,0.18)",
+  featuredIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#F5C51820",
+    borderWidth: 2,
+    borderColor: "#F5C51855",
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
   },
-  difficultyCardContent: {
+  featuredInfo: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
-  difficultyLabel: {
-    color: "#FFFFFF",
-    fontSize: 26,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 3,
-  },
-  difficultyTagline: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 14,
-    fontFamily: "Nunito_400Regular",
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 60,
-    paddingHorizontal: 32,
-    gap: 16,
-  },
-  emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  emptyTitle: {
+  featuredTitle: {
     color: Colors.text,
     fontSize: 22,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
-  emptySubtitle: {
+  featuredDesc: {
     color: Colors.textSecondary,
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Nunito_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 18,
+  },
+  featuredPlayRow: {
+    flexDirection: "row",
+    marginTop: 4,
+  },
+  featuredPlayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F5C518",
+    borderRadius: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  featuredPlayText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
+  },
+  miniCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: "#3ECF8E33",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  miniCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
+  },
+  miniIconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#3ECF8E18",
+    borderWidth: 1.5,
+    borderColor: "#3ECF8E44",
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  miniInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  miniTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+  },
+  miniDesc: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontFamily: "Nunito_400Regular",
+  },
+  miniPlayBtn: {
+    flexShrink: 0,
+  },
+  emptyCard: {
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 32,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    marginBottom: 12,
+  },
+  emptyText: {
+    color: Colors.textMuted,
+    fontSize: 14,
+    fontFamily: "Nunito_400Regular",
   },
   homeBtn: {
     position: "absolute",
