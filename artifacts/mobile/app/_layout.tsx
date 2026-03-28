@@ -33,6 +33,8 @@ function RootLayoutNav() {
       <Stack.Screen name="coin-dash" options={{ headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="summary" options={{ headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="parent-mode" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="car-detail" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="design-builder" options={{ headerShown: false, animation: "slide_from_bottom" }} />
     </Stack>
   );
 }

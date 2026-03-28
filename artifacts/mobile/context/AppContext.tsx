@@ -55,10 +55,27 @@ export interface PlacedSticker {
   y: number;
 }
 
-export interface GarageVehicle {
-  photoUri: string | null;
-  vehicleName: string;
+export type Model3dStatus = "idle" | "pending" | "succeeded" | "failed";
+
+export interface SavedCar {
+  id: string;
+  name: string;
+  photoUri: string;
   stickers: PlacedSticker[];
+  model3dTaskId?: string | null;
+  model3dStatus?: Model3dStatus;
+  model3dUrl?: string | null;
+  createdAt: number;
+}
+
+export interface CarDesign {
+  id: string;
+  name: string;
+  vehicleType: string;
+  primaryColor: string;
+  accentColor: string;
+  accessories: string[];
+  createdAt: number;
 }
 
 export interface StickerDefinition {
@@ -84,6 +101,32 @@ export const STICKER_CATALOG: StickerDefinition[] = [
   { id: "s_unicorn", emoji: "🦄", label: "Unicorn", color: "#CE93D8", unlockCondition: { type: "badges", count: 3 } },
   { id: "s_explosion", emoji: "💥", label: "Blast!", color: "#FF7043", unlockCondition: { type: "sessions", count: 5 } },
   { id: "s_alien", emoji: "👾", label: "Alien", color: "#4FC3F7", unlockCondition: { type: "sessions", count: 5 } },
+];
+
+export const VEHICLE_TYPES = [
+  { id: "speeder", label: "Speeder", emoji: "🏎️", defaultPrimary: "#FF3B30", defaultAccent: "#1C1C1E" },
+  { id: "cruiser", label: "Cruiser", emoji: "🚗", defaultPrimary: "#007AFF", defaultAccent: "#C0C0C0" },
+  { id: "monster", label: "Monster", emoji: "🚛", defaultPrimary: "#34C759", defaultAccent: "#FFD60A" },
+  { id: "rescue", label: "Rescue", emoji: "🚒", defaultPrimary: "#FF3B30", defaultAccent: "#FFFFFF" },
+  { id: "explorer", label: "Explorer", emoji: "🚙", defaultPrimary: "#FF9500", defaultAccent: "#1C1C1E" },
+  { id: "rocket", label: "Rocket Ride", emoji: "🚀", defaultPrimary: "#AF52DE", defaultAccent: "#FFD60A" },
+];
+
+export const DESIGN_COLORS = [
+  "#FF3B30", "#FF9500", "#FFD60A", "#34C759",
+  "#007AFF", "#5856D6", "#AF52DE", "#FF2D55",
+  "#FFFFFF", "#C0C0C0", "#4A4A4A", "#1C1C1E",
+];
+
+export const DESIGN_ACCESSORIES = [
+  { id: "flames", emoji: "🔥", label: "Flames" },
+  { id: "stars", emoji: "⭐", label: "Stars" },
+  { id: "lightning", emoji: "⚡", label: "Lightning" },
+  { id: "crown", emoji: "👑", label: "Crown" },
+  { id: "rainbow", emoji: "🌈", label: "Rainbow" },
+  { id: "heart", emoji: "❤️", label: "Heart" },
+  { id: "diamond", emoji: "💎", label: "Diamond" },
+  { id: "rocket", emoji: "🚀", label: "Rocket" },
 ];
 
 const ALL_MISSIONS: Mission[] = [
@@ -160,12 +203,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   parentPin: "1234",
 };
 
-const DEFAULT_GARAGE: GarageVehicle = {
-  photoUri: null,
-  vehicleName: "My Ride",
-  stickers: [],
-};
-
 export interface LastSessionResult {
   missions: SessionMission[];
   badges: Badge[];
@@ -190,13 +227,15 @@ interface AppContextValue {
   endSession: () => Promise<void>;
   completeMission: (missionId: string) => void;
   isLoaded: boolean;
-  garage: GarageVehicle;
-  setVehiclePhoto: (uri: string) => Promise<void>;
-  setVehicleName: (name: string) => Promise<void>;
-  placeSticker: (stickerId: string, x: number, y: number) => Promise<void>;
-  removeSticker: (uid: string) => Promise<void>;
-  moveSticker: (uid: string, x: number, y: number) => Promise<void>;
   isStickerUnlocked: (sticker: StickerDefinition) => boolean;
+  savedCars: SavedCar[];
+  addSavedCar: (photoUri: string, name?: string) => Promise<SavedCar>;
+  updateSavedCar: (id: string, updates: Partial<Omit<SavedCar, "id" | "createdAt">>) => Promise<void>;
+  deleteSavedCar: (id: string) => Promise<void>;
+  designs: CarDesign[];
+  addDesign: (data: Omit<CarDesign, "id" | "createdAt">) => Promise<CarDesign>;
+  updateDesign: (id: string, updates: Partial<Omit<CarDesign, "id" | "createdAt">>) => Promise<void>;
+  deleteDesign: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -205,8 +244,18 @@ const STORAGE_KEYS = {
   settings: "@gobabygobr_settings",
   history: "@gobabygobr_history",
   session: "@gobabygobr_session",
-  garage: "@gobabygobr_garage",
+  savedCars: "@gobabygobr_saved_cars",
+  designs: "@gobabygobr_designs",
+  legacyGarage: "@gobabygobr_garage",
 };
+
+function makeId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+function makeStickerUid(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+}
 
 export function countAvailableSessionMissions(missions: Mission[], settings: AppSettings): number {
   const enabled = missions.filter(
@@ -289,10 +338,6 @@ function generateBadges(
   return badges;
 }
 
-function makeStickerUid(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
-}
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [sessionHistory, setSessionHistory] = useState<SessionRecord[]>([]);
@@ -302,16 +347,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentBadges, setCurrentBadges] = useState<Badge[]>([]);
   const [lastSessionResult, setLastSessionResult] = useState<LastSessionResult | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [garage, setGarageState] = useState<GarageVehicle>(DEFAULT_GARAGE);
+  const [savedCars, setSavedCars] = useState<SavedCar[]>([]);
+  const [designs, setDesigns] = useState<CarDesign[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [rawSettings, rawHistory, rawSession, rawGarage] = await Promise.all([
+        const [rawSettings, rawHistory, rawSession, rawSavedCars, rawDesigns, rawLegacyGarage] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.settings),
           AsyncStorage.getItem(STORAGE_KEYS.history),
           AsyncStorage.getItem(STORAGE_KEYS.session),
-          AsyncStorage.getItem(STORAGE_KEYS.garage),
+          AsyncStorage.getItem(STORAGE_KEYS.savedCars),
+          AsyncStorage.getItem(STORAGE_KEYS.designs),
+          AsyncStorage.getItem(STORAGE_KEYS.legacyGarage),
         ]);
         if (rawSettings) {
           const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) };
@@ -322,142 +370,155 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         if (rawHistory) setSessionHistory(JSON.parse(rawHistory));
         if (rawSession) {
-          const session = JSON.parse(rawSession) as {
-            missions: SessionMission[];
-            active: boolean;
-            startTime: number | null;
-          };
+          const session = JSON.parse(rawSession) as { missions: SessionMission[]; active: boolean; startTime: number | null };
           if (session.active) {
             setSessionMissions(session.missions);
             setSessionActive(true);
             setSessionStartTime(session.startTime);
           }
         }
-        if (rawGarage) setGarageState({ ...DEFAULT_GARAGE, ...JSON.parse(rawGarage) });
+
+        let initialCars: SavedCar[] = rawSavedCars ? JSON.parse(rawSavedCars) : [];
+
+        if (initialCars.length === 0 && rawLegacyGarage) {
+          const legacy = JSON.parse(rawLegacyGarage) as {
+            photoUri?: string | null;
+            vehicleName?: string;
+            stickers?: PlacedSticker[];
+            model3dTaskId?: string | null;
+            model3dStatus?: Model3dStatus;
+            model3dUrl?: string | null;
+          };
+          if (legacy.photoUri) {
+            const migratedCar: SavedCar = {
+              id: makeId(),
+              name: legacy.vehicleName ?? "My Ride",
+              photoUri: legacy.photoUri,
+              stickers: legacy.stickers ?? [],
+              model3dTaskId: legacy.model3dTaskId ?? null,
+              model3dStatus: legacy.model3dStatus ?? "idle",
+              model3dUrl: legacy.model3dUrl ?? null,
+              createdAt: Date.now(),
+            };
+            initialCars = [migratedCar];
+            await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
+          }
+        }
+
+        setSavedCars(initialCars);
+        if (rawDesigns) setDesigns(JSON.parse(rawDesigns));
       } finally {
         setIsLoaded(true);
       }
     })();
   }, []);
 
-  const persistGarage = useCallback(async (next: GarageVehicle) => {
-    await AsyncStorage.setItem(STORAGE_KEYS.garage, JSON.stringify(next));
+  const persistCars = useCallback(async (cars: SavedCar[]) => {
+    await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(cars));
   }, []);
 
-  const updateSettings = useCallback(
-    async (updates: Partial<AppSettings>) => {
-      const next = { ...settings, ...updates };
-      setSettings(next);
-      await AsyncStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(next));
-    },
-    [settings]
-  );
+  const persistDesigns = useCallback(async (list: CarDesign[]) => {
+    await AsyncStorage.setItem(STORAGE_KEYS.designs, JSON.stringify(list));
+  }, []);
 
-  const setVehiclePhoto = useCallback(
-    async (uri: string) => {
-      let next: GarageVehicle = DEFAULT_GARAGE;
-      setGarageState((prev) => {
-        next = { ...prev, photoUri: uri };
-        return next;
-      });
-      await persistGarage(next);
-    },
-    [persistGarage]
-  );
+  const updateSettings = useCallback(async (updates: Partial<AppSettings>) => {
+    const next = { ...settings, ...updates };
+    setSettings(next);
+    await AsyncStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(next));
+  }, [settings]);
 
-  const setVehicleName = useCallback(
-    async (name: string) => {
-      let next: GarageVehicle = DEFAULT_GARAGE;
-      setGarageState((prev) => {
-        next = { ...prev, vehicleName: name };
-        return next;
-      });
-      await persistGarage(next);
-    },
-    [persistGarage]
-  );
+  const addSavedCar = useCallback(async (photoUri: string, name?: string): Promise<SavedCar> => {
+    const car: SavedCar = {
+      id: makeId(),
+      name: name ?? `Car ${Date.now()}`,
+      photoUri,
+      stickers: [],
+      model3dTaskId: null,
+      model3dStatus: "idle",
+      model3dUrl: null,
+      createdAt: Date.now(),
+    };
+    let next: SavedCar[] = [];
+    setSavedCars((prev) => {
+      next = [...prev, car];
+      return next;
+    });
+    await persistCars(next.length ? next : [car]);
+    return car;
+  }, [persistCars]);
 
-  const placeSticker = useCallback(
-    async (stickerId: string, x: number, y: number) => {
-      const newSticker: PlacedSticker = { uid: makeStickerUid(), stickerId, x, y };
-      let next: GarageVehicle = DEFAULT_GARAGE;
-      setGarageState((prev) => {
-        next = { ...prev, stickers: [...prev.stickers, newSticker] };
-        return next;
-      });
-      await persistGarage(next);
-    },
-    [persistGarage]
-  );
+  const updateSavedCar = useCallback(async (id: string, updates: Partial<Omit<SavedCar, "id" | "createdAt">>) => {
+    let next: SavedCar[] = [];
+    setSavedCars((prev) => {
+      next = prev.map((c) => c.id === id ? { ...c, ...updates } : c);
+      return next;
+    });
+    await persistCars(next);
+  }, [persistCars]);
 
-  const removeSticker = useCallback(
-    async (uid: string) => {
-      let next: GarageVehicle = DEFAULT_GARAGE;
-      setGarageState((prev) => {
-        next = { ...prev, stickers: prev.stickers.filter((s) => s.uid !== uid) };
-        return next;
-      });
-      await persistGarage(next);
-    },
-    [persistGarage]
-  );
+  const deleteSavedCar = useCallback(async (id: string) => {
+    let next: SavedCar[] = [];
+    setSavedCars((prev) => {
+      next = prev.filter((c) => c.id !== id);
+      return next;
+    });
+    await persistCars(next);
+  }, [persistCars]);
 
-  const moveSticker = useCallback(
-    async (uid: string, x: number, y: number) => {
-      let next: GarageVehicle = DEFAULT_GARAGE;
-      setGarageState((prev) => {
-        next = { ...prev, stickers: prev.stickers.map((s) => (s.uid === uid ? { ...s, x, y } : s)) };
-        return next;
-      });
-      await persistGarage(next);
-    },
-    [persistGarage]
-  );
+  const addDesign = useCallback(async (data: Omit<CarDesign, "id" | "createdAt">): Promise<CarDesign> => {
+    const design: CarDesign = { ...data, id: makeId(), createdAt: Date.now() };
+    let next: CarDesign[] = [];
+    setDesigns((prev) => {
+      next = [...prev, design];
+      return next;
+    });
+    await persistDesigns(next.length ? next : [design]);
+    return design;
+  }, [persistDesigns]);
 
-  const isStickerUnlocked = useCallback(
-    (sticker: StickerDefinition): boolean => {
-      if (!sticker.unlockCondition) return true;
-      const historicBadges = sessionHistory.reduce((sum, r) => sum + r.badges.length, 0);
-      const totalBadges = historicBadges + currentBadges.length;
-      const totalSessions = sessionHistory.length;
-      if (sticker.unlockCondition.type === "sessions") {
-        return totalSessions >= sticker.unlockCondition.count;
-      }
-      if (sticker.unlockCondition.type === "badges") {
-        return totalBadges >= sticker.unlockCondition.count;
-      }
-      return false;
-    },
-    [sessionHistory, currentBadges]
-  );
+  const updateDesign = useCallback(async (id: string, updates: Partial<Omit<CarDesign, "id" | "createdAt">>) => {
+    let next: CarDesign[] = [];
+    setDesigns((prev) => {
+      next = prev.map((d) => d.id === id ? { ...d, ...updates } : d);
+      return next;
+    });
+    await persistDesigns(next);
+  }, [persistDesigns]);
+
+  const deleteDesign = useCallback(async (id: string) => {
+    let next: CarDesign[] = [];
+    setDesigns((prev) => {
+      next = prev.filter((d) => d.id !== id);
+      return next;
+    });
+    await persistDesigns(next);
+  }, [persistDesigns]);
+
+  const isStickerUnlocked = useCallback((sticker: StickerDefinition): boolean => {
+    if (!sticker.unlockCondition) return true;
+    const historicBadges = sessionHistory.reduce((sum, r) => sum + r.badges.length, 0);
+    const totalBadges = historicBadges + currentBadges.length;
+    const totalSessions = sessionHistory.length;
+    if (sticker.unlockCondition.type === "sessions") return totalSessions >= sticker.unlockCondition.count;
+    if (sticker.unlockCondition.type === "badges") return totalBadges >= sticker.unlockCondition.count;
+    return false;
+  }, [sessionHistory, currentBadges]);
 
   const startSession = useCallback(async () => {
     const selected = selectSessionMissions(ALL_MISSIONS, settings);
-    if (selected.length < 3) {
-      return;
-    }
+    if (selected.length < 3) return;
     const missions: SessionMission[] = selected.map((m) => ({ ...m, completed: false }));
     const startTime = Date.now();
     setSessionMissions(missions);
     setSessionActive(true);
     setSessionStartTime(startTime);
     setCurrentBadges([]);
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.session,
-      JSON.stringify({ missions, active: true, startTime })
-    );
+    await AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ missions, active: true, startTime }));
   }, [settings]);
 
   const startSingleMission = useCallback(async (missionId: string): Promise<boolean> => {
-    const enabled = ALL_MISSIONS.filter(
-      (m) => settings.enabledMissionIds.includes(m.id) && m.enabled
-    );
-    const filtered =
-      settings.difficulty === "all"
-        ? enabled
-        : enabled.filter(
-            (m) => m.difficulty === settings.difficulty || m.difficulty === "easy"
-          );
+    const enabled = ALL_MISSIONS.filter((m) => settings.enabledMissionIds.includes(m.id) && m.enabled);
+    const filtered = settings.difficulty === "all" ? enabled : enabled.filter((m) => m.difficulty === settings.difficulty || m.difficulty === "easy");
     const mission = filtered.find((m) => m.id === missionId);
     if (!mission) return false;
     const missions: SessionMission[] = [{ ...mission, completed: false }];
@@ -466,28 +527,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSessionActive(true);
     setSessionStartTime(startTime);
     setCurrentBadges([]);
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.session,
-      JSON.stringify({ missions, active: true, startTime })
-    );
+    await AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ missions, active: true, startTime }));
     return true;
   }, [settings]);
 
-  const completeMission = useCallback(
-    (missionId: string) => {
-      setSessionMissions((prev) => {
-        const updated = prev.map((m) =>
-          m.id === missionId ? { ...m, completed: true, completedAt: Date.now() } : m
-        );
-        AsyncStorage.setItem(
-          STORAGE_KEYS.session,
-          JSON.stringify({ missions: updated, active: true, startTime: sessionStartTime })
-        ).catch(() => {});
-        return updated;
-      });
-    },
-    [sessionStartTime]
-  );
+  const completeMission = useCallback((missionId: string) => {
+    setSessionMissions((prev) => {
+      const updated = prev.map((m) => m.id === missionId ? { ...m, completed: true, completedAt: Date.now() } : m);
+      AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ missions: updated, active: true, startTime: sessionStartTime })).catch(() => {});
+      return updated;
+    });
+  }, [sessionStartTime]);
 
   const endSession = useCallback(async () => {
     if (!sessionStartTime) return;
@@ -495,27 +545,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const badges = generateBadges(sessionMissions, duration);
     const completedCount = sessionMissions.filter((m) => m.completed).length;
     setCurrentBadges(badges);
-
-    const snapshot: LastSessionResult = {
-      missions: sessionMissions,
-      badges,
-      completed: completedCount,
-      total: sessionMissions.length,
-      durationSeconds: duration,
-      childName: settings.childName,
-    };
+    const snapshot: LastSessionResult = { missions: sessionMissions, badges, completed: completedCount, total: sessionMissions.length, durationSeconds: duration, childName: settings.childName };
     setLastSessionResult(snapshot);
-
-    const record: SessionRecord = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      date: Date.now(),
-      missionsCompleted: completedCount,
-      totalMissions: sessionMissions.length,
-      durationSeconds: duration,
-      badges,
-      childName: settings.childName,
-    };
-
+    const record: SessionRecord = { id: makeId(), date: Date.now(), missionsCompleted: completedCount, totalMissions: sessionMissions.length, durationSeconds: duration, badges, childName: settings.childName };
     const newHistory = [record, ...sessionHistory].slice(0, 50);
     setSessionHistory(newHistory);
     await Promise.all([
@@ -544,13 +576,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         endSession,
         completeMission,
         isLoaded,
-        garage,
-        setVehiclePhoto,
-        setVehicleName,
-        placeSticker,
-        removeSticker,
-        moveSticker,
         isStickerUnlocked,
+        savedCars,
+        addSavedCar,
+        updateSavedCar,
+        deleteSavedCar,
+        designs,
+        addDesign,
+        updateDesign,
+        deleteDesign,
       }}
     >
       {children}
@@ -563,3 +597,5 @@ export function useApp() {
   if (!ctx) throw new Error("useApp must be inside AppProvider");
   return ctx;
 }
+
+export { makeStickerUid };

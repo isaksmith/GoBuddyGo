@@ -3,17 +3,14 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Animated,
   Dimensions,
   Image,
-  LayoutChangeEvent,
   Platform,
   Pressable,
-  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,175 +18,242 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StickerPicker } from "@/components/StickerPicker";
 import { Colors } from "@/constants/colors";
-import { PlacedSticker, StickerDefinition, STICKER_CATALOG, useApp } from "@/context/AppContext";
+import {
+  CarDesign,
+  SavedCar,
+  VEHICLE_TYPES,
+  DESIGN_ACCESSORIES,
+  useApp,
+} from "@/context/AppContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const PHOTO_AREA_HEIGHT = 280;
+const CARD_WIDTH = 160;
+const CARD_HEIGHT = 210;
 
-function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+function DesignPreview({ design, size = 60 }: { design: CarDesign; size?: number }) {
+  const vt = VEHICLE_TYPES.find((v) => v.id === design.vehicleType) ?? VEHICLE_TYPES[0];
+  const accessories = DESIGN_ACCESSORIES.filter((a) => design.accessories.includes(a.id));
   return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        router.replace("/");
-      }}
-      style={({ pressed }) => [
-        styles.homeBtn,
-        { bottom: bottomOffset },
-        pressed && styles.homeBtnPressed,
-      ]}
-      testID="home-btn-garage"
-    >
-      <LinearGradient
-        colors={["#F4633A", "#C13E20"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.homeBtnGradient}
-      >
-        <Ionicons name="home" size={28} color="#FFFFFF" />
-        <Text style={styles.homeBtnText}>HOME</Text>
-      </LinearGradient>
+    <View style={[dpStyles.container, { width: size * 1.6, height: size * 1.2, borderRadius: size * 0.18 }, { backgroundColor: design.primaryColor }]}>
+      <View style={[dpStyles.accentBar, { backgroundColor: design.accentColor }]} />
+      <Text style={[dpStyles.emoji, { fontSize: size * 0.56 }]}>{vt.emoji}</Text>
+      {accessories.length > 0 && (
+        <View style={dpStyles.accRow}>
+          {accessories.slice(0, 3).map((a) => (
+            <Text key={a.id} style={[dpStyles.accEmoji, { fontSize: size * 0.22 }]}>{a.emoji}</Text>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const dpStyles = StyleSheet.create({
+  container: { justifyContent: "center", alignItems: "center", overflow: "hidden", position: "relative" },
+  accentBar: { position: "absolute", bottom: 0, left: 0, right: 0, height: "22%" },
+  emoji: { zIndex: 1 },
+  accRow: { position: "absolute", top: 4, right: 4, flexDirection: "row", gap: 1 },
+  accEmoji: {},
+});
+
+function SavedCarCard({ car, onPress, onDelete, onRename }: {
+  car: SavedCar;
+  onPress: () => void;
+  onDelete: () => void;
+  onRename: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={cardStyles.card}>
+      <View style={cardStyles.imageArea}>
+        <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
+        {car.model3dUrl && (
+          <View style={cardStyles.badge3d}>
+            <Text style={cardStyles.badge3dText}>3D</Text>
+          </View>
+        )}
+      </View>
+      <View style={cardStyles.footer}>
+        <Text style={cardStyles.name} numberOfLines={1}>{car.name}</Text>
+        <View style={cardStyles.actions}>
+          <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
+            <Ionicons name="pencil" size={14} color={Colors.primary} />
+          </Pressable>
+          <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
+            <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+          </Pressable>
+        </View>
+      </View>
     </Pressable>
   );
 }
 
-function DraggableSticker({
-  placed,
-  onMove,
-  onRemove,
-}: {
-  placed: PlacedSticker;
-  onMove: (uid: string, x: number, y: number) => void;
-  onRemove: (uid: string) => void;
+function DesignCard({ design, onPress, onDelete, onRename }: {
+  design: CarDesign;
+  onPress: () => void;
+  onDelete: () => void;
+  onRename: () => void;
 }) {
-  const sticker = STICKER_CATALOG.find((s) => s.id === placed.stickerId);
-  const position = useRef({ x: placed.x, y: placed.y });
-  const pan = useRef(new Animated.ValueXY({ x: placed.x, y: placed.y })).current;
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const listenerId = pan.addListener((value) => {
-      position.current = value;
-    });
-    return () => {
-      pan.removeListener(listenerId);
-    };
-  }, [pan]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        pan.setOffset(position.current);
-        pan.setValue({ x: 0, y: 0 });
-        longPressTimer.current = setTimeout(() => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          onRemove(placed.uid);
-        }, 800);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (longPressTimer.current) {
-          clearTimeout(longPressTimer.current);
-          longPressTimer.current = null;
-        }
-        Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false })(
-          _,
-          gestureState
-        );
-      },
-      onPanResponderRelease: () => {
-        if (longPressTimer.current) {
-          clearTimeout(longPressTimer.current);
-          longPressTimer.current = null;
-        }
-        pan.flattenOffset();
-        onMove(placed.uid, position.current.x, position.current.y);
-      },
-    })
-  ).current;
-
-  if (!sticker) return null;
-
   return (
-    <Animated.View
-      style={[styles.stickerOnVehicle, { transform: pan.getTranslateTransform() }]}
-      {...panResponder.panHandlers}
-    >
-      <Text style={styles.stickerOnVehicleEmoji}>{sticker.emoji}</Text>
-    </Animated.View>
+    <Pressable onPress={onPress} style={cardStyles.card}>
+      <View style={[cardStyles.imageArea, { justifyContent: "center", alignItems: "center", backgroundColor: Colors.backgroundDeep }]}>
+        <DesignPreview design={design} size={70} />
+      </View>
+      <View style={cardStyles.footer}>
+        <Text style={cardStyles.name} numberOfLines={1}>{design.name}</Text>
+        <View style={cardStyles.actions}>
+          <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
+            <Ionicons name="pencil" size={14} color={Colors.primary} />
+          </Pressable>
+          <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
+            <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+          </Pressable>
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
+function CreateCard({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={cardStyles.createCard}>
+      <View style={cardStyles.createInner}>
+        <View style={cardStyles.plusCircle}>
+          <Ionicons name="add" size={32} color={Colors.primary} />
+        </View>
+        <Text style={cardStyles.createLabel}>{label}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+const cardStyles = StyleSheet.create({
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 18,
+    backgroundColor: Colors.backgroundCard,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    overflow: "hidden",
+  },
+  imageArea: {
+    flex: 1,
+    backgroundColor: Colors.backgroundDeep,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  badge3d: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: Colors.accentBlue,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  badge3dText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+  },
+  footer: {
+    padding: 10,
+    gap: 4,
+  },
+  name: {
+    color: Colors.text,
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.3,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  actionBtn: {
+    padding: 2,
+  },
+  createCard: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: Colors.primary + "55",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  createInner: {
+    alignItems: "center",
+    gap: 10,
+  },
+  plusCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary + "22",
+    borderWidth: 2,
+    borderColor: Colors.primary + "55",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  createLabel: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+    textAlign: "center",
+    paddingHorizontal: 8,
+  },
+});
+
+type Tab = "cars" | "designs";
+
 export default function GarageScreen() {
   const insets = useSafeAreaInsets();
-  const {
-    garage,
-    setVehiclePhoto,
-    setVehicleName,
-    placeSticker,
-    removeSticker,
-    moveSticker,
-    isStickerUnlocked,
-  } = useApp();
-
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(garage.vehicleName);
-  const [photoAreaLayout, setPhotoAreaLayout] = useState({ width: SCREEN_WIDTH - 32, height: PHOTO_AREA_HEIGHT });
-  const slideAnim = useRef(new Animated.Value(400)).current;
-
-  useEffect(() => {
-    if (!editingName) {
-      setNameInput(garage.vehicleName);
-    }
-  }, [garage.vehicleName, editingName]);
+  const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, deleteDesign, updateDesign } = useApp();
+  const [activeTab, setActiveTab] = useState<Tab>("cars");
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameType, setRenameType] = useState<Tab>("cars");
+  const [renameText, setRenameText] = useState("");
+  const tabAnim = useRef(new Animated.Value(0)).current;
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
   const homeBtnBottom = insets.bottom + 82;
 
-  const openPicker = useCallback(() => {
-    setPickerVisible(true);
-    slideAnim.setValue(400);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      tension: 80,
-      friction: 12,
-      useNativeDriver: true,
+  const switchTab = (tab: Tab) => {
+    setActiveTab(tab);
+    Animated.spring(tabAnim, {
+      toValue: tab === "cars" ? 0 : 1,
+      tension: 100,
+      friction: 14,
+      useNativeDriver: false,
     }).start();
-  }, [slideAnim]);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
 
-  const closePicker = useCallback(() => {
-    Animated.timing(slideAnim, {
-      toValue: 400,
-      duration: 220,
-      useNativeDriver: true,
-    }).start(() => setPickerVisible(false));
-  }, [slideAnim]);
-
-  const handlePickSticker = useCallback(
-    (sticker: StickerDefinition) => {
-      const cx = photoAreaLayout.width / 2 - 20;
-      const cy = photoAreaLayout.height / 2 - 20;
-      placeSticker(sticker.id, cx, cy);
-      closePicker();
-    },
-    [photoAreaLayout, placeSticker, closePicker]
-  );
-
-  const handleScanRide = async () => {
+  const handleScanNewCar = async () => {
     if (Platform.OS === "web") {
       Alert.alert(
-        "Scan on Device",
-        "Camera scanning works on a real iOS or Android device. On web, tap OK to use a placeholder.",
+        "Scan New Car",
+        "Camera scanning works on a real device. On web, use a placeholder?",
         [
           { text: "Cancel", style: "cancel" },
           {
             text: "Use Placeholder",
-            onPress: () => setVehiclePhoto("https://placehold.co/600x400/112840/F4633A?text=My+Ride"),
+            onPress: async () => {
+              const car = await addSavedCar(
+                "https://placehold.co/600x400/112840/F4633A?text=My+Ride",
+                `Car ${savedCars.length + 1}`
+              );
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.push(`/car-detail?carId=${car.id}`);
+            },
           },
         ]
       );
@@ -198,60 +262,103 @@ export default function GarageScreen() {
 
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Camera needed", "Allow camera access to scan your vehicle.");
-      return;
+      const libStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (libStatus.status !== "granted") {
+        Alert.alert("Permission needed", "Allow camera or photo library access to scan your vehicle.");
+        return;
+      }
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.85,
-    });
+    Alert.alert("Add Car Photo", "Choose how to add your vehicle photo", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Take Photo",
+        onPress: async () => {
+          const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.85 });
+          if (!result.canceled && result.assets[0]) {
+            const car = await addSavedCar(result.assets[0].uri, `Car ${savedCars.length + 1}`);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.push(`/car-detail?carId=${car.id}`);
+          }
+        },
+      },
+      {
+        text: "Choose from Library",
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.85 });
+          if (!result.canceled && result.assets[0]) {
+            const car = await addSavedCar(result.assets[0].uri, `Car ${savedCars.length + 1}`);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.push(`/car-detail?carId=${car.id}`);
+          }
+        },
+      },
+    ]);
+  };
 
-    if (!result.canceled && result.assets[0]) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await setVehiclePhoto(result.assets[0].uri);
+  const handleDesignNew = () => {
+    router.push("/design-builder");
+  };
+
+  const handleOpenCar = (car: SavedCar) => {
+    router.push(`/car-detail?carId=${car.id}`);
+  };
+
+  const handleOpenDesign = (design: CarDesign) => {
+    router.push(`/design-builder?designId=${design.id}`);
+  };
+
+  const handleDeleteCar = (car: SavedCar) => {
+    Alert.alert("Delete Car", `Remove "${car.name}"? This cannot be undone.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await deleteSavedCar(car.id);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        },
+      },
+    ]);
+  };
+
+  const handleDeleteDesign = (design: CarDesign) => {
+    Alert.alert("Delete Design", `Remove "${design.name}"? This cannot be undone.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await deleteDesign(design.id);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        },
+      },
+    ]);
+  };
+
+  const startRename = (id: string, type: Tab, currentName: string) => {
+    setRenameId(id);
+    setRenameType(type);
+    setRenameText(currentName);
+  };
+
+  const commitRename = useCallback(async () => {
+    if (!renameId) return;
+    const trimmed = renameText.trim();
+    if (!trimmed) return;
+    if (renameType === "cars") {
+      await updateSavedCar(renameId, { name: trimmed });
+    } else {
+      await updateDesign(renameId, { name: trimmed });
     }
-  };
-
-  const handleReScan = async () => {
-    Alert.alert(
-      "Rescan Vehicle?",
-      "This will replace your current photo. Your stickers will stay.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Rescan", style: "destructive", onPress: handleScanRide },
-      ]
-    );
-  };
-
-  const handleSaveName = async () => {
-    await setVehicleName(nameInput.trim() || "My Ride");
-    setEditingName(false);
+    setRenameId(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  }, [renameId, renameType, renameText, updateSavedCar, updateDesign]);
 
-  const handlePhotoAreaLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setPhotoAreaLayout({ width, height });
-  };
-
-  const handleMoveSticker = useCallback(
-    async (uid: string, x: number, y: number) => {
-      await moveSticker(uid, x, y);
-    },
-    [moveSticker]
-  );
-
-  const handleRemoveSticker = useCallback(
-    async (uid: string) => {
-      await removeSticker(uid);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    },
-    [removeSticker]
-  );
-
-  const unlockedCount = STICKER_CATALOG.filter((s) => isStickerUnlocked(s)).length;
+  const tabIndicatorLeft = tabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["2%", "51%"],
+  });
 
   return (
     <LinearGradient
@@ -264,213 +371,168 @@ export default function GarageScreen() {
           { paddingTop: topPad + 8, paddingBottom: homeBtnBottom + 76 },
         ]}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!pickerVisible}
       >
-        <View style={styles.headerRow}>
-          <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="garage-home-btn">
-            <Ionicons name="arrow-back" size={26} color={Colors.text} />
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>🏠 GARAGE</Text>
+            <Text style={styles.headerSub}>
+              {savedCars.length} {savedCars.length === 1 ? "CAR" : "CARS"} · {designs.length} {designs.length === 1 ? "DESIGN" : "DESIGNS"}
+            </Text>
+          </View>
+          <Pressable onPress={() => router.replace("/")} style={styles.homeBtn} hitSlop={8}>
+            <Ionicons name="home" size={20} color={Colors.text} />
           </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>🚗 GARAGE</Text>
-            <Text style={styles.headerSub}>{unlockedCount} STICKERS UNLOCKED</Text>
-          </View>
-          {garage.photoUri && (
-            <Pressable onPress={handleReScan} style={styles.rescanBtn}>
-              <Ionicons name="camera" size={16} color={Colors.primary} />
-              <Text style={styles.rescanBtnText}>RESCAN</Text>
-            </Pressable>
-          )}
         </View>
 
-        <View style={styles.nameRow}>
-          {editingName ? (
-            <View style={styles.nameEditRow}>
-              <TextInput
-                style={styles.nameInput}
-                value={nameInput}
-                onChangeText={setNameInput}
-                placeholder="Ride name..."
-                placeholderTextColor={Colors.textMuted}
-                autoFocus
-                onSubmitEditing={handleSaveName}
-                returnKeyType="done"
-              />
-              <Pressable onPress={handleSaveName} style={styles.nameSaveBtn}>
-                <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={() => setEditingName(true)} style={styles.nameDisplay}>
-              <Ionicons name="car-sport" size={20} color={Colors.secondary} />
-              <Text style={styles.nameText}>{garage.vehicleName.toUpperCase()}</Text>
-              <Ionicons name="pencil" size={14} color={Colors.primary} />
-            </Pressable>
-          )}
+        <View style={styles.tabContainer}>
+          <Animated.View style={[styles.tabIndicator, { left: tabIndicatorLeft }]} />
+          <Pressable style={styles.tabBtn} onPress={() => switchTab("cars")}>
+            <Ionicons name="camera" size={15} color={activeTab === "cars" ? Colors.text : Colors.textMuted} />
+            <Text style={[styles.tabLabel, activeTab === "cars" && styles.tabLabelActive]}>SAVED CARS</Text>
+          </Pressable>
+          <Pressable style={styles.tabBtn} onPress={() => switchTab("designs")}>
+            <Ionicons name="color-palette" size={15} color={activeTab === "designs" ? Colors.text : Colors.textMuted} />
+            <Text style={[styles.tabLabel, activeTab === "designs" && styles.tabLabelActive]}>MY DESIGNS</Text>
+          </Pressable>
         </View>
 
-        {!garage.photoUri ? (
-          <View style={styles.emptyState}>
-            <LinearGradient
-              colors={[Colors.backgroundCard, Colors.backgroundDeep]}
-              style={styles.emptyCard}
-            >
-              <View style={styles.emptyIconCircle}>
-                <Text style={styles.emptyEmoji}>🚗</Text>
+        {activeTab === "cars" && (
+          <View style={styles.section}>
+            {savedCars.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>📸</Text>
+                <Text style={styles.emptyTitle}>NO CARS YET</Text>
+                <Text style={styles.emptySubtitle}>Scan a photo of your real GoBabyGo vehicle to add it to your garage!</Text>
+                <Pressable onPress={handleScanNewCar} style={styles.emptyBtn}>
+                  <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.emptyBtnGrad}>
+                    <Ionicons name="camera" size={20} color="#FFFFFF" />
+                    <Text style={styles.emptyBtnText}>SCAN YOUR RIDE!</Text>
+                  </LinearGradient>
+                </Pressable>
               </View>
-              <Text style={styles.emptyTitle}>SCAN YOUR RIDE!</Text>
-              <Text style={styles.emptySubtitle}>
-                Take a photo of your GoBabyGo vehicle and turn it into your virtual garage car!
-              </Text>
-              <Pressable onPress={handleScanRide} style={styles.scanBtn} testID="scan-ride-btn">
-                <LinearGradient
-                  colors={[Colors.primary, Colors.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.scanBtnGradient}
-                >
-                  <Ionicons name="camera" size={26} color="#FFFFFF" />
-                  <Text style={styles.scanBtnText}>SCAN YOUR RIDE!</Text>
-                </LinearGradient>
-              </Pressable>
-              <View style={styles.stickerPreviewRow}>
-                <Text style={styles.stickerPreviewLabel}>STICKERS WAITING FOR YOU:</Text>
-                <View style={styles.stickerPreviewEmojis}>
-                  {STICKER_CATALOG.slice(0, 6).map((s) => (
-                    <Text key={s.id} style={styles.previewEmoji}>{s.emoji}</Text>
-                  ))}
-                  <Text style={styles.previewMore}>+{STICKER_CATALOG.length - 6}</Text>
-                </View>
-              </View>
-            </LinearGradient>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cardRow}
+              >
+                {savedCars.map((car) => (
+                  <SavedCarCard
+                    key={car.id}
+                    car={car}
+                    onPress={() => handleOpenCar(car)}
+                    onDelete={() => handleDeleteCar(car)}
+                    onRename={() => startRename(car.id, "cars", car.name)}
+                  />
+                ))}
+                <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
+              </ScrollView>
+            )}
+
+            {savedCars.length > 0 && (
+              <Text style={styles.scrollHint}>← Swipe to see more cars</Text>
+            )}
           </View>
-        ) : (
-          <>
-            <View
-              style={styles.vehicleArea}
-              onLayout={handlePhotoAreaLayout}
-            >
-              <Image
-                source={{ uri: garage.photoUri }}
-                style={styles.vehiclePhoto}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={["transparent", "rgba(9,25,42,0.5)"]}
-                style={styles.vehiclePhotoOverlay}
-              />
-              {garage.stickers.map((placed) => (
-                <DraggableSticker
-                  key={placed.uid}
-                  placed={placed}
-                  onMove={handleMoveSticker}
-                  onRemove={handleRemoveSticker}
-                />
-              ))}
-              {garage.stickers.length === 0 && (
-                <View style={styles.stickerHint} pointerEvents="none">
-                  <Text style={styles.stickerHintText}>TAP + TO ADD STICKERS!</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.actionRow}>
-              <Pressable onPress={openPicker} style={styles.addStickerBtn} testID="add-sticker-btn">
-                <LinearGradient
-                  colors={[Colors.accent, "#2DB87A"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.addStickerBtnGradient}
-                >
-                  <Ionicons name="add-circle" size={22} color="#FFFFFF" />
-                  <Text style={styles.addStickerBtnText}>ADD STICKER</Text>
-                </LinearGradient>
-              </Pressable>
-              {garage.stickers.length > 0 && (
-                <View style={styles.stickerCountPill}>
-                  <Text style={styles.stickerCountText}>
-                    {garage.stickers.length} ON RIDE
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.helpRow}>
-              <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
-              <Text style={styles.helpText}>
-                DRAG stickers to move · HOLD to remove
-              </Text>
-            </View>
-
-            <View style={styles.stickerCatalogPreview}>
-              <Text style={styles.catalogTitle}>YOUR STICKER COLLECTION</Text>
-              <View style={styles.catalogGrid}>
-                {STICKER_CATALOG.map((sticker) => {
-                  const unlocked = isStickerUnlocked(sticker);
-                  return (
-                    <Pressable
-                      key={sticker.id}
-                      onPress={() => {
-                        if (!unlocked) return;
-                        placeSticker(
-                          sticker.id,
-                          photoAreaLayout.width / 2 - 20,
-                          photoAreaLayout.height / 2 - 20
-                        );
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      }}
-                      style={[
-                        styles.catalogCell,
-                        unlocked
-                          ? { borderColor: sticker.color + "66", backgroundColor: sticker.color + "15" }
-                          : { borderColor: Colors.border, opacity: 0.5 },
-                      ]}
-                    >
-                      <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>
-                        {sticker.emoji}
-                      </Text>
-                      {!unlocked && (
-                        <View style={styles.catalogLock}>
-                          <Ionicons name="lock-closed" size={10} color={Colors.textMuted} />
-                        </View>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          </>
         )}
+
+        {activeTab === "designs" && (
+          <View style={styles.section}>
+            {designs.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>🎨</Text>
+                <Text style={styles.emptyTitle}>NO DESIGNS YET</Text>
+                <Text style={styles.emptySubtitle}>Design your dream GoBabyGo ride! Pick a base, choose colors, and add accessories.</Text>
+                <Pressable onPress={handleDesignNew} style={styles.emptyBtn}>
+                  <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} style={styles.emptyBtnGrad}>
+                    <Ionicons name="color-palette" size={20} color="#FFFFFF" />
+                    <Text style={styles.emptyBtnText}>DESIGN NEW CAR!</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cardRow}
+              >
+                {designs.map((design) => (
+                  <DesignCard
+                    key={design.id}
+                    design={design}
+                    onPress={() => handleOpenDesign(design)}
+                    onDelete={() => handleDeleteDesign(design)}
+                    onRename={() => startRename(design.id, "designs", design.name)}
+                  />
+                ))}
+                <CreateCard label="Design New Car" onPress={handleDesignNew} />
+              </ScrollView>
+            )}
+
+            {designs.length > 0 && (
+              <Text style={styles.scrollHint}>← Swipe to see more designs</Text>
+            )}
+          </View>
+        )}
+
+        <View style={styles.bottomActions}>
+          {activeTab === "cars" && savedCars.length > 0 && (
+            <Pressable onPress={handleScanNewCar} style={styles.fabBtn}>
+              <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.fabGrad}>
+                <Ionicons name="camera" size={20} color="#FFFFFF" />
+                <Text style={styles.fabText}>SCAN NEW CAR</Text>
+              </LinearGradient>
+            </Pressable>
+          )}
+          {activeTab === "designs" && designs.length > 0 && (
+            <Pressable onPress={handleDesignNew} style={styles.fabBtn}>
+              <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} style={styles.fabGrad}>
+                <Ionicons name="color-palette" size={20} color="#FFFFFF" />
+                <Text style={styles.fabText}>DESIGN NEW CAR</Text>
+              </LinearGradient>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
 
-      {pickerVisible && (
-        <Pressable style={styles.pickerBackdrop} onPress={closePicker} />
+      {renameId && (
+        <View style={styles.renameOverlay}>
+          <Pressable style={styles.renameBackdrop} onPress={() => setRenameId(null)} />
+          <View style={styles.renameSheet}>
+            <Text style={styles.renameTitle}>RENAME</Text>
+            <TextInput
+              style={styles.renameInput}
+              value={renameText}
+              onChangeText={setRenameText}
+              autoFocus
+              placeholder="Enter new name..."
+              placeholderTextColor={Colors.textMuted}
+              returnKeyType="done"
+              onSubmitEditing={commitRename}
+              maxLength={30}
+            />
+            <View style={styles.renameActions}>
+              <Pressable onPress={() => setRenameId(null)} style={styles.renameCancelBtn}>
+                <Text style={styles.renameCancelText}>CANCEL</Text>
+              </Pressable>
+              <Pressable onPress={commitRename} style={styles.renameSaveBtn}>
+                <Text style={styles.renameSaveText}>SAVE</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       )}
-
-      <StickerPicker
-        visible={pickerVisible}
-        onClose={closePicker}
-        onPickSticker={handlePickSticker}
-        isStickerUnlocked={isStickerUnlocked}
-        slideAnim={slideAnim}
-      />
-
-      {!pickerVisible && <HomeButton bottomOffset={homeBtnBottom} />}
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: 16,
-  },
-  headerRow: {
+  container: { flex: 1 },
+  scroll: { paddingHorizontal: 16 },
+  header: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 14,
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
   },
   backBtn: {
     marginRight: 2,
@@ -482,355 +544,214 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   headerSub: {
-    color: Colors.accent,
+    color: Colors.textMuted,
     fontSize: 11,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1,
     marginTop: 2,
   },
-  rescanBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+  homeBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.backgroundCard,
-    borderRadius: 50,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 2,
-    borderColor: Colors.primary + "55",
-  },
-  rescanBtnText: {
-    color: Colors.primary,
-    fontSize: 11,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-  },
-  nameRow: {
-    marginBottom: 14,
-  },
-  nameDisplay: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 50,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderWidth: 2,
-    borderColor: Colors.secondary + "55",
-    alignSelf: "flex-start",
-  },
-  nameText: {
-    color: Colors.secondary,
-    fontSize: 14,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-  },
-  nameEditRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  nameInput: {
-    flex: 1,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    color: Colors.text,
-    fontSize: 15,
-    fontFamily: "Nunito_700Bold",
-    borderWidth: 2,
-    borderColor: Colors.secondary,
-  },
-  nameSaveBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  emptyState: {
-    marginTop: 12,
-  },
-  emptyCard: {
-    borderRadius: 26,
-    padding: 28,
-    alignItems: "center",
     borderWidth: 2,
     borderColor: Colors.border,
-    gap: 12,
-  },
-  emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.backgroundDeep,
-    borderWidth: 3,
-    borderColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 4,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 50,
+    padding: 4,
+    marginBottom: 24,
+    position: "relative",
+    borderWidth: 2,
+    borderColor: Colors.border,
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: 4,
+    width: "47%",
+    bottom: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: 46,
+  },
+  tabBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    zIndex: 1,
+  },
+  tabLabel: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
+  },
+  tabLabelActive: {
+    color: Colors.text,
+  },
+  section: {
+    minHeight: CARD_HEIGHT + 40,
+  },
+  cardRow: {
+    paddingRight: 16,
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  scrollHint: {
+    color: Colors.textMuted,
+    fontSize: 10,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 30,
+    gap: 12,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    padding: 28,
   },
   emptyEmoji: {
     fontSize: 52,
   },
   emptyTitle: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 2,
-    textAlign: "center",
   },
   emptySubtitle: {
     color: Colors.textSecondary,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 20,
     paddingHorizontal: 8,
   },
-  scanBtn: {
-    width: "100%",
+  emptyBtn: {
     borderRadius: 50,
     overflow: "hidden",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.65,
-    shadowRadius: 14,
-    elevation: 10,
+    width: "100%",
     marginTop: 4,
   },
-  scanBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 20,
-    borderRadius: 50,
-  },
-  scanBtnText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  stickerPreviewRow: {
-    alignItems: "center",
-    gap: 8,
-    marginTop: 4,
-  },
-  stickerPreviewLabel: {
-    color: Colors.textMuted,
-    fontSize: 10,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  stickerPreviewEmojis: {
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "center",
-  },
-  previewEmoji: {
-    fontSize: 24,
-  },
-  previewMore: {
-    color: Colors.textMuted,
-    fontSize: 14,
-    fontFamily: "Nunito_700Bold",
-  },
-  vehicleArea: {
-    width: "100%",
-    height: PHOTO_AREA_HEIGHT,
-    borderRadius: 22,
-    overflow: "hidden",
-    borderWidth: 3,
-    borderColor: Colors.primary + "66",
-    marginBottom: 12,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
-    backgroundColor: Colors.backgroundCard,
-  },
-  vehiclePhoto: {
-    width: "100%",
-    height: "100%",
-  },
-  vehiclePhotoOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-  },
-  stickerOnVehicle: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-  },
-  stickerOnVehicleEmoji: {
-    fontSize: 42,
-  },
-  stickerHint: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  stickerHintText: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 13,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
-  },
-  addStickerBtn: {
-    flex: 1,
-    borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  addStickerBtnGradient: {
+  emptyBtnGrad: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 16,
-    borderRadius: 50,
+    paddingVertical: 18,
   },
-  addStickerBtnText: {
+  emptyBtnText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
+    letterSpacing: 1,
   },
-  stickerCountPill: {
-    backgroundColor: Colors.backgroundCard,
+  bottomActions: {
+    marginTop: 28,
+    gap: 12,
+  },
+  fabBtn: {
     borderRadius: 50,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 2,
-    borderColor: Colors.accent + "55",
+    overflow: "hidden",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  stickerCountText: {
-    color: Colors.accent,
-    fontSize: 11,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.5,
-  },
-  helpRow: {
+  fabGrad: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 20,
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
   },
-  helpText: {
+  fabText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+  },
+  renameOverlay: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: "flex-end",
+  },
+  renameBackdrop: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  renameSheet: {
+    backgroundColor: Colors.backgroundCard,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    gap: 16,
+    borderTopWidth: 2,
+    borderColor: Colors.border,
+  },
+  renameTitle: {
     color: Colors.textMuted,
     fontSize: 11,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.5,
-  },
-  stickerCatalogPreview: {
-    marginTop: 4,
-  },
-  catalogTitle: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontFamily: "Nunito_700Bold",
     letterSpacing: 2,
-    marginBottom: 12,
+    textAlign: "center",
   },
-  catalogGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  catalogCell: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  catalogEmoji: {
-    fontSize: 26,
-  },
-  catalogLock: {
-    position: "absolute",
-    bottom: -4,
-    right: -4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+  renameInput: {
     backgroundColor: Colors.backgroundDeep,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  pickerBackdrop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  homeBtn: {
-    position: "absolute",
-    left: 20,
-    right: 20,
     borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: "#F4633A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 12,
-    zIndex: 100,
-  },
-  homeBtnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-  homeBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 20,
-    borderRadius: 50,
-  },
-  homeBtnText: {
-    color: "#FFFFFF",
-    fontSize: 22,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    color: Colors.text,
+    fontSize: 16,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 3,
+    borderWidth: 2,
+    borderColor: Colors.border,
+  },
+  renameActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  renameCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 50,
+    backgroundColor: Colors.backgroundDeep,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  renameCancelText: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+  },
+  renameSaveBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 50,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+  },
+  renameSaveText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
   },
 });
