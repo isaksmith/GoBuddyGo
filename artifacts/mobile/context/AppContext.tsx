@@ -12,7 +12,7 @@ export interface Mission {
   title: string;
   description: string;
   icon: string;
-  category: "cheer" | "interact" | "count" | "move";
+  category: "cheer" | "interact" | "count" | "move" | "ar-game";
   difficulty: "easy" | "medium" | "hard";
   enabled: boolean;
 }
@@ -141,6 +141,15 @@ const ALL_MISSIONS: Mission[] = [
     difficulty: "easy",
     enabled: true,
   },
+  {
+    id: "coin-dash",
+    title: "AR Drive!",
+    description: "Watch your car cruise around in augmented reality — move your phone to follow!",
+    icon: "car-sport",
+    category: "ar-game",
+    difficulty: "medium",
+    enabled: true,
+  },
 ];
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -201,7 +210,7 @@ const STORAGE_KEYS = {
 
 export function countAvailableSessionMissions(missions: Mission[], settings: AppSettings): number {
   const enabled = missions.filter(
-    (m) => settings.enabledMissionIds.includes(m.id) && m.enabled
+    (m) => settings.enabledMissionIds.includes(m.id) && m.enabled && m.category !== "ar-game"
   );
   const filtered =
     settings.difficulty === "all"
@@ -217,7 +226,7 @@ function selectSessionMissions(
   settings: AppSettings
 ): Mission[] {
   const enabled = missions.filter(
-    (m) => settings.enabledMissionIds.includes(m.id) && m.enabled
+    (m) => settings.enabledMissionIds.includes(m.id) && m.enabled && m.category !== "ar-game"
   );
   const filtered =
     settings.difficulty === "all"
@@ -304,7 +313,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.getItem(STORAGE_KEYS.session),
           AsyncStorage.getItem(STORAGE_KEYS.garage),
         ]);
-        if (rawSettings) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) });
+        if (rawSettings) {
+          const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) };
+          const allMissionIds = ALL_MISSIONS.filter((m) => m.enabled).map((m) => m.id);
+          const merged = Array.from(new Set([...parsed.enabledMissionIds, ...allMissionIds.filter((id) => !parsed.enabledMissionIds.includes(id))]));
+          parsed.enabledMissionIds = merged;
+          setSettings(parsed);
+        }
         if (rawHistory) setSessionHistory(JSON.parse(rawHistory));
         if (rawSession) {
           const session = JSON.parse(rawSession) as {

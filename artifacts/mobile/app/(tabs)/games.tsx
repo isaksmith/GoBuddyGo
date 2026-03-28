@@ -96,7 +96,11 @@ export default function GamesScreen() {
   };
 
   const handlePlay = useCallback((missionId: string) => {
-    router.push({ pathname: "/ar", params: { missionId } });
+    if (missionId === "coin-dash") {
+      router.push("/coin-dash");
+    } else {
+      router.push({ pathname: "/ar", params: { missionId } });
+    }
   }, []);
 
   if (selectedDifficulty === null) {

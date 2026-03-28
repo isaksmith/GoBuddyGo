@@ -16,11 +16,12 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "The AR Co-Pilot view uses your camera to overlay mission graphics and sparkle effects during your GoBabyGo session."
+        "NSCameraUsageDescription": "The AR Co-Pilot view uses your camera to overlay mission graphics and sparkle effects during your GoBabyGo session.",
+        "NSMicrophoneUsageDescription": "The Coin Dash AR game uses the microphone for the AR WebView camera feed."
       }
     },
     "android": {
-      "permissions": ["CAMERA"]
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
