@@ -26,6 +26,7 @@ export default function SummaryScreen() {
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const recapRef = useRef<ViewShot>(null);
   const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   const result = lastSessionResult;
   const completed = result?.completed ?? 0;
@@ -86,6 +87,8 @@ export default function SummaryScreen() {
         }
       }
     } catch (_e) {
+      setShareError("Sharing failed. Please try again.");
+      setTimeout(() => setShareError(null), 3000);
     } finally {
       setSharing(false);
     }
@@ -191,6 +194,13 @@ export default function SummaryScreen() {
             )}
           </LinearGradient>
         </ViewShot>
+
+        {shareError && (
+          <View style={styles.errorBanner}>
+            <Ionicons name="alert-circle" size={16} color="#FF6B6B" />
+            <Text style={styles.errorBannerText}>{shareError}</Text>
+          </View>
+        )}
 
         <Pressable
           onPress={handleShare}
@@ -388,6 +398,24 @@ const styles = StyleSheet.create({
   },
   shareBtnDisabled: {
     opacity: 0.5,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255, 107, 107, 0.12)",
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    width: "100%",
+  },
+  errorBannerText: {
+    color: "#FF6B6B",
+    fontSize: 14,
+    fontFamily: "Nunito_600SemiBold",
+    flex: 1,
   },
   shareBtnText: {
     color: Colors.secondary,

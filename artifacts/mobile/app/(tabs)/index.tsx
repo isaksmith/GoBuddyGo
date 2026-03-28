@@ -31,13 +31,15 @@ function StatBadge({ label, value, color }: { label: string; value: string; colo
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { settings, updateSettings, sessionHistory } = useApp();
+  const { settings, updateSettings, sessionHistory, missions } = useApp();
   const [name, setName] = useState(settings.childName);
   const [editingName, setEditingName] = useState(false);
+  const [missionWarning, setMissionWarning] = useState(false);
   const rocketAnim = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enabledMissionCount = missions.filter((m) => settings.enabledMissionIds.includes(m.id)).length;
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -72,6 +74,12 @@ export default function HomeScreen() {
   };
 
   const handleStartSession = () => {
+    if (enabledMissionCount < 3) {
+      setMissionWarning(true);
+      setTimeout(() => setMissionWarning(false), 3500);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const native = Platform.OS !== "web";
     Animated.sequence([
@@ -140,6 +148,15 @@ export default function HomeScreen() {
             <StatBadge label="Sessions" value={String(totalSessions)} color={Colors.accentBlue} />
             <StatBadge label="Missions" value={String(totalMissions)} color={Colors.accent} />
             <StatBadge label="Badges" value={String(totalBadges)} color={Colors.secondary} />
+          </View>
+        )}
+
+        {missionWarning && (
+          <View style={styles.missionWarningBanner}>
+            <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
+            <Text style={styles.missionWarningText}>
+              Enable at least 3 missions in Parent Mode before starting.
+            </Text>
           </View>
         )}
 
@@ -282,6 +299,25 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 12,
     fontFamily: "Nunito_600SemiBold",
+  },
+  missionWarningBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "rgba(255, 209, 102, 0.12)",
+    borderWidth: 1,
+    borderColor: Colors.secondary,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    width: "100%",
+  },
+  missionWarningText: {
+    flex: 1,
+    color: Colors.secondary,
+    fontSize: 14,
+    fontFamily: "Nunito_600SemiBold",
+    lineHeight: 20,
   },
   startButton: {
     width: width - 48,

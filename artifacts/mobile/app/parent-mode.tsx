@@ -166,6 +166,8 @@ export default function ParentModeScreen() {
   const [pinError, setPinError] = useState("");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const usingDefaultPin = settings.parentPin === "1234";
+  const enabledCount = missions.filter((m) => settings.enabledMissionIds.includes(m.id)).length;
 
   const toggleMission = async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -219,6 +221,23 @@ export default function ParentModeScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
+        {usingDefaultPin && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
+            <Text style={styles.warningText}>
+              You are using the default PIN (1234). Change it below to secure Parent Mode.
+            </Text>
+          </View>
+        )}
+        {enabledCount < 3 && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="alert-circle-outline" size={18} color={Colors.secondary} />
+            <Text style={styles.warningText}>
+              Only {enabledCount} mission{enabledCount !== 1 ? "s" : ""} enabled — enable at least 3 for a full session.
+            </Text>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Session Duration</Text>
           <View style={styles.durationRow}>
@@ -359,6 +378,24 @@ export default function ParentModeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  warningBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "rgba(255, 209, 102, 0.12)",
+    borderWidth: 1,
+    borderColor: Colors.secondary,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  warningText: {
+    flex: 1,
+    color: Colors.secondary,
+    fontSize: 13,
+    fontFamily: "Nunito_600SemiBold",
+    lineHeight: 18,
   },
   header: {
     flexDirection: "row",
