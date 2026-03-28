@@ -91,6 +91,23 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+### `artifacts/mobile` (`@workspace/mobile`)
+
+Expo React Native mobile app — **GoBabyGo Buddy-Link AR**. A gamified companion app for siblings of children using WSU GoBabyGo modified ride-on vehicles.
+
+- Framework: Expo SDK with Expo Router (file-based navigation)
+- Fonts: `@expo-google-fonts/nunito` (Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold)
+- Camera: `expo-camera` with `CameraView` + `useCameraPermissions()`
+- Sensors: `expo-sensors` Accelerometer used for shake/proximity detection
+- Storage: AsyncStorage (no backend — fully offline)
+- Design: Deep navy (#0D1B2A) + orange accent (#FF6B2B) + amber secondary (#FFD166)
+- Navigation: 3 bottom tabs (Home/Missions/History) + stack routes /ar, /summary, /parent-mode
+- Screens: Home, Missions, History, AR Co-Pilot, Session Summary, Parent Mode (PIN: 1234)
+- Components: AROverlay (SparkleEffect, MissionShield, SpeedStar), MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning
+- Context: AppContext with 10 missions, session management, badge generation, AsyncStorage persistence
+- Animation: All Animated API calls use `useNativeDriver: Platform.OS !== 'web'` for web compatibility
+- `pnpm --filter @workspace/mobile run dev` — start Expo dev server
+
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
