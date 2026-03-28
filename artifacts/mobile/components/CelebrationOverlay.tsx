@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
-import { Animated, Dimensions, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/constants/colors";
+import { useCelebrationSound } from "./useCelebrationSound";
 
-const { width, height } = Dimensions.get("window");
 const native = Platform.OS !== "web";
 
 interface CelebrationOverlayProps {
@@ -16,9 +16,12 @@ export function CelebrationOverlay({ visible, missionTitle, onHide }: Celebratio
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.5)).current;
   const starRotate = useRef(new Animated.Value(0)).current;
+  const playSound = useCelebrationSound();
 
   useEffect(() => {
     if (visible) {
+      playSound();
+
       Animated.parallel([
         Animated.spring(opacity, { toValue: 1, tension: 120, friction: 7, useNativeDriver: native }),
         Animated.spring(scale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: native }),

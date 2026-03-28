@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+import ViewShot from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Colors } from "@/constants/colors";
@@ -23,6 +24,7 @@ export default function SummaryScreen() {
   const { sessionMissions, currentBadges, settings, endSession, sessionActive } = useApp();
   const heroScale = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
+  const recapRef = useRef<ViewShot>(null);
   const [sharing, setSharing] = useState(false);
 
   const completed = sessionMissions.filter((m) => m.completed).length;
@@ -50,35 +52,36 @@ export default function SummaryScreen() {
   const handleShare = async () => {
     setSharing(true);
     try {
-      const driverLine = settings.childName ? `Driver: ${settings.childName}` : "";
-      const badgeLines = currentBadges.length > 0
-        ? `Badges earned: ${currentBadges.map((b) => b.title).join(", ")}`
-        : "Keep going — badges await next time!";
-      const missionLines = sessionMissions
-        .map((m) => `${m.completed ? "✅" : "⬜"} ${m.title}`)
-        .join("\n");
-
-      const text = [
-        "🚗 GoBabyGo Buddy-Link Co-Pilot Report 🚗",
-        driverLine,
-        "",
-        `Missions: ${completed}/${total} complete (${pct}%)`,
-        "",
-        missionLines,
-        "",
-        badgeLines,
-      ]
-        .filter(Boolean)
-        .join("\n");
-
       const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(
-          `data:text/plain;base64,${btoa(unescape(encodeURIComponent(text)))}`,
-          { mimeType: "text/plain", dialogTitle: "Share your Co-Pilot recap!" }
-        );
+
+      if (Platform.OS !== "web" && canShare && recapRef.current) {
+        const uri = await (recapRef.current as ViewShot & { capture: () => Promise<string> }).capture();
+        await Sharing.shareAsync(uri, {
+          mimeType: "image/png",
+          dialogTitle: "Share your Co-Pilot recap!",
+        });
       } else {
-        console.log("Sharing not available on this platform");
+        const driverLine = settings.childName ? `Driver: ${settings.childName}` : "";
+        const badgeLines = currentBadges.length > 0
+          ? `Badges: ${currentBadges.map((b) => b.title).join(", ")}`
+          : "More badges await next session!";
+        const text = [
+          "🚗 GoBabyGo Buddy-Link Co-Pilot Recap 🚗",
+          driverLine,
+          `Missions: ${completed}/${total} complete (${pct}%)`,
+          badgeLines,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        if (canShare) {
+          const encoded = encodeURIComponent(text);
+          const base64 = btoa(unescape(encoded));
+          await Sharing.shareAsync(
+            `data:text/plain;base64,${base64}`,
+            { mimeType: "text/plain", dialogTitle: "Share your Co-Pilot recap!" }
+          );
+        }
       }
     } catch (_e) {
     } finally {
@@ -98,83 +101,94 @@ export default function SummaryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          style={[
-            styles.heroSection,
-            { opacity: heroOpacity, transform: [{ scale: heroScale }] },
-          ]}
+        <ViewShot
+          ref={recapRef}
+          options={{ format: "png", quality: 0.95 }}
+          style={styles.recapCard}
         >
-          <View style={styles.trophyCircle}>
-            <Ionicons name="trophy" size={64} color={Colors.secondary} />
-          </View>
-          <Text style={styles.heroTitle}>Mission Complete!</Text>
-          {settings.childName ? (
-            <Text style={styles.heroSubtitle}>
-              Great co-pilot session with {settings.childName}!
-            </Text>
-          ) : (
-            <Text style={styles.heroSubtitle}>Amazing co-pilot work!</Text>
-          )}
-        </Animated.View>
+          <LinearGradient
+            colors={[Colors.background, Colors.backgroundMid]}
+            style={styles.recapInner}
+          >
+            <Animated.View
+              style={[
+                styles.heroSection,
+                { opacity: heroOpacity, transform: [{ scale: heroScale }] },
+              ]}
+            >
+              <View style={styles.trophyCircle}>
+                <Ionicons name="trophy" size={64} color={Colors.secondary} />
+              </View>
+              <Text style={styles.heroTitle}>Mission Complete!</Text>
+              {settings.childName ? (
+                <Text style={styles.heroSubtitle}>
+                  Great co-pilot session with {settings.childName}!
+                </Text>
+              ) : (
+                <Text style={styles.heroSubtitle}>Amazing co-pilot work!</Text>
+              )}
+            </Animated.View>
 
-        <View style={styles.scoreCard}>
-          <View style={styles.scoreMain}>
-            <Text style={styles.scoreValue}>{completed}</Text>
-            <Text style={styles.scoreLabel}>of {total} missions</Text>
-          </View>
-          <View style={styles.scoreDivider} />
-          <View style={styles.scoreSecondary}>
-            <Ionicons name="checkmark-circle" size={36} color={Colors.accent} />
-            <Text style={styles.scorePct}>{pct}%</Text>
-          </View>
-        </View>
+            <View style={styles.scoreCard}>
+              <View style={styles.scoreMain}>
+                <Text style={styles.scoreValue}>{completed}</Text>
+                <Text style={styles.scoreLabel}>of {total} missions</Text>
+              </View>
+              <View style={styles.scoreDivider} />
+              <View style={styles.scoreSecondary}>
+                <Ionicons name="checkmark-circle" size={36} color={Colors.accent} />
+                <Text style={styles.scorePct}>{pct}%</Text>
+              </View>
+            </View>
 
-        {sessionMissions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What You Did</Text>
-            {sessionMissions.map((m) => (
-              <View key={m.id} style={styles.missionRow}>
-                <Ionicons
-                  name={m.completed ? "checkmark-circle" : "close-circle"}
-                  size={22}
-                  color={m.completed ? Colors.accent : Colors.textMuted}
-                />
-                <Text
-                  style={[
-                    styles.missionRowText,
-                    !m.completed && styles.missionRowMuted,
-                  ]}
+            {sessionMissions.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>What You Did</Text>
+                {sessionMissions.map((m) => (
+                  <View key={m.id} style={styles.missionRow}>
+                    <Ionicons
+                      name={m.completed ? "checkmark-circle" : "close-circle"}
+                      size={22}
+                      color={m.completed ? Colors.accent : Colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.missionRowText,
+                        !m.completed && styles.missionRowMuted,
+                      ]}
+                    >
+                      {m.title}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {currentBadges.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Badges Earned</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.badgesScroll}
                 >
-                  {m.title}
+                  {currentBadges.map((badge, i) => (
+                    <BadgeCard key={badge.id} badge={badge} index={i} />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {currentBadges.length === 0 && (
+              <View style={styles.encourageCard}>
+                <Ionicons name="heart" size={28} color={Colors.primary} />
+                <Text style={styles.encourageText}>
+                  Keep going! More badges await next session
                 </Text>
               </View>
-            ))}
-          </View>
-        )}
-
-        {currentBadges.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Badges Earned</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.badgesScroll}
-            >
-              {currentBadges.map((badge, i) => (
-                <BadgeCard key={badge.id} badge={badge} index={i} />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {currentBadges.length === 0 && (
-          <View style={styles.encourageCard}>
-            <Ionicons name="heart" size={28} color={Colors.primary} />
-            <Text style={styles.encourageText}>
-              Keep going! More badges await next session
-            </Text>
-          </View>
-        )}
+            )}
+          </LinearGradient>
+        </ViewShot>
 
         <Pressable
           onPress={handleShare}
@@ -212,9 +226,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: "center",
   },
+  recapCard: {
+    width: "100%",
+    marginBottom: 16,
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  recapInner: {
+    padding: 24,
+    alignItems: "center",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   heroSection: {
     alignItems: "center",
     marginBottom: 28,
+    width: "100%",
   },
   trophyCircle: {
     width: 120,
@@ -332,7 +360,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: Colors.border,
   },

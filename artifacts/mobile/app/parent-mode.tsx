@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -160,6 +160,10 @@ export default function ParentModeScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings, missions } = useApp();
   const [unlocked, setUnlocked] = useState(false);
+  const [changePinVisible, setChangePinVisible] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinError, setPinError] = useState("");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
@@ -170,17 +174,21 @@ export default function ParentModeScreen() {
     await updateSettings({ enabledMissionIds: next });
   };
 
-  const handleChangePin = () => {
-    Alert.alert("Change PIN", "Enter a new 4–6 digit PIN", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Set PIN",
-        onPress: () => {},
-      },
-    ]);
+  const handleSavePin = async () => {
+    if (newPin.length < 4) {
+      setPinError("PIN must be at least 4 digits");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setPinError("PINs do not match");
+      return;
+    }
+    await updateSettings({ parentPin: newPin });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setChangePinVisible(false);
+    setNewPin("");
+    setConfirmPin("");
+    setPinError("");
   };
 
   if (!unlocked) {
@@ -286,13 +294,64 @@ export default function ParentModeScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Security</Text>
-          <Pressable onPress={handleChangePin} style={styles.changePinBtn}>
+          <Pressable onPress={() => setChangePinVisible(true)} style={styles.changePinBtn} testID="change-pin-btn">
             <Ionicons name="key" size={20} color={Colors.primary} />
             <Text style={styles.changePinText}>Change Parent PIN</Text>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </Pressable>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={changePinVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setChangePinVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Change Parent PIN</Text>
+            <Text style={styles.modalSubtitle}>Enter a new 4–6 digit PIN</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              value={newPin}
+              onChangeText={(v) => { setNewPin(v.replace(/\D/g, "").slice(0, 6)); setPinError(""); }}
+              keyboardType="number-pad"
+              secureTextEntry
+              placeholder="New PIN"
+              placeholderTextColor={Colors.textMuted}
+              maxLength={6}
+              testID="new-pin-input"
+            />
+            <TextInput
+              style={styles.modalInput}
+              value={confirmPin}
+              onChangeText={(v) => { setConfirmPin(v.replace(/\D/g, "").slice(0, 6)); setPinError(""); }}
+              keyboardType="number-pad"
+              secureTextEntry
+              placeholder="Confirm PIN"
+              placeholderTextColor={Colors.textMuted}
+              maxLength={6}
+              testID="confirm-pin-input"
+            />
+
+            {pinError ? <Text style={styles.pinErrorText}>{pinError}</Text> : null}
+
+            <View style={styles.modalBtns}>
+              <Pressable
+                onPress={() => { setChangePinVisible(false); setNewPin(""); setConfirmPin(""); setPinError(""); }}
+                style={styles.modalCancelBtn}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={handleSavePin} style={styles.modalSaveBtn} testID="save-pin-btn">
+                <Text style={styles.modalSaveText}>Save PIN</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -431,5 +490,83 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontFamily: "Nunito_600SemiBold",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 24,
+    padding: 28,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    gap: 14,
+  },
+  modalTitle: {
+    color: Colors.text,
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    textAlign: "center",
+  },
+  modalSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontFamily: "Nunito_400Regular",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  modalInput: {
+    backgroundColor: Colors.background,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    color: Colors.text,
+    fontSize: 20,
+    fontFamily: "Nunito_700Bold",
+    textAlign: "center",
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    letterSpacing: 6,
+  },
+  pinErrorText: {
+    color: Colors.danger,
+    fontSize: 13,
+    fontFamily: "Nunito_600SemiBold",
+    textAlign: "center",
+  },
+  modalBtns: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  modalSaveBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+  },
+  modalSaveText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "Nunito_700Bold",
   },
 });

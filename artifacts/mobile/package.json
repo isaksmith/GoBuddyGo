@@ -57,8 +57,10 @@
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
+    "expo-audio": "56.0.0-canary-20260305-5163746",
     "expo-camera": "56.0.0-canary-20260305-5163746",
     "expo-sensors": "56.0.0-canary-20260305-5163746",
-    "expo-sharing": "56.0.0-canary-20260305-5163746"
+    "expo-sharing": "56.0.0-canary-20260305-5163746",
+    "react-native-view-shot": "^4.0.3"
   }
 }
