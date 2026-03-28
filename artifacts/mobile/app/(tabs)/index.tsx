@@ -15,8 +15,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors, GlowShadows } from "@/constants/colors";
-import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
+import { Colors } from "@/constants/colors";
+import { useApp } from "@/context/AppContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -95,14 +95,10 @@ function FloatingOrb({
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { settings, updateSettings, sessionHistory, missions } = useApp();
+  const { settings, updateSettings, sessionHistory } = useApp();
   const [name, setName] = useState(settings.childName);
-  const [missionWarning, setMissionWarning] = useState(false);
-  const buttonScale = useRef(new Animated.Value(1)).current;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const availableMissionCount = countAvailableSessionMissions(missions, settings);
-  const native = Platform.OS !== "web";
 
   useEffect(() => {
     setName(settings.childName);
@@ -127,20 +123,6 @@ export default function HomeScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       router.push("/parent-mode");
     }
-  };
-
-  const handleStartSession = () => {
-    if (availableMissionCount < 3) {
-      setMissionWarning(true);
-      setTimeout(() => setMissionWarning(false), 3500);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Animated.sequence([
-      Animated.timing(buttonScale, { toValue: 0.92, duration: 80, useNativeDriver: native }),
-      Animated.timing(buttonScale, { toValue: 1, duration: 140, useNativeDriver: native }),
-    ]).start(() => router.push("/ar"));
   };
 
   const totalSessions = sessionHistory.length;
@@ -217,29 +199,6 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-
-        {missionWarning && (
-          <View style={styles.missionWarningBanner}>
-            <Ionicons name="warning" size={20} color={Colors.secondary} />
-            <Text style={styles.missionWarningText}>
-              Enable at least 3 missions in Parent Mode first!
-            </Text>
-          </View>
-        )}
-
-        <Animated.View style={[styles.startButtonWrap, { transform: [{ scale: buttonScale }] }]}>
-          <Pressable onPress={handleStartSession} testID="start-session-btn">
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.startButtonGradient}
-            >
-              <Ionicons name="play-circle" size={32} color="#FFFFFF" />
-              <Text style={styles.startButtonText}>START MISSION!</Text>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
 
         <Pressable onPress={() => router.push("/parent-mode")} style={styles.parentModeBtn} testID="parent-mode-btn">
           <Ionicons name="lock-closed" size={16} color={Colors.textMuted} />
@@ -406,46 +365,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1,
-  },
-  missionWarningBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.secondary + "22",
-    borderWidth: 2,
-    borderColor: Colors.secondary,
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    width: "100%",
-  },
-  missionWarningText: {
-    flex: 1,
-    color: Colors.secondary,
-    fontSize: 14,
-    fontFamily: "Nunito_700Bold",
-  },
-  startButtonWrap: {
-    width: width - 40,
-    borderRadius: 50,
-    overflow: "hidden",
-    ...GlowShadows.strong,
-    marginBottom: 14,
-  },
-  startButtonGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 22,
-    borderRadius: 50,
-  },
-  startButtonText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
   },
   parentModeBtn: {
     flexDirection: "row",
