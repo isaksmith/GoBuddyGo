@@ -39,6 +39,11 @@ export default function MissionsScreen() {
     router.push("/summary");
   };
 
+  const handleOpenAR = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push("/ar");
+  };
+
   const completed = sessionMissions.filter((m) => m.completed).length;
   const total = sessionMissions.length;
   const pct = total > 0 ? (completed / total) * 100 : 0;
@@ -126,18 +131,18 @@ export default function MissionsScreen() {
         ))}
 
         <Pressable
-          onPress={handleEndSession}
+          onPress={handleOpenAR}
           style={styles.endButton}
-          testID="end-session-btn"
+          testID="open-ar-btn"
         >
           <LinearGradient
-            colors={[Colors.danger, "#C03060"]}
+            colors={[Colors.primary, Colors.primaryDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.endButtonGradient}
           >
-            <Ionicons name="flag" size={20} color="#FFFFFF" />
-            <Text style={styles.endButtonText}>END SESSION</Text>
+            <Ionicons name="play-circle" size={22} color="#FFFFFF" />
+            <Text style={styles.endButtonText}>OPEN AR VIEW</Text>
           </LinearGradient>
         </Pressable>
       </ScrollView>
@@ -291,7 +296,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 50,
     overflow: "hidden",
-    shadowColor: Colors.danger,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
