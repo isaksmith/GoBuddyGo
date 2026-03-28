@@ -5,17 +5,17 @@ import { router, type Href } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
-  Dimensions,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
+import { useTextScale } from "@/hooks/useTextScale";
 
-const { width, height } = Dimensions.get("window");
 const native = Platform.OS !== "web";
 
 const DOTS = [
@@ -51,7 +51,7 @@ const STARS = [
   { rx: 0.62, ry: 0.55, size: 10, delay: 750 },
 ];
 
-function TwinklingStar({ rx, ry, size, delay }: { rx: number; ry: number; size: number; delay: number }) {
+function TwinklingStar({ rx, ry, size, delay, w, h }: { rx: number; ry: number; size: number; delay: number; w: number; h: number }) {
   const opacity = useRef(new Animated.Value(0.3)).current;
   const scale = useRef(new Animated.Value(0.8)).current;
 
@@ -78,8 +78,8 @@ function TwinklingStar({ rx, ry, size, delay }: { rx: number; ry: number; size: 
       pointerEvents="none"
       style={{
         position: "absolute",
-        left: width * rx - size / 2,
-        top: height * ry - size / 2,
+        left: w * rx - size / 2,
+        top: h * ry - size / 2,
         opacity,
         transform: [{ scale }],
         zIndex: 0,
@@ -97,7 +97,7 @@ const BLOBS = [
   { rx: 0.5,  ry: 0.6,  w: 240, h: 200, colors: ["#D9770688", "#A21CAFAA"] as [string,string], delay: 1200 },
 ];
 
-function AnimatedBlob({ rx, ry, w, h, colors, delay }: typeof BLOBS[0]) {
+function AnimatedBlob({ rx, ry, w, h, colors, delay, screenW, screenH }: typeof BLOBS[0] & { screenW: number; screenH: number }) {
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -117,8 +117,8 @@ function AnimatedBlob({ rx, ry, w, h, colors, delay }: typeof BLOBS[0]) {
       pointerEvents="none"
       style={{
         position: "absolute",
-        left: width * rx - w * 0.3,
-        top: height * ry - h * 0.3,
+        left: screenW * rx - w * 0.3,
+        top: screenH * ry - h * 0.3,
         width: w,
         height: h,
         borderRadius: w * 0.5,
@@ -192,6 +192,7 @@ const HUB_BUTTONS: HubButton[] = [
 ];
 
 function HubButtonContent({ btn, btnW, btnH }: { btn: HubButton; btnW: number; btnH: number }) {
+  const textScale = useTextScale();
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -253,8 +254,8 @@ function HubButtonContent({ btn, btnW, btnH }: { btn: HubButton; btnW: number; b
             <Ionicons name={btn.icon} size={52} color="#FFFFFF" />
           </View>
         </Animated.View>
-        <Text style={styles.hubButtonLabel}>{btn.label}</Text>
-        <Text style={styles.hubButtonTagline}>{btn.tagline}</Text>
+        <Text style={[styles.hubButtonLabel, { fontSize: 16 * textScale }]}>{btn.label}</Text>
+        <Text style={[styles.hubButtonTagline, { fontSize: 11 * textScale }]}>{btn.tagline}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -262,6 +263,9 @@ function HubButtonContent({ btn, btnW, btnH }: { btn: HubButton; btnW: number; b
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const textScale = useTextScale();
+  const isLandscape = width > height;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -282,11 +286,15 @@ export default function HomeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const GRID_GAP = 12;
-  const H_PAD = 16;
-  const btnW = (width - H_PAD * 2 - GRID_GAP) / 2;
-  const availableH = height - topPad - bottomPad - 72;
-  const btnH = (availableH - GRID_GAP) / 2;
+  const GRID_GAP = 10;
+  const H_PAD = isLandscape ? 20 : 14;
+  const headerH = isLandscape ? 48 : 68;
+
+  const cols = isLandscape ? 4 : 2;
+  const btnW = (width - H_PAD * 2 - GRID_GAP * (cols - 1)) / cols;
+  const availableH = height - topPad - bottomPad - headerH;
+  const rows = HUB_BUTTONS.length / cols;
+  const btnH = Math.min((availableH - GRID_GAP * (rows - 1)) / rows, isLandscape ? 180 : 999);
 
   return (
     <View style={styles.container}>
@@ -295,7 +303,7 @@ export default function HomeScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {BLOBS.map((b, i) => <AnimatedBlob key={i} {...b} />)}
+      {BLOBS.map((b, i) => <AnimatedBlob key={i} {...b} screenW={width} screenH={height} />)}
 
       {DOTS.map((d, i) => (
         <View
@@ -314,12 +322,12 @@ export default function HomeScreen() {
         />
       ))}
 
-      {STARS.map((s, i) => <TwinklingStar key={i} {...s} />)}
+      {STARS.map((s, i) => <TwinklingStar key={i} {...s} w={width} h={height} />)}
 
       <View style={[styles.inner, { paddingTop: topPad, paddingBottom: bottomPad, paddingHorizontal: H_PAD }]}>
-        <View style={styles.header}>
+        <View style={[styles.header, { height: headerH }]}>
           <Pressable onPress={handleHiddenTap} testID="settings-btn" style={styles.titleWrap}>
-            <Text style={styles.appTitle}>Go Buddy Go</Text>
+            <Text style={[styles.appTitle, { fontSize: (isLandscape ? 28 : 42) * textScale }]}>Go Buddy Go</Text>
           </Pressable>
           <Pressable
             onPress={() => {

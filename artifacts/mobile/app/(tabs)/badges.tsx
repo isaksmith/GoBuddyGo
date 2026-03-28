@@ -3,10 +3,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   return (
@@ -37,9 +38,13 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
 
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { sessionHistory } = useApp();
+  const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 82;
+  const numCols = width > 600 ? 3 : 2;
+  const hPad = width > 600 ? 20 : 12;
 
   const allBadges = sessionHistory.flatMap((s) =>
     s.badges.map((b) => ({ ...b, date: s.date }))
@@ -50,18 +55,19 @@ export default function BadgesScreen() {
       colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
       style={styles.container}
     >
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Text style={styles.headerTitle}>⭐ Badges</Text>
+      <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
+        <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>⭐ Badges</Text>
         <View style={styles.countPill}>
-          <Text style={styles.countText}>{allBadges.length} EARNED</Text>
+          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>{allBadges.length} EARNED</Text>
         </View>
       </View>
 
       <FlatList
         data={allBadges}
         keyExtractor={(_, i) => String(i)}
-        numColumns={2}
-        contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76 }]}
+        numColumns={numCols}
+        key={String(numCols)}
+        contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76, paddingHorizontal: hPad }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -79,8 +85,8 @@ export default function BadgesScreen() {
             <View style={styles.badgeIconCircle}>
               <Ionicons name="star" size={36} color={Colors.secondary} />
             </View>
-            <Text style={styles.badgeTitle}>{item.title.toUpperCase()}</Text>
-            <Text style={styles.badgeDate}>
+            <Text style={[styles.badgeTitle, { fontSize: 13 * textScale }]}>{item.title.toUpperCase()}</Text>
+            <Text style={[styles.badgeDate, { fontSize: 11 * textScale }]}>
               {new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             </Text>
           </View>

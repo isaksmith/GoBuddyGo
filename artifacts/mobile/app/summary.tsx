@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import ViewShot from "react-native-view-shot";
@@ -18,10 +19,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
-  const { lastSessionResult, sessionHistory } = useApp();
+  const { width } = useWindowDimensions();
+  const textScale = useTextScale();
+  const { lastSessionResult, sessionHistory, settings } = useApp();
   const heroScale = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const recapRef = useRef<ViewShot>(null);
@@ -36,6 +40,8 @@ export default function SummaryScreen() {
         missions: [],
         badges: latestHistory.badges,
         childName: latestHistory.childName,
+        driverName: latestHistory.driverName ?? "",
+        durationSeconds: latestHistory.durationSeconds,
       }
     : null);
   const completed = result?.completed ?? 0;
@@ -43,11 +49,14 @@ export default function SummaryScreen() {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const missions = result?.missions ?? [];
   const badges = result?.badges ?? [];
-  const childName = result?.childName ?? "";
+  const siblingName = result?.childName ?? settings.childName ?? "";
+  const driverName = result?.driverName ?? settings.driverName ?? "";
 
   const native = Platform.OS !== "web";
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const contentMaxWidth = Math.min(width, 700);
+  const hPad = width > 600 ? 32 : 20;
 
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -84,7 +93,7 @@ export default function SummaryScreen() {
           dialogTitle: "Share your Co-Pilot recap!",
         });
       } else {
-        const driverLine = childName ? `Driver: ${childName}` : "";
+        const driverLine = driverName ? `Driver: ${driverName}` : (siblingName ? `Co-Pilot: ${siblingName}` : "");
         const badgeLines =
           badges.length > 0
             ? `Badges: ${badges.map((b) => b.title).join(", ")}`
@@ -130,9 +139,10 @@ export default function SummaryScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: topPad + 16, paddingBottom: bottomPad + 50 },
+          { paddingTop: topPad + 16, paddingBottom: bottomPad + 50, paddingHorizontal: hPad, alignSelf: "center", width: contentMaxWidth },
         ]}
         showsVerticalScrollIndicator={false}
+        style={{ width: "100%" }}
       >
         <ViewShot
           ref={recapRef}
@@ -158,10 +168,10 @@ export default function SummaryScreen() {
               <View style={styles.trophyCircle}>
                 <Ionicons name="trophy" size={62} color={Colors.secondary} />
               </View>
-              <Text style={styles.heroTitle}>MISSION COMPLETE!</Text>
-              <Text style={styles.heroSubtitle}>
-                {childName
-                  ? `Amazing co-pilot session with ${childName}!`
+              <Text style={[styles.heroTitle, { fontSize: 28 * textScale }]}>MISSION COMPLETE!</Text>
+              <Text style={[styles.heroSubtitle, { fontSize: 15 * textScale }]}>
+                {siblingName
+                  ? `Amazing co-pilot session${driverName ? ` with ${driverName}` : ""}!`
                   : "Amazing co-pilot work! 🚀"}
               </Text>
             </Animated.View>
@@ -195,7 +205,7 @@ export default function SummaryScreen() {
 
             {missions.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>WHAT YOU DID</Text>
+                <Text style={[styles.sectionTitle, { fontSize: 13 * textScale }]}>WHAT YOU DID</Text>
                 {missions.map((m) => (
                   <View
                     key={m.id}
@@ -235,7 +245,7 @@ export default function SummaryScreen() {
 
             {badges.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>🏅 BADGES EARNED</Text>
+                <Text style={[styles.sectionTitle, { fontSize: 13 * textScale }]}>🏅 BADGES EARNED</Text>
                 <View style={styles.badgesGrid}>
                   {badges.map((badge, i) => (
                     <BadgeCard key={badge.id} badge={badge} index={i} />
@@ -295,7 +305,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    paddingHorizontal: 20,
     alignItems: "center",
   },
   recapCard: {

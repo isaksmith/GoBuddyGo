@@ -38,14 +38,19 @@ export interface SessionRecord {
   durationSeconds: number;
   badges: Badge[];
   childName: string;
+  driverName: string;
 }
 
 export interface AppSettings {
   childName: string;
+  driverName: string;
   sessionDurationMinutes: number;
   difficulty: "easy" | "medium" | "all";
   enabledMissionIds: string[];
   parentPin: string;
+  soundsEnabled: boolean;
+  proximityAlertsEnabled: boolean;
+  textSize: "small" | "medium" | "large";
 }
 
 export interface PlacedSticker {
@@ -207,10 +212,14 @@ const ALL_MISSIONS: Mission[] = [
 
 const DEFAULT_SETTINGS: AppSettings = {
   childName: "",
+  driverName: "",
   sessionDurationMinutes: 10,
   difficulty: "all",
   enabledMissionIds: ALL_MISSIONS.map((m) => m.id),
-  parentPin: "1234",
+  parentPin: "0000",
+  soundsEnabled: true,
+  proximityAlertsEnabled: true,
+  textSize: "medium",
 };
 
 export interface LastSessionResult {
@@ -220,11 +229,13 @@ export interface LastSessionResult {
   total: number;
   durationSeconds: number;
   childName: string;
+  driverName: string;
 }
 
 interface AppContextValue {
   settings: AppSettings;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
+  resetProgress: () => Promise<void>;
   missions: Mission[];
   sessionMissions: SessionMission[];
   sessionActive: boolean;
@@ -554,15 +565,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [sessionStartTime]);
 
+  const resetProgress = useCallback(async () => {
+    setSessionHistory([]);
+    setCurrentBadges([]);
+    setLastSessionResult(null);
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.history),
+      AsyncStorage.removeItem(STORAGE_KEYS.session),
+    ]);
+    setSessionActive(false);
+    setSessionStartTime(null);
+    setSessionMissions([]);
+  }, []);
+
   const endSession = useCallback(async () => {
     if (!sessionStartTime) return;
     const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
     const badges = generateBadges(sessionMissions, duration);
     const completedCount = sessionMissions.filter((m) => m.completed).length;
     setCurrentBadges(badges);
-    const snapshot: LastSessionResult = { missions: sessionMissions, badges, completed: completedCount, total: sessionMissions.length, durationSeconds: duration, childName: settings.childName };
+    const snapshot: LastSessionResult = { missions: sessionMissions, badges, completed: completedCount, total: sessionMissions.length, durationSeconds: duration, childName: settings.childName, driverName: settings.driverName ?? "" };
     setLastSessionResult(snapshot);
-    const record: SessionRecord = { id: makeId(), date: Date.now(), missionsCompleted: completedCount, totalMissions: sessionMissions.length, durationSeconds: duration, badges, childName: settings.childName };
+    const record: SessionRecord = { id: makeId(), date: Date.now(), missionsCompleted: completedCount, totalMissions: sessionMissions.length, durationSeconds: duration, badges, childName: settings.childName, driverName: settings.driverName ?? "" };
     const newHistory = [record, ...sessionHistory].slice(0, 50);
     setSessionHistory(newHistory);
     await Promise.all([
@@ -572,13 +596,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSessionActive(false);
     setSessionStartTime(null);
     setSessionMissions([]);
-  }, [sessionStartTime, sessionMissions, sessionHistory, settings.childName]);
+  }, [sessionStartTime, sessionMissions, sessionHistory, settings.childName, settings.driverName]);
 
   return (
     <AppContext.Provider
       value={{
         settings,
         updateSettings,
+        resetProgress,
         missions: ALL_MISSIONS,
         sessionMissions,
         sessionActive,

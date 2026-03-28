@@ -1,5 +1,10 @@
+import { useApp } from "@/context/AppContext";
+
 export function useCelebrationSound() {
+  const { settings } = useApp();
+
   return function playChime() {
+    if (!(settings.soundsEnabled ?? true)) return;
     try {
       const AudioContextClass =
         window.AudioContext ||

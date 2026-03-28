@@ -6,15 +6,17 @@ import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useApp } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   return (
@@ -77,11 +79,6 @@ const homeBtnStyles = StyleSheet.create({
   },
 });
 
-const { width } = Dimensions.get("window");
-const COLS = 3;
-const H_PAD = 16;
-const GAP = 12;
-const CELL = (width - H_PAD * 2 - GAP * (COLS - 1)) / COLS;
 const native = Platform.OS !== "web";
 
 const SOUND_SOURCES = {
@@ -124,14 +121,17 @@ const SOUNDS: SoundButton[] = [
   { id: "race",    emoji: "🏁",  label: "GO GO GO!", sublabel: "Race start",    gradient: ["#F472B6", "#BE185D"] },
 ];
 
-function SoundPad({ btn }: { btn: SoundButton }) {
+function SoundPad({ btn, soundsEnabled, cell }: { btn: SoundButton; soundsEnabled: boolean; cell: number }) {
+  const textScale = useTextScale();
   const scale = useRef(new Animated.Value(1)).current;
   const [flash, setFlash] = useState(false);
   const player = useAudioPlayer(SOUND_SOURCES[btn.id]);
 
   const handlePress = () => {
-    player.seekTo(0);
-    player.play();
+    if (soundsEnabled) {
+      player.seekTo(0);
+      player.play();
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setFlash(true);
     setTimeout(() => setFlash(false), 180);
@@ -143,16 +143,16 @@ function SoundPad({ btn }: { btn: SoundButton }) {
 
   return (
     <Pressable onPress={handlePress} style={styles.padWrap}>
-      <Animated.View style={{ transform: [{ scale }], borderRadius: CELL / 2, overflow: "hidden" }}>
+      <Animated.View style={{ transform: [{ scale }], borderRadius: cell / 2, overflow: "hidden" }}>
         <LinearGradient
           colors={flash ? ["#FFFFFF", "#F0F0F0"] : btn.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.pad, { width: CELL, height: CELL, borderRadius: CELL / 2 }]}
+          style={[styles.pad, { width: cell, height: cell, borderRadius: cell / 2 }]}
         >
-          <Text style={styles.padEmoji}>{btn.emoji}</Text>
-          <Text style={[styles.padLabel, flash && { color: btn.gradient[0] }]}>{btn.label}</Text>
-          <Text style={[styles.padSublabel, flash && { color: btn.gradient[1] + "BB" }]}>{btn.sublabel}</Text>
+          <Text style={[styles.padEmoji, { fontSize: cell * 0.32, lineHeight: cell * 0.38 }]}>{btn.emoji}</Text>
+          <Text style={[styles.padLabel, { fontSize: 11 * textScale }, flash && { color: btn.gradient[0] }]}>{btn.label}</Text>
+          <Text style={[styles.padSublabel, { fontSize: 9 * textScale }, flash && { color: btn.gradient[1] + "BB" }]}>{btn.sublabel}</Text>
         </LinearGradient>
       </Animated.View>
     </Pressable>
@@ -161,8 +161,17 @@ function SoundPad({ btn }: { btn: SoundButton }) {
 
 export default function SoundsScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { settings } = useApp();
+  const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 82;
+  const soundsEnabled = settings.soundsEnabled ?? true;
+
+  const COLS = width > 600 ? 4 : 3;
+  const H_PAD = width > 600 ? 20 : 16;
+  const GAP = 10;
+  const CELL = Math.min((width - H_PAD * 2 - GAP * (COLS - 1)) / COLS, 130);
 
   return (
     <LinearGradient
@@ -170,16 +179,18 @@ export default function SoundsScreen() {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Text style={styles.headerTitle}>🚗 CAR SOUNDS 🚗</Text>
-        <Text style={styles.headerSub}>Tap a button to make noise!</Text>
+        <Text style={[styles.headerTitle, { fontSize: 28 * textScale }]}>🚗 CAR SOUNDS 🚗</Text>
+        <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>
+          {soundsEnabled ? "Tap a button to make noise!" : "Sound effects are off"}
+        </Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.grid, { paddingBottom: homeBtnBottom + 76 }]}
+        contentContainerStyle={[styles.grid, { paddingBottom: homeBtnBottom + 76, paddingHorizontal: H_PAD, gap: GAP }]}
         showsVerticalScrollIndicator={false}
       >
         {SOUNDS.map((btn) => (
-          <SoundPad key={btn.id} btn={btn} />
+          <SoundPad key={btn.id} btn={btn} soundsEnabled={soundsEnabled} cell={CELL} />
         ))}
       </ScrollView>
 
@@ -217,8 +228,6 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: H_PAD,
-    gap: GAP,
   },
   padWrap: {
     shadowColor: "#000",
@@ -235,8 +244,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.25)",
   },
   padEmoji: {
-    fontSize: CELL * 0.32,
-    lineHeight: CELL * 0.38,
+    fontSize: 28,
+    lineHeight: 34,
   },
   padLabel: {
     color: "#FFFFFF",

@@ -25,6 +25,7 @@ import { SparkleEffect } from "@/components/AROverlay";
 import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
 import { useApp, countAvailableSessionMissions, SessionMission } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
 
 type AccelerometerData = { x: number; y: number; z: number };
 type AccelerometerSubscription = { remove: () => void };
@@ -133,6 +134,7 @@ export default function ARScreen() {
     sessionStartTime,
     isLoaded,
   } = useApp();
+  const textScale = useTextScale();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -321,13 +323,13 @@ export default function ARScreen() {
                 <Ionicons name="rocket" size={16} color={Colors.secondary} />
                 <Text style={styles.missionBadgeTitle}>ACTIVE MISSION</Text>
               </View>
-              <Text style={styles.missionTitle}>{currentMission.title.toUpperCase()}</Text>
-              <Text style={styles.missionDesc}>{currentMission.description}</Text>
+              <Text style={[styles.missionTitle, { fontSize: 20 * textScale }]}>{currentMission.title.toUpperCase()}</Text>
+              <Text style={[styles.missionDesc, { fontSize: 14 * textScale }]}>{currentMission.description}</Text>
             </Animated.View>
           )}
         </View>
 
-        <ProximityWarning visible={proximityWarning} />
+        <ProximityWarning visible={proximityWarning && (settings.proximityAlertsEnabled ?? true)} />
 
         <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 12 }]}>
           {allDone ? (

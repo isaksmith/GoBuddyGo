@@ -1,9 +1,11 @@
 import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -12,18 +14,17 @@ import {
   Switch,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
-import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
+
+const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 const DURATIONS = [5, 10, 15, 20, 30];
-const DIFFICULTIES = [
-  { value: "easy", label: "Easy", desc: "Simple, encouraging missions" },
-  { value: "medium", label: "Medium", desc: "Easy + medium difficulty" },
-  { value: "all", label: "All", desc: "All missions including challenging" },
-] as const;
 
 function PinEntry({
   onUnlock,
@@ -156,24 +157,54 @@ const pinStyles = StyleSheet.create({
   },
 });
 
+const TEXT_SIZES = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+] as const;
+
 export default function ParentModeScreen() {
   const insets = useSafeAreaInsets();
-  const { settings, updateSettings, missions } = useApp();
+  const { width } = useWindowDimensions();
+  const { settings, updateSettings, resetProgress } = useApp();
+  const textScale = useTextScale();
   const [unlocked, setUnlocked] = useState(false);
   const [changePinVisible, setChangePinVisible] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [pinError, setPinError] = useState("");
+  const [siblingName, setSiblingName] = useState(settings.childName);
+  const [driverName, setDriverName] = useState(settings.driverName ?? "");
+
+  useEffect(() => { setSiblingName(settings.childName); }, [settings.childName]);
+  useEffect(() => { setDriverName(settings.driverName ?? ""); }, [settings.driverName]);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
-  const usingDefaultPin = settings.parentPin === "1234";
-  const availableCount = countAvailableSessionMissions(missions, settings);
+  const usingDefaultPin = settings.parentPin === "0000";
+  const contentMaxWidth = Math.min(width, 700);
+  const hPad = width > 600 ? 32 : 20;
 
-  const toggleMission = async (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const ids = settings.enabledMissionIds;
-    const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
-    await updateSettings({ enabledMissionIds: next });
+  const handleSaveNames = async () => {
+    await updateSettings({ childName: siblingName.trim(), driverName: driverName.trim() });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleResetProgress = () => {
+    Alert.alert(
+      "Reset Progress",
+      "This will permanently clear all badges and session history. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            await resetProgress();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ]
+    );
   };
 
   const handleSavePin = async () => {
@@ -209,37 +240,30 @@ export default function ParentModeScreen() {
       colors={[Colors.background, Colors.backgroundMid]}
       style={styles.container}
     >
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
+      <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Parent Mode</Text>
+        <Text style={[styles.headerTitle, { fontSize: 22 * textScale }]}>Parent Mode</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40, paddingHorizontal: hPad, alignSelf: "center", width: contentMaxWidth }]}
         showsVerticalScrollIndicator={false}
+        style={{ width: "100%" }}
       >
         {usingDefaultPin && (
           <View style={styles.warningBanner}>
             <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
             <Text style={styles.warningText}>
-              You are using the default PIN (1234). Change it below to secure Parent Mode.
-            </Text>
-          </View>
-        )}
-        {availableCount < 3 && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="alert-circle-outline" size={18} color={Colors.secondary} />
-            <Text style={styles.warningText}>
-              Only {availableCount} mission{availableCount !== 1 ? "s" : ""} available for current settings — enable at least 3 for a full session.
+              You are using the default PIN (0000). Change it below to secure Parent Mode.
             </Text>
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Session Duration</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Session Duration</Text>
           <View style={styles.durationRow}>
             {DURATIONS.map((d) => (
               <Pressable
@@ -264,60 +288,128 @@ export default function ParentModeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Mission Difficulty</Text>
-          {DIFFICULTIES.map((d) => (
-            <Pressable
-              key={d.value}
-              onPress={() => updateSettings({ difficulty: d.value })}
-              style={[
-                styles.difficultyCard,
-                settings.difficulty === d.value && styles.difficultyCardActive,
-              ]}
-            >
-              <View style={styles.difficultyLeft}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Names</Text>
+          <View style={styles.nameInputRow}>
+            <Text style={styles.nameInputLabel}>Sibling's Name</Text>
+            <TextInput
+              style={styles.nameInput}
+              value={siblingName}
+              onChangeText={setSiblingName}
+              onBlur={handleSaveNames}
+              placeholder="e.g. Emma"
+              placeholderTextColor={Colors.textMuted}
+              returnKeyType="done"
+              onSubmitEditing={handleSaveNames}
+              testID="sibling-name-input"
+            />
+          </View>
+          <View style={styles.nameInputRow}>
+            <Text style={styles.nameInputLabel}>Driver's Name</Text>
+            <TextInput
+              style={styles.nameInput}
+              value={driverName}
+              onChangeText={setDriverName}
+              onBlur={handleSaveNames}
+              placeholder="e.g. Dad"
+              placeholderTextColor={Colors.textMuted}
+              returnKeyType="done"
+              onSubmitEditing={handleSaveNames}
+              testID="driver-name-input"
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Sound & Alerts</Text>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Ionicons name="musical-notes" size={18} color={Colors.primary} style={styles.toggleIcon} />
+              <View>
+                <Text style={styles.toggleTitle}>Sound Effects</Text>
+                <Text style={styles.toggleDesc}>Play sounds in games and celebrations</Text>
+              </View>
+            </View>
+            <Switch
+              value={settings.soundsEnabled ?? true}
+              onValueChange={(v) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateSettings({ soundsEnabled: v }); }}
+              trackColor={{ false: Colors.border, true: Colors.primary }}
+              thumbColor="#FFFFFF"
+              testID="sounds-toggle"
+            />
+          </View>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Ionicons name="warning" size={18} color={Colors.primary} style={styles.toggleIcon} />
+              <View>
+                <Text style={styles.toggleTitle}>Proximity Alerts</Text>
+                <Text style={styles.toggleDesc}>"Give the driver some space!" warning</Text>
+              </View>
+            </View>
+            <Switch
+              value={settings.proximityAlertsEnabled ?? true}
+              onValueChange={(v) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateSettings({ proximityAlertsEnabled: v }); }}
+              trackColor={{ false: Colors.border, true: Colors.primary }}
+              thumbColor="#FFFFFF"
+              testID="proximity-toggle"
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Text Size</Text>
+          <View style={styles.durationRow}>
+            {TEXT_SIZES.map((ts) => (
+              <Pressable
+                key={ts.value}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateSettings({ textSize: ts.value }); }}
+                style={[
+                  styles.durationChip,
+                  (settings.textSize ?? "medium") === ts.value && styles.durationChipActive,
+                ]}
+                testID={`text-size-${ts.value}`}
+              >
                 <Text
                   style={[
-                    styles.difficultyLabel,
-                    settings.difficulty === d.value && styles.difficultyLabelActive,
+                    styles.durationText,
+                    (settings.textSize ?? "medium") === ts.value && styles.durationTextActive,
                   ]}
                 >
-                  {d.label}
+                  {ts.label}
                 </Text>
-                <Text style={styles.difficultyDesc}>{d.desc}</Text>
-              </View>
-              {settings.difficulty === d.value && (
-                <Ionicons name="checkmark-circle" size={22} color={Colors.primary} />
-              )}
-            </Pressable>
-          ))}
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Active Missions</Text>
-          {missions.map((m) => (
-            <View key={m.id} style={styles.missionToggleRow}>
-              <View style={styles.missionToggleInfo}>
-                <Text style={styles.missionToggleTitle}>{m.title}</Text>
-                <Text style={styles.missionToggleDiff}>{m.difficulty}</Text>
-              </View>
-              <Switch
-                value={settings.enabledMissionIds.includes(m.id)}
-                onValueChange={() => toggleMission(m.id)}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor="#FFFFFF"
-                testID={`mission-toggle-${m.id}`}
-              />
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Security</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Security</Text>
           <Pressable onPress={() => setChangePinVisible(true)} style={styles.changePinBtn} testID="change-pin-btn">
             <Ionicons name="key" size={20} color={Colors.primary} />
             <Text style={styles.changePinText}>Change Parent PIN</Text>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </Pressable>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Data</Text>
+          <Pressable onPress={handleResetProgress} style={styles.resetBtn} testID="reset-progress-btn">
+            <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+            <Text style={styles.resetBtnText}>Reset Progress</Text>
+          </Pressable>
+          <Text style={styles.resetBtnHint}>Clears all badges and session history.</Text>
+        </View>
+
+        <View style={[styles.section, styles.aboutSection]}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>About</Text>
+          <View style={styles.aboutCard}>
+            <Text style={styles.aboutAppName}>GoBabyGo Buddy-Link AR</Text>
+            <Text style={styles.aboutVersion}>Version {APP_VERSION}</Text>
+            <View style={styles.aboutDivider} />
+            <Text style={styles.aboutTip}>
+              <Text style={styles.aboutTipLabel}>How to use: </Text>
+              Start a session from the home screen and hand the phone to the sibling. They'll see missions to cheer on the driver, and earn badges when they complete them. Use the AR view for an extra immersive experience. All settings here are for parents only.
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -511,6 +603,113 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_400Regular",
     textTransform: "capitalize",
     marginTop: 2,
+  },
+  nameInputRow: {
+    marginBottom: 12,
+  },
+  nameInputLabel: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontFamily: "Nunito_600SemiBold",
+    marginBottom: 6,
+  },
+  nameInput: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  toggleInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    gap: 10,
+  },
+  toggleIcon: {
+    marginRight: 2,
+  },
+  toggleTitle: {
+    color: Colors.text,
+    fontSize: 15,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  toggleDesc: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    fontFamily: "Nunito_400Regular",
+    marginTop: 2,
+  },
+  resetBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(239, 71, 111, 0.08)",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.danger + "40",
+  },
+  resetBtnText: {
+    flex: 1,
+    color: Colors.danger,
+    fontSize: 16,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  resetBtnHint: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    fontFamily: "Nunito_400Regular",
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  aboutSection: {
+    marginBottom: 8,
+  },
+  aboutCard: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 6,
+  },
+  aboutAppName: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: "Nunito_700Bold",
+  },
+  aboutVersion: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontFamily: "Nunito_400Regular",
+  },
+  aboutDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: 8,
+  },
+  aboutTip: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontFamily: "Nunito_400Regular",
+    lineHeight: 20,
+  },
+  aboutTipLabel: {
+    fontFamily: "Nunito_700Bold",
+    color: Colors.text,
   },
   changePinBtn: {
     flexDirection: "row",

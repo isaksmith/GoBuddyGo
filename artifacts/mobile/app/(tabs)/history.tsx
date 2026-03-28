@@ -2,12 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { SessionRecord, useApp } from "@/context/AppContext";
+import { useTextScale } from "@/hooks/useTextScale";
 
-function SessionItem({ session, isFirst }: { session: SessionRecord; isFirst: boolean }) {
+function SessionItem({ session, isFirst, textScale }: { session: SessionRecord; isFirst: boolean; textScale: number }) {
   const date = new Date(session.date);
   const pct =
     session.totalMissions > 0
@@ -32,16 +33,21 @@ function SessionItem({ session, isFirst }: { session: SessionRecord; isFirst: bo
     >
       <View style={styles.cardHeader}>
         <View style={styles.cardLeft}>
-          <Text style={styles.cardDate}>
+          <Text style={[styles.cardDate, { fontSize: 11 * textScale }]}>
             {date.toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
               year: "numeric",
             }).toUpperCase()}
           </Text>
+          {session.driverName ? (
+            <Text style={[styles.cardChild, { fontSize: 12 * textScale }]}>
+              🏎 DRIVER: {session.driverName.toUpperCase()}
+            </Text>
+          ) : null}
           {session.childName ? (
-            <Text style={styles.cardChild}>
-              🏎 DRIVER: {session.childName.toUpperCase()}
+            <Text style={[styles.cardChild, { fontSize: 12 * textScale }]}>
+              🌟 CO-PILOT: {session.childName.toUpperCase()}
             </Text>
           ) : null}
         </View>
@@ -88,22 +94,26 @@ function SessionItem({ session, isFirst }: { session: SessionRecord; isFirst: bo
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { sessionHistory } = useApp();
+  const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const contentMaxWidth = Math.min(width, 700);
+  const hPad = width > 600 ? 32 : 16;
 
   return (
     <LinearGradient
       colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
       style={styles.container}
     >
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
+      <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="history-home-btn">
           <Ionicons name="arrow-back" size={26} color={Colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>🏆 HISTORY</Text>
+        <Text style={[styles.headerTitle, { fontSize: 24 * textScale }]}>🏆 HISTORY</Text>
         <View style={styles.countPill}>
-          <Text style={styles.countText}>{sessionHistory.length} RIDES</Text>
+          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>{sessionHistory.length} RIDES</Text>
         </View>
       </View>
 
@@ -111,9 +121,10 @@ export default function HistoryScreen() {
         data={sessionHistory}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <SessionItem session={item} isFirst={index === 0} />
+          <SessionItem session={item} isFirst={index === 0} textScale={textScale} />
         )}
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110, paddingHorizontal: hPad, alignSelf: "center", width: contentMaxWidth }]}
+        style={{ width: "100%" }}
         showsVerticalScrollIndicator={false}
         scrollEnabled={sessionHistory.length > 0}
         ListEmptyComponent={
