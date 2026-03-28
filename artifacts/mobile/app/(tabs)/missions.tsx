@@ -19,7 +19,7 @@ import { useApp } from "@/context/AppContext";
 
 export default function MissionsScreen() {
   const insets = useSafeAreaInsets();
-  const { sessionMissions, completeMission, sessionActive, endSession } = useApp();
+  const { sessionMissions, completeMission, sessionActive } = useApp();
   const [celebratingMission, setCelebratingMission] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
 
@@ -34,15 +34,6 @@ export default function MissionsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const handleEndSession = async () => {
-    await endSession();
-    router.push("/summary");
-  };
-
-  const handleOpenAR = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/ar");
-  };
 
   const completed = sessionMissions.filter((m) => m.completed).length;
   const total = sessionMissions.length;
@@ -130,21 +121,7 @@ export default function MissionsScreen() {
           />
         ))}
 
-        <Pressable
-          onPress={handleOpenAR}
-          style={styles.endButton}
-          testID="open-ar-btn"
-        >
-          <LinearGradient
-            colors={[Colors.primary, Colors.primaryDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.endButtonGradient}
-          >
-            <Ionicons name="play-circle" size={22} color="#FFFFFF" />
-            <Text style={styles.endButtonText}>PLAY IN AR MODE</Text>
-          </LinearGradient>
-        </Pressable>
+
       </ScrollView>
 
       <CelebrationOverlay
@@ -291,29 +268,5 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 16,
     paddingTop: 4,
-  },
-  endButton: {
-    marginTop: 16,
-    borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  endButtonGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 16,
-    borderRadius: 50,
-  },
-  endButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
   },
 });
