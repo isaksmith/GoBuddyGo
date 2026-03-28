@@ -1,5 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -308,6 +309,16 @@ export default function RaceScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraGranted = permission?.granted ?? false;
+
+  useEffect(() => {
+    if (permission === null || permission === undefined) return;
+    if (!permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [permission]);
+
   const [lightState, setLightState] = useState<LightState>("off");
   const [gameState, setGameState] = useState<GameState>("idle");
   const [showGo, setShowGo] = useState(false);
@@ -354,10 +365,12 @@ export default function RaceScreen() {
   }, [clearTimers]);
 
   return (
-    <LinearGradient
-      colors={["#0D0D1A", "#1A0A2E", "#0D1F35"]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      {cameraGranted ? (
+        <CameraView style={StyleSheet.absoluteFill} facing="back" />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.fallbackBg]} />
+      )}
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
         <Pressable
           onPress={() => router.back()}
@@ -435,13 +448,17 @@ export default function RaceScreen() {
       </View>
 
       <PitStopModal visible={pitStopOpen} onClose={() => setPitStopOpen(false)} />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#0D0D1A",
+  },
+  fallbackBg: {
+    backgroundColor: "#0D0D1A",
   },
   topBar: {
     flexDirection: "row",
@@ -449,6 +466,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 8,
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   backBtn: {
     width: 44,
@@ -481,6 +499,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 3,
     borderBottomWidth: 3,
     borderColor: "#FFFFFF20",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
   trackDash: {
     width: 28,
