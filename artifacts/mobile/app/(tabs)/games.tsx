@@ -78,6 +78,9 @@ export default function GamesScreen() {
       >
         <View style={[styles.header, { paddingTop: topPad + 8 }]}>
           <View style={styles.headerRow}>
+            <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="games-home-btn">
+              <Ionicons name="arrow-back" size={26} color={Colors.text} />
+            </Pressable>
             <Ionicons name="game-controller" size={24} color={Colors.primary} />
             <Text style={styles.headerTitle}>GAME MODES</Text>
           </View>

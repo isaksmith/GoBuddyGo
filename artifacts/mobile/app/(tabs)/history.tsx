@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
-import { FlatList, Platform, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { SessionRecord, useApp } from "@/context/AppContext";
@@ -97,6 +98,9 @@ export default function HistoryScreen() {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
+        <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="history-home-btn">
+          <Ionicons name="arrow-back" size={26} color={Colors.text} />
+        </Pressable>
         <Text style={styles.headerTitle}>🏆 HISTORY</Text>
         <View style={styles.countPill}>
           <Text style={styles.countText}>{sessionHistory.length} RIDES</Text>
@@ -138,6 +142,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingBottom: 16,
+    gap: 10,
+  },
+  backBtn: {
+    marginRight: 2,
   },
   headerTitle: {
     color: Colors.text,

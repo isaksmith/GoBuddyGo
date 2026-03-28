@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -237,7 +238,10 @@ export default function GarageScreen() {
         scrollEnabled={!pickerVisible}
       >
         <View style={styles.headerRow}>
-          <View>
+          <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="garage-home-btn">
+            <Ionicons name="arrow-back" size={26} color={Colors.text} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>🚗 GARAGE</Text>
             <Text style={styles.headerSub}>{unlockedCount} STICKERS UNLOCKED</Text>
           </View>
@@ -433,9 +437,12 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
+    gap: 10,
     marginBottom: 14,
+  },
+  backBtn: {
+    marginRight: 2,
   },
   headerTitle: {
     color: Colors.text,
