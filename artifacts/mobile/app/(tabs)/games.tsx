@@ -16,6 +16,51 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 
+function GoldCoinIcon({ size = 40 }: { size?: number }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: "#D4A017",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 2,
+        borderColor: "#FFE066",
+        shadowColor: "#F5C518",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+        elevation: 6,
+      }}
+    >
+      <View
+        style={{
+          width: size * 0.68,
+          height: size * 0.68,
+          borderRadius: (size * 0.68) / 2,
+          backgroundColor: "#F5C518",
+          justifyContent: "center",
+          alignItems: "center",
+          borderWidth: 1.5,
+          borderColor: "#FFE566",
+        }}
+      >
+        <Text
+          style={{
+            color: "#7A5000",
+            fontFamily: "Nunito_700Bold",
+            fontSize: size * 0.36,
+          }}
+        >
+          $
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   return (
     <Pressable
@@ -52,15 +97,17 @@ const FEATURED_GAMES = [
     colors: ["#F5C518CC", "#D4A80033"] as [string, string],
     accentColor: "#F5C518",
     borderColor: "#F5C51855",
+    isGoldCoin: false,
   },
   {
     id: "coin-dash",
     title: "Coin Dash",
     description: "Drive your car around and collect coins with the D-pad!",
-    emoji: "🪙",
+    emoji: "",
     colors: ["#3ECF8ECC", "#2DB87A33"] as [string, string],
     accentColor: "#3ECF8E",
     borderColor: "#3ECF8E55",
+    isGoldCoin: true,
   },
 ];
 
@@ -138,7 +185,11 @@ export default function GamesScreen() {
               style={styles.featuredCardGradient}
             >
               <View style={[styles.featuredIconCircle, { backgroundColor: game.accentColor + "20", borderColor: game.accentColor + "55" }]}>
-                <Text style={styles.featuredEmoji}>{game.emoji}</Text>
+                {game.isGoldCoin ? (
+                  <GoldCoinIcon size={48} />
+                ) : (
+                  <Text style={styles.featuredEmoji}>{game.emoji}</Text>
+                )}
               </View>
               <View style={styles.featuredInfo}>
                 <Text style={styles.featuredTitle}>{game.title}</Text>

@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -48,6 +48,34 @@ function makeCoin(id: number) {
   return { id, x: pos.x, y: pos.y };
 }
 
+function GoldCoin({ size = 40 }: { size?: number }) {
+  return (
+    <View
+      style={[
+        styles.goldCoinOuter,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.goldCoinInner,
+          {
+            width: size * 0.72,
+            height: size * 0.72,
+            borderRadius: (size * 0.72) / 2,
+          },
+        ]}
+      >
+        <Text style={[styles.goldCoinSymbol, { fontSize: size * 0.38 }]}>$</Text>
+      </View>
+    </View>
+  );
+}
+
 function CoinView({ coin, onCollect }: { coin: { id: number; x: number; y: number }; onCollect: (id: number) => void }) {
   const spin = useSharedValue(1);
   const bounce = useSharedValue(0);
@@ -82,7 +110,7 @@ function CoinView({ coin, onCollect }: { coin: { id: number; x: number; y: numbe
         style,
       ]}
     >
-      <Text style={styles.coinEmoji}>🪙</Text>
+      <GoldCoin size={COIN_R * 2} />
     </Animated.View>
   );
 }
@@ -116,6 +144,7 @@ export default function CoinDashScreen() {
   const insets = useSafeAreaInsets();
   const { savedCars } = useApp();
   const activeCar = savedCars[0] ?? null;
+  const [permission, requestPermission] = useCameraPermissions();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -144,6 +173,13 @@ export default function CoinDashScreen() {
       true
     );
   }, []);
+
+  useEffect(() => {
+    if (permission === null || permission === undefined) return;
+    if (!permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [permission]);
 
   const carStyle = useAnimatedStyle(() => ({
     transform: [
@@ -228,11 +264,16 @@ export default function CoinDashScreen() {
     []
   );
 
+  const cameraGranted = permission?.granted ?? false;
+
   return (
-    <LinearGradient
-      colors={["#0A1A10", "#0D2820", "#081F18"]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      {cameraGranted ? (
+        <CameraView style={StyleSheet.absoluteFill} facing="back" />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.fallbackBg]} />
+      )}
+
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
         <Pressable
@@ -244,26 +285,18 @@ export default function CoinDashScreen() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <Text style={styles.titleEmoji}>🪙</Text>
+          <GoldCoin size={28} />
           <Text style={styles.titleText}>COIN DASH</Text>
         </View>
 
         <View style={styles.scoreBadge}>
-          <Text style={styles.scoreEmoji}>🪙</Text>
+          <GoldCoin size={22} />
           <Text style={styles.scoreText}>{score}</Text>
         </View>
       </View>
 
       {/* Playfield */}
       <View style={styles.playfield} pointerEvents="none">
-        {/* Ground lines */}
-        {[0.3, 0.6, 0.9].map((frac) => (
-          <View
-            key={frac}
-            style={[styles.groundLine, { top: `${frac * 100}%` as any }]}
-          />
-        ))}
-
         {/* Coins */}
         {coins.map((coin) => (
           <CoinView key={coin.id} coin={coin} onCollect={() => {}} />
@@ -308,13 +341,17 @@ export default function CoinDashScreen() {
           </View>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#000",
+  },
+  fallbackBg: {
+    backgroundColor: "#0A1A10",
   },
   topBar: {
     flexDirection: "row",
@@ -323,12 +360,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
     zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
   backBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -337,53 +375,67 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  titleEmoji: {
-    fontSize: 22,
-  },
   titleText: {
     color: "#FFFFFF",
     fontSize: 24,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 3,
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   scoreBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(245,197,24,0.25)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 2,
-    borderColor: "#F5C51866",
-  },
-  scoreEmoji: {
-    fontSize: 18,
+    borderColor: "#F5C51888",
   },
   scoreText: {
     color: "#F5C518",
     fontSize: 22,
     fontFamily: "Nunito_700Bold",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   playfield: {
     flex: 1,
     position: "relative",
     overflow: "hidden",
   },
-  groundLine: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
   coin: {
     position: "absolute",
     justifyContent: "center",
     alignItems: "center",
   },
-  coinEmoji: {
-    fontSize: 28,
+  goldCoinOuter: {
+    backgroundColor: "#D4A017",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFE066",
+    shadowColor: "#F5C518",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  goldCoinInner: {
+    backgroundColor: "#F5C518",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#FFE566",
+  },
+  goldCoinSymbol: {
+    color: "#7A5000",
+    fontFamily: "Nunito_700Bold",
+    lineHeight: undefined,
   },
   car: {
     position: "absolute",
@@ -399,6 +451,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 8,
     paddingBottom: 24,
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
   dpadGrid: {
     gap: 6,
@@ -416,25 +469,25 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "rgba(0,0,0,0.2)",
   },
   dpadBtn: {
     width: 72,
     height: 72,
     borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.25)",
+    borderColor: "rgba(255,255,255,0.35)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.6,
     shadowRadius: 6,
     elevation: 6,
   },
   dpadBtnPressed: {
-    backgroundColor: "rgba(245,197,24,0.35)",
+    backgroundColor: "rgba(245,197,24,0.45)",
     borderColor: "#F5C518",
     transform: [{ scale: 0.92 }],
   },
