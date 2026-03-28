@@ -14,7 +14,7 @@ import MissionCard from "@/components/MissionCard";
 import { Colors } from "@/constants/colors";
 import { useApp, SessionMission } from "@/context/AppContext";
 
-export default function MissionsScreen() {
+export default function GamesScreen() {
   const insets = useSafeAreaInsets();
   const { missions, settings } = useApp();
 
@@ -44,7 +44,7 @@ export default function MissionsScreen() {
           <Ionicons name="game-controller" size={24} color={Colors.primary} />
           <Text style={styles.headerTitle}>GAME MODES</Text>
         </View>
-        <Text style={styles.headerSub}>Choose a mission to play in AR</Text>
+        <Text style={styles.headerSub}>Choose a game to play in AR</Text>
       </View>
 
       <ScrollView

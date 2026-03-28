@@ -16,9 +16,9 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="missions">
-        <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
-        <Label>Missions</Label>
+      <NativeTabs.Trigger name="games">
+        <Icon sf={{ default: "gamecontroller", selected: "gamecontroller.fill" }} />
+        <Label>Games</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="garage">
         <Icon sf={{ default: "car", selected: "car.fill" }} />
@@ -34,14 +34,14 @@ function NativeTabLayout() {
 
 const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   index: { active: "home", inactive: "home-outline" },
-  missions: { active: "checkmark-circle", inactive: "checkmark-circle-outline" },
+  games: { active: "game-controller", inactive: "game-controller-outline" },
   garage: { active: "car-sport", inactive: "car-sport-outline" },
   history: { active: "trophy", inactive: "trophy-outline" },
 };
 
 const IOS_SYMBOLS: Record<string, { active: SFSymbol; inactive: SFSymbol }> = {
   index: { active: "house.fill", inactive: "house" },
-  missions: { active: "checkmark.circle.fill", inactive: "checkmark.circle" },
+  games: { active: "gamecontroller.fill", inactive: "gamecontroller" },
   garage: { active: "car.fill", inactive: "car" },
   history: { active: "trophy.fill", inactive: "trophy" },
 };
@@ -100,7 +100,7 @@ function ClassicTabLayout() {
       })}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="missions" options={{ title: "Missions" }} />
+      <Tabs.Screen name="games" options={{ title: "Games" }} />
       <Tabs.Screen name="garage" options={{ title: "Garage" }} />
       <Tabs.Screen name="history" options={{ title: "History" }} />
     </Tabs>
