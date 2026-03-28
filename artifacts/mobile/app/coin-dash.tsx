@@ -1,9 +1,8 @@
 import * as Haptics from "expo-haptics";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -14,607 +13,429 @@ import {
   View,
 } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withSequence,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Colors } from "@/constants/colors";
-import { useApp, STICKER_CATALOG } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
-const CAR_W = 160;
-const CAR_H = 120;
+const CAR_W = 100;
+const CAR_H = 70;
+const COIN_R = 20;
+const MOVE_STEP = 28;
+const PLAYFIELD_TOP = 100;
+const PLAYFIELD_BOTTOM_MARGIN = 280;
 
-type GyroSubscription = { remove: () => void };
-
-function useGyroscope() {
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const tiltRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-
-    let sub: GyroSubscription | null = null;
-
-    (async () => {
-      try {
-        const sensors = await import("expo-sensors");
-        const { Gyroscope } = sensors;
-        Gyroscope.setUpdateInterval(16);
-
-        sub = Gyroscope.addListener((data: { x: number; y: number; z: number }) => {
-          const cur = tiltRef.current;
-          const nextX = cur.x + data.y * 3.0;
-          const nextY = cur.y - data.x * 2.5;
-          const clampedX = Math.max(-SCREEN_W * 0.3, Math.min(SCREEN_W * 0.3, nextX));
-          const clampedY = Math.max(-SCREEN_H * 0.15, Math.min(SCREEN_H * 0.15, nextY));
-          tiltRef.current = { x: clampedX, y: clampedY };
-          setTilt({ x: clampedX, y: clampedY });
-        });
-      } catch (e) {
-        console.warn("[CoinDash] Gyroscope unavailable:", e);
-      }
-    })();
-
-    return () => {
-      if (sub) sub.remove();
-    };
-  }, []);
-
-  return tilt;
-}
-
-interface DrivePath {
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  duration: number;
-}
-
-function generatePath(): DrivePath {
-  const margin = CAR_W;
-  const y = SCREEN_H * 0.5 + (Math.random() - 0.5) * SCREEN_H * 0.3;
-  const goRight = Math.random() > 0.5;
+function randomCoinPos() {
+  const margin = COIN_R + 16;
   return {
-    startX: goRight ? -margin : SCREEN_W + margin,
-    startY: y,
-    endX: goRight ? SCREEN_W + margin : -margin,
-    endY: y + (Math.random() - 0.5) * 80,
-    duration: 4000 + Math.random() * 3000,
+    x: margin + Math.random() * (SCREEN_W - margin * 2 - COIN_R * 2),
+    y: PLAYFIELD_TOP + margin + Math.random() * (SCREEN_H - PLAYFIELD_TOP - PLAYFIELD_BOTTOM_MARGIN - margin * 2),
   };
 }
 
-function VehicleOnTrack({
-  photoUri,
-  isDefault,
-  stickers,
-  vehicleName,
-  tilt,
-  onLap,
-}: {
-  photoUri: string | null;
-  isDefault?: boolean;
-  stickers: { stickerId: string }[];
-  vehicleName: string;
-  tilt: { x: number; y: number };
-  onLap: () => void;
-}) {
-  const posX = useSharedValue(0);
-  const posY = useSharedValue(0);
-  const flipX = useSharedValue(1);
+function makeCoin(id: number) {
+  const pos = randomCoinPos();
+  return { id, x: pos.x, y: pos.y };
+}
+
+function CoinView({ coin, onCollect }: { coin: { id: number; x: number; y: number }; onCollect: (id: number) => void }) {
+  const spin = useSharedValue(1);
   const bounce = useSharedValue(0);
-  const pathRef = useRef<DrivePath>(generatePath());
-
-  const startDrive = () => {
-    const path = generatePath();
-    pathRef.current = path;
-    posX.value = path.startX;
-    posY.value = path.startY;
-    flipX.value = path.endX > path.startX ? 1 : -1;
-
-    posX.value = withTiming(path.endX, {
-      duration: path.duration,
-      easing: Easing.inOut(Easing.quad),
-    });
-    posY.value = withTiming(path.endY, {
-      duration: path.duration,
-      easing: Easing.inOut(Easing.quad),
-    });
-
-    setTimeout(() => {
-      onLap();
-      startDrive();
-    }, path.duration);
-  };
 
   useEffect(() => {
+    spin.value = withRepeat(
+      withSequence(withTiming(0.6, { duration: 400 }), withTiming(1, { duration: 400 })),
+      -1,
+      false
+    );
     bounce.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 150 }),
-        withTiming(3, { duration: 150 })
-      ),
+      withSequence(withTiming(-4, { duration: 500 }), withTiming(4, { duration: 500 })),
       -1,
       true
     );
-    startDrive();
   }, []);
 
-  const carStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: posX.value + tilt.x },
-      { translateY: posY.value + tilt.y + bounce.value },
-      { scaleX: flipX.value },
-    ],
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: spin.value }, { translateY: bounce.value }],
   }));
 
-  const stickerEmojis = stickers
-    .map((s) => STICKER_CATALOG.find((sc) => sc.id === s.stickerId)?.emoji)
-    .filter(Boolean);
-
   return (
-    <Animated.View style={[styles.carContainer, carStyle]}>
-      {isDefault ? (
-        <View style={styles.carPlaceholder}>
-          <DefaultCarSvg width={CAR_W - 20} height={CAR_H - 20} bodyColor="#4F8EF7" accentColor="#FFD93D" />
-        </View>
-      ) : photoUri ? (
-        <Image source={{ uri: photoUri }} style={styles.carImage} resizeMode="cover" />
-      ) : (
-        <View style={styles.carPlaceholder}>
-          <Ionicons name="car-sport" size={60} color="#4FC3F7" />
-        </View>
-      )}
-      {stickerEmojis.length > 0 && (
-        <View style={styles.carStickers}>
-          {stickerEmojis.slice(0, 4).map((emoji, i) => (
-            <Text key={i} style={styles.carStickerEmoji}>{emoji}</Text>
-          ))}
-        </View>
-      )}
-      <View style={styles.carNameBadge}>
-        <Text style={styles.carNameText} numberOfLines={1}>{vehicleName}</Text>
-      </View>
+    <Animated.View
+      style={[
+        styles.coin,
+        {
+          left: coin.x - COIN_R,
+          top: coin.y - COIN_R,
+          width: COIN_R * 2,
+          height: COIN_R * 2,
+        },
+        style,
+      ]}
+    >
+      <Text style={styles.coinEmoji}>🪙</Text>
     </Animated.View>
   );
 }
 
-function DustParticle({ delay }: { delay: number }) {
-  const x = useSharedValue(0);
-  const y = useSharedValue(0);
-  const opacity = useSharedValue(0);
+function DPadButton({
+  direction,
+  onPress,
+}: {
+  direction: "up" | "down" | "left" | "right";
+  onPress: (dir: "up" | "down" | "left" | "right") => void;
+}) {
+  const iconMap: Record<string, string> = {
+    up: "chevron-up",
+    down: "chevron-down",
+    left: "chevron-back",
+    right: "chevron-forward",
+  };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const startX = Math.random() * SCREEN_W;
-      const startY = SCREEN_H * 0.6 + Math.random() * SCREEN_H * 0.3;
-      x.value = startX;
-      y.value = startY;
-      opacity.value = withSequence(
-        withTiming(0.4, { duration: 200 }),
-        withTiming(0, { duration: 800 })
-      );
-      x.value = withTiming(startX + (Math.random() - 0.5) * 40, { duration: 1000 });
-      y.value = withTiming(startY - 20 - Math.random() * 30, { duration: 1000 });
-    }, 2000 + delay);
-
-    return () => clearInterval(interval);
-  }, [delay]);
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }, { translateY: y.value }],
-    opacity: opacity.value,
-  }));
-
-  return <Animated.View style={[styles.dustParticle, style]} />;
+  return (
+    <Pressable
+      onPress={() => onPress(direction)}
+      style={({ pressed }) => [styles.dpadBtn, pressed && styles.dpadBtnPressed]}
+      testID={`dpad-${direction}`}
+    >
+      <Ionicons name={iconMap[direction] as any} size={32} color="#FFFFFF" />
+    </Pressable>
+  );
 }
 
 export default function CoinDashScreen() {
   const insets = useSafeAreaInsets();
-  const [permission, requestPermission] = useCameraPermissions();
   const { savedCars } = useApp();
   const activeCar = savedCars[0] ?? null;
-  const tilt = useGyroscope();
-  const [laps, setLaps] = useState(0);
 
-  const handleLap = () => {
-    setLaps((prev) => prev + 1);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const [score, setScore] = useState(0);
+  const [coins, setCoins] = useState(() =>
+    Array.from({ length: 6 }, (_, i) => makeCoin(i))
+  );
+  const nextCoinId = useRef(6);
+
+  const carX = useSharedValue(SCREEN_W / 2 - CAR_W / 2);
+  const carY = useSharedValue(
+    PLAYFIELD_TOP + (SCREEN_H - PLAYFIELD_TOP - PLAYFIELD_BOTTOM_MARGIN) / 2 - CAR_H / 2
+  );
+  const carFlip = useSharedValue(1);
+  const carBounce = useSharedValue(0);
+
+  const carPosRef = useRef({
+    x: SCREEN_W / 2 - CAR_W / 2,
+    y: PLAYFIELD_TOP + (SCREEN_H - PLAYFIELD_TOP - PLAYFIELD_BOTTOM_MARGIN) / 2 - CAR_H / 2,
+  });
+
+  useEffect(() => {
+    carBounce.value = withRepeat(
+      withSequence(withTiming(-2, { duration: 200 }), withTiming(2, { duration: 200 })),
+      -1,
+      true
+    );
+  }, []);
+
+  const carStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: carX.value },
+      { translateY: carY.value + carBounce.value },
+      { scaleX: carFlip.value },
+    ],
+  }));
+
+  const checkCollisions = useCallback(
+    (cx: number, cy: number) => {
+      const carCenterX = cx + CAR_W / 2;
+      const carCenterY = cy + CAR_H / 2;
+
+      setCoins((prev) => {
+        let collectedAny = false;
+        const next = prev.filter((coin) => {
+          const dx = carCenterX - coin.x;
+          const dy = carCenterY - coin.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < CAR_W / 2 + COIN_R - 6) {
+            collectedAny = true;
+            return false;
+          }
+          return true;
+        });
+
+        if (collectedAny) {
+          const toAdd = prev.length - next.length;
+          const newCoins = Array.from({ length: toAdd }, () => {
+            const id = nextCoinId.current++;
+            return makeCoin(id);
+          });
+          setScore((s) => s + toAdd);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          return [...next, ...newCoins];
+        }
+        return prev;
+      });
+    },
+    []
+  );
+
+  const moveCarRef = useRef(checkCollisions);
+  moveCarRef.current = checkCollisions;
+
+  const playfield = {
+    minX: 0,
+    maxX: SCREEN_W - CAR_W,
+    minY: PLAYFIELD_TOP,
+    maxY: SCREEN_H - PLAYFIELD_BOTTOM_MARGIN - CAR_H,
   };
 
-  if (!permission) {
-    return (
-      <View style={[styles.center, { backgroundColor: Colors.background }]}>
-        <Text style={styles.loadingText}>Loading camera...</Text>
-      </View>
-    );
-  }
+  const handleDpad = useCallback(
+    (dir: "up" | "down" | "left" | "right") => {
+      const cur = carPosRef.current;
+      let nx = cur.x;
+      let ny = cur.y;
 
-  if (!permission.granted) {
-    return (
-      <LinearGradient
-        colors={[Colors.background, Colors.backgroundMid]}
-        style={styles.center}
-      >
-        <View style={styles.permIconCircle}>
-          <Ionicons name="camera" size={48} color={Colors.primary} />
-        </View>
-        <Text style={styles.permTitle}>CAMERA NEEDED!</Text>
-        <Text style={styles.permSubtitle}>
-          Watch your car drive around in AR! Move your phone to follow it.
-        </Text>
-        <Pressable onPress={requestPermission} style={styles.permBtn}>
-          <LinearGradient
-            colors={[Colors.primary, Colors.primaryDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.permBtnGradient}
-          >
-            <Ionicons name="camera" size={20} color="#FFFFFF" />
-            <Text style={styles.permBtnText}>ENABLE CAMERA</Text>
-          </LinearGradient>
-        </Pressable>
-        <Pressable onPress={() => router.back()} style={styles.backLinkBtn}>
-          <Text style={styles.backLinkText}>Go Back</Text>
-        </Pressable>
-      </LinearGradient>
-    );
-  }
+      if (dir === "up") ny -= MOVE_STEP;
+      if (dir === "down") ny += MOVE_STEP;
+      if (dir === "left") {
+        nx -= MOVE_STEP;
+        carFlip.value = 1;
+      }
+      if (dir === "right") {
+        nx += MOVE_STEP;
+        carFlip.value = -1;
+      }
 
-  const hasVehicle = !!activeCar;
+      nx = Math.max(playfield.minX, Math.min(playfield.maxX, nx));
+      ny = Math.max(playfield.minY, Math.min(playfield.maxY, ny));
+
+      carPosRef.current = { x: nx, y: ny };
+      carX.value = withSpring(nx, { damping: 14, stiffness: 200 });
+      carY.value = withSpring(ny, { damping: 14, stiffness: 200 });
+
+      setTimeout(() => {
+        moveCarRef.current(nx, ny);
+      }, 80);
+    },
+    []
+  );
 
   return (
-    <View style={styles.container}>
-      {Platform.OS !== "web" ? (
-        <CameraView style={StyleSheet.absoluteFill} facing="back" />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.webFallback]}>
-          <Ionicons name="car-sport" size={80} color={Colors.border} />
-          <Text style={styles.webFallbackText}>
-            AR Drive requires a mobile device
-          </Text>
-        </View>
-      )}
+    <LinearGradient
+      colors={["#0A1A10", "#0D2820", "#081F18"]}
+      style={styles.container}
+    >
+      {/* Top bar */}
+      <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+        >
+          <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+        </Pressable>
 
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <DustParticle key={i} delay={i * 400} />
+        <View style={styles.titleRow}>
+          <Text style={styles.titleEmoji}>🪙</Text>
+          <Text style={styles.titleText}>COIN DASH</Text>
+        </View>
+
+        <View style={styles.scoreBadge}>
+          <Text style={styles.scoreEmoji}>🪙</Text>
+          <Text style={styles.scoreText}>{score}</Text>
+        </View>
+      </View>
+
+      {/* Playfield */}
+      <View style={styles.playfield} pointerEvents="none">
+        {/* Ground lines */}
+        {[0.3, 0.6, 0.9].map((frac) => (
+          <View
+            key={frac}
+            style={[styles.groundLine, { top: `${frac * 100}%` as any }]}
+          />
         ))}
+
+        {/* Coins */}
+        {coins.map((coin) => (
+          <CoinView key={coin.id} coin={coin} onCollect={() => {}} />
+        ))}
+
+        {/* Car */}
+        <Animated.View style={[styles.car, carStyle]}>
+          {activeCar && !activeCar.isDefault && activeCar.photoUri ? (
+            <Image
+              source={{ uri: activeCar.photoUri }}
+              style={styles.carImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <DefaultCarSvg
+              width={CAR_W}
+              height={CAR_H}
+              bodyColor="#4F8EF7"
+              accentColor="#FFD93D"
+            />
+          )}
+        </Animated.View>
       </View>
 
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <VehicleOnTrack
-          photoUri={activeCar?.photoUri || null}
-          isDefault={activeCar?.isDefault}
-          stickers={activeCar?.stickers ?? []}
-          vehicleName={activeCar?.name ?? "My Car"}
-          tilt={tilt}
-          onLap={handleLap}
-        />
-      </View>
-
-      <View style={[StyleSheet.absoluteFill, styles.hudOverlay]} pointerEvents="box-none">
-        <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-          <Pressable onPress={() => router.back()} style={styles.backCircle}>
-            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
-          </Pressable>
-
-          <View style={styles.titleContainer}>
-            <Ionicons name="car-sport" size={18} color="#4FC3F7" />
-            <Text style={styles.titleText}>AR DRIVE</Text>
+      {/* D-Pad Controls */}
+      <View style={[styles.dpadWrapper, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={styles.dpadGrid}>
+          <View style={styles.dpadRow}>
+            <View style={styles.dpadSpacer} />
+            <DPadButton direction="up" onPress={handleDpad} />
+            <View style={styles.dpadSpacer} />
           </View>
-
-          <View style={styles.lapContainer}>
-            <Ionicons name="flag" size={16} color="#F5C518" />
-            <Text style={styles.lapText}>Laps: {laps}</Text>
+          <View style={styles.dpadRow}>
+            <DPadButton direction="left" onPress={handleDpad} />
+            <View style={styles.dpadCenter} />
+            <DPadButton direction="right" onPress={handleDpad} />
           </View>
-        </View>
-
-        {!hasVehicle && (
-          <View style={styles.noVehicleOverlay}>
-            <View style={styles.noVehicleCard}>
-              <Ionicons name="camera-outline" size={40} color="#4FC3F7" />
-              <Text style={styles.noVehicleTitle}>NO VEHICLE YET</Text>
-              <Text style={styles.noVehicleSub}>
-                Head to the Garage tab to scan your ride first!
-              </Text>
-              <Pressable onPress={() => router.back()} style={styles.noVehicleBtn}>
-                <Text style={styles.noVehicleBtnText}>GO TO GARAGE</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
-        <View style={[styles.bottomHint, { paddingBottom: insets.bottom + 20 }]}>
-          <View style={styles.hintBadge}>
-            <Ionicons name="phone-portrait-outline" size={16} color="#4FC3F7" />
-            <Text style={styles.hintText}>
-              {hasVehicle ? "Move your phone to follow your car!" : "Scan a car in the Garage first"}
-            </Text>
+          <View style={styles.dpadRow}>
+            <View style={styles.dpadSpacer} />
+            <DPadButton direction="down" onPress={handleDpad} />
+            <View style={styles.dpadSpacer} />
           </View>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-    gap: 16,
-  },
-  loadingText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontFamily: "Nunito_400Regular",
-  },
-  permIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.backgroundCard,
-    borderWidth: 3,
-    borderColor: Colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 6,
-  },
-  permTitle: {
-    color: Colors.text,
-    fontSize: 26,
-    fontFamily: "Nunito_700Bold",
-    textAlign: "center",
-    letterSpacing: 2,
-    marginTop: 4,
-  },
-  permSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 15,
-    fontFamily: "Nunito_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  permBtn: {
-    borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 8,
-    marginTop: 4,
-  },
-  permBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 36,
-    borderRadius: 50,
-  },
-  permBtnText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  backLinkBtn: {
-    paddingVertical: 8,
-  },
-  backLinkText: {
-    color: Colors.textMuted,
-    fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
-  },
-  webFallback: {
-    backgroundColor: "#081520",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
-  },
-  webFallbackText: {
-    color: Colors.textMuted ?? "#888",
-    fontSize: 14,
-    fontFamily: "Nunito_400Regular",
-  },
-  hudOverlay: {
-    justifyContent: "space-between",
   },
   topBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingBottom: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    zIndex: 10,
   },
-  backCircle: {
+  backBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.25)",
+    backgroundColor: "rgba(255,255,255,0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: "rgba(79,195,247,0.4)",
-  },
-  titleText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
-  lapContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: "rgba(245,197,24,0.4)",
-  },
-  lapText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-  },
-  carContainer: {
-    position: "absolute",
-    width: CAR_W,
-    height: CAR_H,
-    alignItems: "center",
-  },
-  carImage: {
-    width: CAR_W,
-    height: CAR_H - 24,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "rgba(79,195,247,0.6)",
-    shadowColor: "#4FC3F7",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: "hidden",
-  },
-  carPlaceholder: {
-    width: CAR_W,
-    height: CAR_H - 24,
-    borderRadius: 16,
-    backgroundColor: "rgba(10,30,50,0.8)",
-    borderWidth: 2,
-    borderColor: "rgba(79,195,247,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  carStickers: {
-    position: "absolute",
-    top: -8,
-    right: -8,
-    flexDirection: "row",
-    gap: 2,
-  },
-  carStickerEmoji: {
-    fontSize: 18,
-  },
-  carNameBadge: {
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderRadius: 10,
-    paddingVertical: 2,
-    paddingHorizontal: 10,
-    marginTop: 2,
-    borderWidth: 1,
-    borderColor: "rgba(79,195,247,0.3)",
-  },
-  carNameText: {
-    color: "#4FC3F7",
-    fontSize: 11,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  dustParticle: {
-    position: "absolute",
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(200,180,140,0.5)",
-  },
-  bottomHint: {
-    alignItems: "center",
-  },
-  hintBadge: {
+  titleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(0,0,0,0.65)",
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: "rgba(79,195,247,0.3)",
   },
-  hintText: {
+  titleEmoji: {
+    fontSize: 22,
+  },
+  titleText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontFamily: "Nunito_600SemiBold",
+    fontSize: 24,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
   },
-  noVehicleOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
+  scoreBadge: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  noVehicleCard: {
-    backgroundColor: Colors.backgroundCard ?? "#1A2332",
-    borderRadius: 24,
-    padding: 32,
-    alignItems: "center",
-    gap: 12,
+    gap: 6,
+    backgroundColor: "rgba(245,197,24,0.25)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderWidth: 2,
-    borderColor: "rgba(79,195,247,0.5)",
-    shadowColor: "#4FC3F7",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-    marginHorizontal: 32,
+    borderColor: "#F5C51866",
   },
-  noVehicleTitle: {
-    color: Colors.text,
+  scoreEmoji: {
+    fontSize: 18,
+  },
+  scoreText: {
+    color: "#F5C518",
     fontSize: 22,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
   },
-  noVehicleSub: {
-    color: Colors.textSecondary,
-    fontSize: 15,
-    fontFamily: "Nunito_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
+  playfield: {
+    flex: 1,
+    position: "relative",
+    overflow: "hidden",
   },
-  noVehicleBtn: {
-    backgroundColor: "#4FC3F7",
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    marginTop: 8,
+  groundLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  noVehicleBtnText: {
-    color: "#000",
-    fontSize: 14,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
+  coin: {
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  coinEmoji: {
+    fontSize: 28,
+  },
+  car: {
+    position: "absolute",
+    width: CAR_W,
+    height: CAR_H,
+  },
+  carImage: {
+    width: CAR_W,
+    height: CAR_H,
+    borderRadius: 8,
+  },
+  dpadWrapper: {
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  dpadGrid: {
+    gap: 6,
+  },
+  dpadRow: {
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+  },
+  dpadSpacer: {
+    width: 72,
+    height: 72,
+  },
+  dpadCenter: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  dpadBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  dpadBtnPressed: {
+    backgroundColor: "rgba(245,197,24,0.35)",
+    borderColor: "#F5C518",
+    transform: [{ scale: 0.92 }],
   },
 });

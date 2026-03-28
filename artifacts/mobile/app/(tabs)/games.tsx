@@ -43,31 +43,55 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   );
 }
 
+const FEATURED_GAMES = [
+  {
+    id: "race",
+    title: "Race",
+    description: "Start your engines! Hit the gas at the green light and nail a pit stop.",
+    emoji: "🏎️",
+    colors: ["#F5C518CC", "#D4A80033"] as [string, string],
+    accentColor: "#F5C518",
+    borderColor: "#F5C51855",
+  },
+  {
+    id: "coin-dash",
+    title: "Coin Dash",
+    description: "Drive your car around and collect coins with the D-pad!",
+    emoji: "🪙",
+    colors: ["#3ECF8ECC", "#2DB87A33"] as [string, string],
+    accentColor: "#3ECF8E",
+    borderColor: "#3ECF8E55",
+  },
+];
+
+const MINI_GAMES = [
+  { id: "m1", emoji: "📣", label: "Cheer!", color: "#EF476F" },
+  { id: "m2", emoji: "🖐️", label: "High Five!", color: "#F5C518" },
+  { id: "m4", emoji: "🎵", label: "Dance!", color: "#9B5DE5" },
+  { id: "m5", emoji: "👍", label: "Thumbs Up!", color: "#3ECF8E" },
+  { id: "m8", emoji: "🔢", label: "Count!", color: "#4FC3F7" },
+  { id: "m9", emoji: "🏆", label: "Lap Cheer!", color: "#F4633A" },
+];
+
 export default function GamesScreen() {
   const insets = useSafeAreaInsets();
-  const { missions, settings } = useApp();
+  const { settings } = useApp();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 82;
 
-  const handlePlay = useCallback((missionId: string) => {
+  const handlePlay = useCallback((gameId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (missionId === "coin-dash") {
+    if (gameId === "coin-dash") {
       router.push("/coin-dash");
+    } else if (gameId === "race") {
+      router.push("/race");
     } else {
-      router.push({ pathname: "/ar", params: { missionId } });
+      router.push({ pathname: "/ar", params: { missionId: gameId } });
     }
   }, []);
 
   const enabledIds = settings.enabledMissionIds;
-
-  const mediumGames = missions.filter(
-    (m) => m.enabled && enabledIds.includes(m.id) && m.difficulty === "medium"
-  );
-
-  const easyGames = missions.filter(
-    (m) => m.enabled && enabledIds.includes(m.id) && m.difficulty === "easy"
-  );
 
   return (
     <LinearGradient
@@ -83,7 +107,7 @@ export default function GamesScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: homeBtnBottom + 76 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── GAMES section (medium) ─────────────────────────── */}
+        {/* ── GAMES section ─────────────────────────────────── */}
         <View style={styles.sectionHeader}>
           <LinearGradient
             colors={["#F5C518", "#D4A800"]}
@@ -96,51 +120,41 @@ export default function GamesScreen() {
           </LinearGradient>
         </View>
 
-        {mediumGames.length > 0 ? (
-          mediumGames.map((game) => (
-            <Pressable
-              key={game.id}
-              onPress={() => handlePlay(game.id)}
-              style={({ pressed }) => [
-                styles.featuredCard,
-                pressed && styles.featuredCardPressed,
-              ]}
-              testID={`game-${game.id}`}
+        {FEATURED_GAMES.map((game) => (
+          <Pressable
+            key={game.id}
+            onPress={() => handlePlay(game.id)}
+            style={({ pressed }) => [
+              styles.featuredCard,
+              { borderColor: game.borderColor },
+              pressed && styles.featuredCardPressed,
+            ]}
+            testID={`game-${game.id}`}
+          >
+            <LinearGradient
+              colors={game.colors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.featuredCardGradient}
             >
-              <LinearGradient
-                colors={["#F5C518CC", "#D4A80033"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.featuredCardGradient}
-              >
-                <View style={styles.featuredIconCircle}>
-                  <Ionicons
-                    name={(game.icon as keyof typeof Ionicons.glyphMap) ?? "game-controller"}
-                    size={46}
-                    color="#F5C518"
-                  />
-                </View>
-                <View style={styles.featuredInfo}>
-                  <Text style={styles.featuredTitle}>{game.title}</Text>
-                  <Text style={styles.featuredDesc}>{game.description}</Text>
-                  <View style={styles.featuredPlayRow}>
-                    <View style={styles.featuredPlayBtn}>
-                      <Ionicons name="play" size={14} color="#FFFFFF" />
-                      <Text style={styles.featuredPlayText}>PLAY NOW</Text>
-                    </View>
+              <View style={[styles.featuredIconCircle, { backgroundColor: game.accentColor + "20", borderColor: game.accentColor + "55" }]}>
+                <Text style={styles.featuredEmoji}>{game.emoji}</Text>
+              </View>
+              <View style={styles.featuredInfo}>
+                <Text style={styles.featuredTitle}>{game.title}</Text>
+                <Text style={styles.featuredDesc}>{game.description}</Text>
+                <View style={styles.featuredPlayRow}>
+                  <View style={[styles.featuredPlayBtn, { backgroundColor: game.accentColor }]}>
+                    <Ionicons name="play" size={14} color="#FFFFFF" />
+                    <Text style={styles.featuredPlayText}>PLAY NOW</Text>
                   </View>
                 </View>
-              </LinearGradient>
-            </Pressable>
-          ))
-        ) : (
-          <View style={styles.emptyCard}>
-            <Ionicons name="time-outline" size={36} color={Colors.textMuted} />
-            <Text style={styles.emptyText}>More games coming soon!</Text>
-          </View>
-        )}
+              </View>
+            </LinearGradient>
+          </Pressable>
+        ))}
 
-        {/* ── MINI GAMES section (easy) ──────────────────────── */}
+        {/* ── MINI GAMES section ────────────────────────────── */}
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
           <LinearGradient
             colors={["#3ECF8E", "#2DB87A"]}
@@ -151,42 +165,25 @@ export default function GamesScreen() {
             <Ionicons name="star" size={14} color="#FFF" />
             <Text style={styles.sectionBadgeText}>MINI GAMES</Text>
           </LinearGradient>
-          <Text style={styles.sectionSub}>Fun for everyone!</Text>
         </View>
 
-        {easyGames.map((game) => (
-          <Pressable
-            key={game.id}
-            onPress={() => handlePlay(game.id)}
-            style={({ pressed }) => [
-              styles.miniCard,
-              pressed && styles.miniCardPressed,
-            ]}
-            testID={`game-${game.id}`}
-          >
-            <View style={styles.miniIconCircle}>
-              <Ionicons
-                name={(game.icon as keyof typeof Ionicons.glyphMap) ?? "star"}
-                size={28}
-                color="#3ECF8E"
-              />
-            </View>
-            <View style={styles.miniInfo}>
-              <Text style={styles.miniTitle}>{game.title}</Text>
-              <Text style={styles.miniDesc} numberOfLines={1}>{game.description}</Text>
-            </View>
-            <View style={styles.miniPlayBtn}>
-              <Ionicons name="play-circle" size={38} color="#3ECF8E" />
-            </View>
-          </Pressable>
-        ))}
-
-        {easyGames.length === 0 && (
-          <View style={styles.emptyCard}>
-            <Ionicons name="star-outline" size={36} color={Colors.textMuted} />
-            <Text style={styles.emptyText}>No mini games available</Text>
-          </View>
-        )}
+        <View style={styles.miniGrid}>
+          {MINI_GAMES.filter((g) => enabledIds.includes(g.id)).map((game) => (
+            <Pressable
+              key={game.id}
+              onPress={() => handlePlay(game.id)}
+              style={({ pressed }) => [
+                styles.miniCard,
+                { backgroundColor: game.color },
+                pressed && styles.miniCardPressed,
+              ]}
+              testID={`game-${game.id}`}
+            >
+              <Text style={styles.miniEmoji}>{game.emoji}</Text>
+              <Text style={styles.miniLabel}>{game.label}</Text>
+            </Pressable>
+          ))}
+        </View>
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
@@ -217,35 +214,29 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    gap: 10,
     marginBottom: 14,
   },
   sectionBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
     borderRadius: 50,
   },
   sectionBadgeText: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1.5,
-  },
-  sectionSub: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontFamily: "Nunito_400Regular",
   },
   featuredCard: {
     borderRadius: 24,
     overflow: "hidden",
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: "#F5C51855",
     shadowColor: "#F5C518",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
@@ -267,12 +258,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#F5C51820",
     borderWidth: 2,
-    borderColor: "#F5C51855",
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
+  },
+  featuredEmoji: {
+    fontSize: 40,
   },
   featuredInfo: {
     flex: 1,
@@ -298,7 +290,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#F5C518",
     borderRadius: 50,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -309,69 +300,39 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1.5,
   },
-  miniCard: {
+  miniGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  miniCard: {
+    width: "47%",
+    borderRadius: 24,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
     alignItems: "center",
-    gap: 14,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1.5,
-    borderColor: "#3ECF8E33",
+    justifyContent: "center",
+    gap: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 6,
   },
   miniCardPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.97 }],
+    opacity: 0.85,
+    transform: [{ scale: 0.95 }],
   },
-  miniIconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: "#3ECF8E18",
-    borderWidth: 1.5,
-    borderColor: "#3ECF8E44",
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
+  miniEmoji: {
+    fontSize: 42,
   },
-  miniInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  miniTitle: {
-    color: Colors.text,
+  miniLabel: {
+    color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 0.5,
-  },
-  miniDesc: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontFamily: "Nunito_400Regular",
-  },
-  miniPlayBtn: {
-    flexShrink: 0,
-  },
-  emptyCard: {
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 32,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    marginBottom: 12,
-  },
-  emptyText: {
-    color: Colors.textMuted,
-    fontSize: 14,
-    fontFamily: "Nunito_400Regular",
+    textAlign: "center",
   },
   homeBtn: {
     position: "absolute",
