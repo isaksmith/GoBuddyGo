@@ -142,7 +142,7 @@ export default function MissionsScreen() {
             style={styles.endButtonGradient}
           >
             <Ionicons name="play-circle" size={22} color="#FFFFFF" />
-            <Text style={styles.endButtonText}>OPEN AR VIEW</Text>
+            <Text style={styles.endButtonText}>PLAY IN AR MODE</Text>
           </LinearGradient>
         </Pressable>
       </ScrollView>
