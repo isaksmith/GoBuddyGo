@@ -78,8 +78,15 @@ export default function SummaryScreen() {
           .join("\n");
 
         if (canShare) {
-          const encoded = encodeURIComponent(text);
-          const base64 = btoa(unescape(encoded));
+          let base64 = "";
+          try {
+            const bytes = new TextEncoder().encode(text);
+            let binary = "";
+            bytes.forEach((b) => (binary += String.fromCharCode(b)));
+            base64 = btoa(binary);
+          } catch (_e) {
+            base64 = btoa(text.replace(/[^\x00-\x7F]/g, "?"));
+          }
           await Sharing.shareAsync(
             `data:text/plain;base64,${base64}`,
             { mimeType: "text/plain", dialogTitle: "Share your Co-Pilot recap!" }

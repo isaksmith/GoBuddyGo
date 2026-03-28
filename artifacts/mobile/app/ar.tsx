@@ -22,7 +22,7 @@ import { CelebrationOverlay } from "@/components/CelebrationOverlay";
 import { MissionShield, SparkleEffect, SpeedStar } from "@/components/AROverlay";
 import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
 type AccelerometerData = { x: number; y: number; z: number };
 type AccelerometerSubscription = { remove: () => void };
@@ -65,7 +65,7 @@ function useAccelerometerProxy() {
 export default function ARScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const { sessionMissions, completeMission, sessionActive, startSession, endSession, settings, sessionStartTime, isLoaded } = useApp();
+  const { missions, sessionMissions, completeMission, sessionActive, startSession, endSession, settings, sessionStartTime, isLoaded } = useApp();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [speed, setSpeed] = useState(0);
@@ -76,10 +76,16 @@ export default function ARScreen() {
 
   const pulseScale = useSharedValue(1);
 
+  const insufficientMissions = isLoaded && countAvailableSessionMissions(missions, settings) < 3;
+
   useEffect(() => {
     if (!isLoaded) return;
+    if (insufficientMissions) {
+      router.replace("/");
+      return;
+    }
     if (!sessionActive) {
-      startSession();
+      startSession().catch(() => {});
     }
   }, [isLoaded]);
 
