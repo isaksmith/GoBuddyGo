@@ -20,7 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CelebrationOverlay } from "@/components/CelebrationOverlay";
-import { MissionShield, SparkleEffect, SpeedStar } from "@/components/AROverlay";
+import { MissionShield, SparkleEffect } from "@/components/AROverlay";
 import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
 import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
@@ -81,7 +81,6 @@ export default function ARScreen() {
   } = useApp();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
-  const [speed, setSpeed] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [timeUp, setTimeUp] = useState(false);
   const proximityWarning = useAccelerometerProxy();
@@ -113,13 +112,6 @@ export default function ARScreen() {
       -1,
       false
     );
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSpeed(Math.floor(Math.random() * 3));
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -272,7 +264,6 @@ export default function ARScreen() {
           </Animated.View>
         )}
 
-        <SpeedStar speed={speed} />
         <ProximityWarning visible={proximityWarning} />
 
         {currentMission && (
