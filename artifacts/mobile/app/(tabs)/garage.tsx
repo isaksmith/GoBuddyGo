@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Colors } from "@/constants/colors";
 import {
   CarDesign,
@@ -400,7 +401,9 @@ export default function GarageScreen() {
           <View style={styles.section}>
             {savedCars.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📸</Text>
+                <View style={styles.defaultCarWrap}>
+                  <DefaultCarSvg width={220} height={130} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+                </View>
                 <Text style={styles.emptyTitle}>NO CARS YET</Text>
                 <Text style={styles.emptySubtitle}>Scan a photo of your real GoBabyGo vehicle to add it to your garage!</Text>
                 <Pressable onPress={handleScanNewCar} style={styles.emptyBtn}>
@@ -624,6 +627,16 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: {
     fontSize: 52,
+  },
+  defaultCarWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: "rgba(79,142,247,0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(79,142,247,0.2)",
   },
   emptyTitle: {
     color: Colors.text,
