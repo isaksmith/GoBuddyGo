@@ -139,42 +139,126 @@ function AnimatedBlob({ rx, ry, w, h, colors, delay }: typeof BLOBS[0]) {
 
 type HubButton = {
   label: string;
+  tagline: string;
   icon: keyof typeof Ionicons.glyphMap;
   route: Href;
   colors: [string, string];
+  glowColor: string;
   testID: string;
+  pulseDelay: number;
 };
 
 const HUB_BUTTONS: HubButton[] = [
   {
     label: "Games",
+    tagline: "Let's play!",
     icon: "game-controller",
     route: "/(tabs)/games",
     colors: ["#4F8EF7", "#2B5FD9"],
+    glowColor: "#4F8EF7",
     testID: "hub-games-btn",
+    pulseDelay: 0,
   },
   {
     label: "Garage",
+    tagline: "Build your ride!",
     icon: "car-sport",
     route: "/(tabs)/garage",
     colors: ["#3ECF8E", "#1EA06B"],
+    glowColor: "#3ECF8E",
     testID: "hub-garage-btn",
+    pulseDelay: 300,
   },
   {
     label: "Badges",
+    tagline: "Earn 'em all!",
     icon: "star",
     route: "/(tabs)/badges",
     colors: ["#F5A623", "#D4820A"],
+    glowColor: "#F5A623",
     testID: "hub-badges-btn",
+    pulseDelay: 600,
   },
   {
     label: "Sounds",
+    tagline: "Make some noise!",
     icon: "volume-high",
     route: "/(tabs)/sounds",
     colors: ["#A855F7", "#7C3AED"],
+    glowColor: "#A855F7",
     testID: "hub-sounds-btn",
+    pulseDelay: 900,
   },
 ];
+
+function HubButtonContent({ btn, btnW, btnH }: { btn: HubButton; btnW: number; btnH: number }) {
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.delay(btn.pulseDelay),
+        Animated.timing(pulse, { toValue: 1.12, duration: 700, useNativeDriver: native }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: native }),
+        Animated.delay(1800),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  return (
+    <Pressable
+      testID={btn.testID}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push(btn.route);
+      }}
+      style={({ pressed }) => [
+        styles.hubButtonWrap,
+        { width: btnW, height: btnH, shadowColor: btn.glowColor },
+        pressed && styles.hubButtonPressed,
+      ]}
+    >
+      <LinearGradient
+        colors={btn.colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.hubButton,
+          { borderColor: btn.glowColor + "55", borderWidth: 1.5 },
+        ]}
+      >
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <LinearGradient
+            colors={["rgba(255,255,255,0.38)", "rgba(255,255,255,0.0)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.glossOverlay}
+          />
+        </View>
+        <Animated.View
+          style={[
+            styles.hubIconCircleWrap,
+            { transform: [{ scale: pulse }] },
+          ]}
+        >
+          <View
+            style={[
+              styles.hubIconGlowRing,
+              { borderColor: btn.glowColor + "99" },
+            ]}
+          />
+          <View style={styles.hubIconCircle}>
+            <Ionicons name={btn.icon} size={52} color="#FFFFFF" />
+          </View>
+        </Animated.View>
+        <Text style={styles.hubButtonLabel}>{btn.label}</Text>
+        <Text style={styles.hubButtonTagline}>{btn.tagline}</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -236,7 +320,6 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Pressable onPress={handleHiddenTap} testID="settings-btn" style={styles.titleWrap}>
             <Text style={styles.appTitle}>Go Buddy Go</Text>
-            <Text style={styles.appSubtitle}>⭐ CO-PILOT MODE ⭐</Text>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -253,31 +336,7 @@ export default function HomeScreen() {
 
         <View style={[styles.hubGrid, { gap: GRID_GAP }]}>
           {HUB_BUTTONS.map((btn) => (
-            <Pressable
-              key={btn.label}
-              testID={btn.testID}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push(btn.route);
-              }}
-              style={({ pressed }) => [
-                styles.hubButtonWrap,
-                { width: btnW, height: btnH },
-                pressed && styles.hubButtonPressed,
-              ]}
-            >
-              <LinearGradient
-                colors={btn.colors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.hubButton}
-              >
-                <View style={styles.hubIconCircle}>
-                  <Ionicons name={btn.icon} size={52} color="#FFFFFF" />
-                </View>
-                <Text style={styles.hubButtonLabel}>{btn.label}</Text>
-              </LinearGradient>
-            </Pressable>
+            <HubButtonContent key={btn.label} btn={btn} btnW={btnW} btnH={btnH} />
           ))}
         </View>
       </View>
@@ -317,14 +376,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
   },
-  appSubtitle: {
-    color: "#FFD93D",
-    fontSize: 13,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
-    textAlign: "center",
-    marginTop: 2,
-  },
   hubGrid: {
     flex: 1,
     flexDirection: "row",
@@ -333,11 +384,10 @@ const styles = StyleSheet.create({
   hubButtonWrap: {
     borderRadius: 28,
     overflow: "hidden",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.38,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOpacity: 0.55,
+    shadowRadius: 18,
+    elevation: 14,
   },
   hubButtonPressed: {
     opacity: 0.88,
@@ -347,21 +397,52 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 16,
+    gap: 10,
     borderRadius: 28,
+    overflow: "hidden",
+  },
+  glossOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "45%",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    zIndex: 1,
+  },
+  hubIconCircleWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hubIconGlowRing: {
+    position: "absolute",
+    width: 106,
+    height: 106,
+    borderRadius: 53,
+    borderWidth: 2.5,
+    zIndex: 0,
   },
   hubIconCircle: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.22)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 1,
   },
   hubButtonLabel: {
     color: "#FFFFFF",
     fontSize: 22,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1,
+  },
+  hubButtonTagline: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+    marginTop: -4,
   },
 });
