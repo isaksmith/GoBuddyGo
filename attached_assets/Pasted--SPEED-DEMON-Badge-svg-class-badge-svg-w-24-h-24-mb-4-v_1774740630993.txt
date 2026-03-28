@@ -1,0 +1,189 @@
+<!-- SPEED DEMON Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="speedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ef4444"></stop>
+                        <stop offset="100%" stop-color="#f97316"></stop>
+                    </linearGradient>
+                    <linearGradient id="speedGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#fef08a"></stop>
+                        <stop offset="100%" stop-color="#eab308"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#speedGrad)" stroke-width="6"></circle>
+                <!-- Lightning Bolt -->
+                <path d="M55 20 L32 55 L50 55 L42 80 L72 45 L55 45 Z" fill="url(#speedGlow)"></path>
+            </svg>
+
+<!-- FIRST VICTORY Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="victoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#cbd5e1"></stop>
+                        <stop offset="100%" stop-color="#64748b"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#victoryGrad)" stroke-width="6"></circle>
+                <!-- Checkered Flag -->
+                <g transform="translate(25, 30) rotate(-15)">
+                    <rect x="0" y="0" width="15" height="15" fill="#ffffff"></rect>
+                    <rect x="15" y="0" width="15" height="15" fill="#000000"></rect>
+                    <rect x="30" y="0" width="15" height="15" fill="#ffffff"></rect>
+                    
+                    <rect x="0" y="15" width="15" height="15" fill="#000000"></rect>
+                    <rect x="15" y="15" width="15" height="15" fill="#ffffff"></rect>
+                    <rect x="30" y="15" width="15" height="15" fill="#000000"></rect>
+
+                    <rect x="0" y="30" width="15" height="15" fill="#ffffff"></rect>
+                    <rect x="15" y="30" width="15" height="15" fill="#000000"></rect>
+                    <rect x="30" y="30" width="15" height="15" fill="#ffffff"></rect>
+                </g>
+                <line x1="28" y1="35" x2="20" y2="75" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"></line>
+            </svg>
+
+<!-- DRIFT KING Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="driftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#a855f7"></stop>
+                        <stop offset="100%" stop-color="#ec4899"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#driftGrad)" stroke-width="6"></circle>
+                <!-- Curved Tire Tracks -->
+                <path d="M 25 80 Q 30 40, 75 25" fill="none" stroke="#d8b4fe" stroke-width="6" stroke-dasharray="8 4" stroke-linecap="round"></path>
+                <path d="M 35 85 Q 40 45, 85 30" fill="none" stroke="#fbcfe8" stroke-width="6" stroke-dasharray="8 4" stroke-linecap="round"></path>
+                <!-- Smoke puff -->
+                <circle cx="75" cy="35" r="8" fill="#e2e8f0" opacity="0.6"></circle>
+                <circle cx="65" cy="25" r="10" fill="#e2e8f0" opacity="0.5"></circle>
+            </svg>
+
+<!-- GEARHEAD Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="mechGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6"></stop>
+                        <stop offset="100%" stop-color="#14b8a6"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#mechGrad)" stroke-width="6"></circle>
+                <!-- Gear -->
+                <circle cx="50" cy="50" r="18" fill="none" stroke="#94a3b8" stroke-width="6" stroke-dasharray="6 4"></circle>
+                <circle cx="50" cy="50" r="14" fill="#94a3b8"></circle>
+                <circle cx="50" cy="50" r="6" fill="#1e293b"></circle>
+                <!-- Wrench -->
+                <path d="M30 70 L42 58 M58 42 L70 30" stroke="#f1f5f9" stroke-width="8" stroke-linecap="round"></path>
+                <path d="M65 25 A 8 8 0 1 0 75 35 L 70 30 Z" fill="#f1f5f9"></path>
+                <path d="M25 65 A 8 8 0 1 0 35 75 L 30 70 Z" fill="#f1f5f9"></path>
+            </svg>
+
+<!-- NIGHT RIDER Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#1e1b4b"></stop>
+                        <stop offset="100%" stop-color="#4338ca"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#nightGrad)" stroke-width="6"></circle>
+                <!-- Moon -->
+                <path d="M45 25 A 15 15 0 1 0 70 40 A 18 18 0 0 1 45 25 Z" fill="#fde047"></path>
+                <!-- Road -->
+                <path d="M20 80 L40 50 L60 50 L80 80 Z" fill="#334155"></path>
+                <!-- Center Line -->
+                <line x1="50" y1="80" x2="50" y2="50" stroke="#fef08a" stroke-width="2" stroke-dasharray="6 4"></line>
+                <!-- Stars -->
+                <circle cx="30" cy="30" r="1.5" fill="#fff"></circle>
+                <circle cx="70" cy="20" r="1" fill="#fff"></circle>
+                <circle cx="80" cy="55" r="2" fill="#fff"></circle>
+            </svg>
+
+<!-- ENDURANCE Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="enduranceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#10b981"></stop>
+                        <stop offset="100%" stop-color="#84cc16"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#enduranceGrad)" stroke-width="6"></circle>
+                <!-- Stopwatch -->
+                <circle cx="50" cy="52" r="22" fill="none" stroke="#6ee7b7" stroke-width="4"></circle>
+                <circle cx="50" cy="52" r="2" fill="#6ee7b7"></circle>
+                <!-- Hand -->
+                <line x1="50" y1="52" x2="60" y2="40" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"></line>
+                <!-- Top Button -->
+                <rect x="46" y="20" width="8" height="6" fill="#6ee7b7" rx="2"></rect>
+                <!-- Side Button -->
+                <path d="M 68 32 L 72 28 L 76 32 L 72 36 Z" fill="#6ee7b7"></path>
+            </svg>
+
+<!-- PERFECT START Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="launchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#22d3ee"></stop>
+                        <stop offset="100%" stop-color="#0284c7"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#launchGrad)" stroke-width="6"></circle>
+                <!-- Start Lights Box -->
+                <rect x="35" y="20" width="30" height="60" rx="8" fill="#0f172a" stroke="#475569" stroke-width="2"></rect>
+                <!-- Lights -->
+                <circle cx="50" cy="32" r="6" fill="#ef4444" opacity="0.3"></circle>
+                <circle cx="50" cy="50" r="6" fill="#eab308" opacity="0.3"></circle>
+                <circle cx="50" cy="68" r="6" fill="#22c55e" filter="drop-shadow(0 0 4px #22c55e)"></circle>
+            </svg>
+
+<!-- TRACK STAR Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#fbbf24"></stop>
+                        <stop offset="100%" stop-color="#ea580c"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#starGrad)" stroke-width="6"></circle>
+                <!-- Star -->
+                <polygon points="50,18 60,39 83,42 66,58 70,80 50,69 30,80 34,58 17,42 40,39" fill="url(#starGrad)"></polygon>
+                <!-- Orbit / Track line -->
+                <path d="M 15 50 A 35 15 0 1 0 85 50" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="4 4" opacity="0.5"></path>
+            </svg>
+
+<!-- BURNOUT Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="burnoutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#b91c1c"></stop>
+                        <stop offset="100%" stop-color="#7f1d1d"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#burnoutGrad)" stroke-width="6"></circle>
+                <!-- Flames -->
+                <path d="M30 65 Q 25 45, 45 35 Q 40 50, 50 45 Q 60 25, 65 40 Q 80 45, 70 65 Z" fill="#ef4444"></path>
+                <path d="M40 65 Q 35 50, 50 45 Q 60 35, 60 55 Q 70 55, 60 65 Z" fill="#facc15"></path>
+                <!-- Tire Base -->
+                <rect x="35" y="60" width="30" height="15" fill="#020617" rx="4"></rect>
+                <line x1="40" y1="60" x2="40" y2="75" stroke="#334155" stroke-width="2"></line>
+                <line x1="50" y1="60" x2="50" y2="75" stroke="#334155" stroke-width="2"></line>
+                <line x1="60" y1="60" x2="60" y2="75" stroke="#334155" stroke-width="2"></line>
+            </svg>
+
+<!-- GRAND CHAMP Badge -->
+<svg class="badge-svg w-24 h-24 mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="champGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#d4af37"></stop>
+                        <stop offset="100%" stop-color="#fcd34d"></stop>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="#1e293b" stroke="url(#champGrad)" stroke-width="6"></circle>
+                <!-- Trophy -->
+                <path d="M 35 25 L 65 25 L 60 50 Q 50 60, 50 65 L 50 75 L 40 75 L 40 80 L 60 80 L 60 75 L 50 75 L 50 65 Q 50 60, 40 50 Z" fill="url(#champGrad)"></path>
+                <!-- Trophy Handles -->
+                <path d="M 35 30 A 10 10 0 1 0 38 45" fill="none" stroke="url(#champGrad)" stroke-width="3"></path>
+                <path d="M 65 30 A 10 10 0 1 1 62 45" fill="none" stroke="url(#champGrad)" stroke-width="3"></path>
+                <!-- Shine -->
+                <polygon points="45,30 50,25 55,30 50,45" fill="#fef3c7" opacity="0.4"></polygon>
+            </svg>
+
