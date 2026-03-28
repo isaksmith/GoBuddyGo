@@ -257,6 +257,8 @@ interface AppContextValue {
   addDesign: (data: Omit<CarDesign, "id" | "createdAt">) => Promise<CarDesign>;
   updateDesign: (id: string, updates: Partial<Omit<CarDesign, "id" | "createdAt">>) => Promise<void>;
   deleteDesign: (id: string) => Promise<void>;
+  gamesPlayed: number;
+  incrementGamesPlayed: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -267,6 +269,7 @@ const STORAGE_KEYS = {
   session: "@gobabygobr_session",
   savedCars: "@gobabygobr_saved_cars",
   designs: "@gobabygobr_designs",
+  gamesPlayed: "@gobabygobr_games_played",
   legacyGarage: "@gobabygobr_garage",
 };
 
@@ -370,18 +373,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [savedCars, setSavedCars] = useState<SavedCar[]>([]);
   const [designs, setDesigns] = useState<CarDesign[]>([]);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
 
   useEffect(() => {
     (async () => {
       try {
-        const [rawSettings, rawHistory, rawSession, rawSavedCars, rawDesigns, rawLegacyGarage] = await Promise.all([
+        const [rawSettings, rawHistory, rawSession, rawSavedCars, rawDesigns, rawLegacyGarage, rawGamesPlayed] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.settings),
           AsyncStorage.getItem(STORAGE_KEYS.history),
           AsyncStorage.getItem(STORAGE_KEYS.session),
           AsyncStorage.getItem(STORAGE_KEYS.savedCars),
           AsyncStorage.getItem(STORAGE_KEYS.designs),
           AsyncStorage.getItem(STORAGE_KEYS.legacyGarage),
+          AsyncStorage.getItem(STORAGE_KEYS.gamesPlayed),
         ]);
+        if (rawGamesPlayed) setGamesPlayed(parseInt(rawGamesPlayed, 10) || 0);
         if (rawSettings) {
           const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) };
           const allMissionIds = ALL_MISSIONS.filter((m) => m.enabled).map((m) => m.id);
@@ -520,6 +526,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await persistDesigns(next);
   }, [persistDesigns]);
 
+  const incrementGamesPlayed = useCallback(async () => {
+    setGamesPlayed((prev) => {
+      const next = prev + 1;
+      AsyncStorage.setItem(STORAGE_KEYS.gamesPlayed, String(next));
+      return next;
+    });
+  }, []);
+
   const isStickerUnlocked = useCallback((sticker: StickerDefinition): boolean => {
     if (!sticker.unlockCondition) return true;
     const historicBadges = sessionHistory.reduce((sum, r) => sum + r.badges.length, 0);
@@ -625,6 +639,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addDesign,
         updateDesign,
         deleteDesign,
+        gamesPlayed,
+        incrementGamesPlayed,
       }}
     >
       {children}

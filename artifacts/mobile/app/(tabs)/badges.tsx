@@ -6,7 +6,7 @@ import React from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
-import { BADGE_REGISTRY, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
+import { BADGE_REGISTRY, BADGE_UNLOCK_ORDER, DEFAULT_UNLOCKED_COUNT, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
@@ -97,12 +97,15 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { sessionHistory } = useApp();
+  const { sessionHistory, gamesPlayed } = useApp();
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 82;
   const numCols = width > 600 ? 3 : 2;
   const hPad = width > 600 ? 20 : 12;
+
+  const unlockedCount = Math.min(DEFAULT_UNLOCKED_COUNT + gamesPlayed, BADGE_UNLOCK_ORDER.length);
+  const unlockedSet = new Set(BADGE_UNLOCK_ORDER.slice(0, unlockedCount));
 
   const earnedMap: Record<string, number> = {};
   for (const session of sessionHistory) {
@@ -114,10 +117,14 @@ export default function BadgesScreen() {
     }
   }
 
-  const galleryItems: GalleryItem[] = Object.values(BADGE_REGISTRY).map((meta) => ({
-    meta,
-    earnedDate: earnedMap[meta.id] ?? null,
-  }));
+  const galleryItems: GalleryItem[] = BADGE_UNLOCK_ORDER.map((id) => {
+    const meta = BADGE_REGISTRY[id];
+    const isUnlocked = unlockedSet.has(id);
+    return {
+      meta,
+      earnedDate: isUnlocked ? (earnedMap[id] ?? Date.now()) : null,
+    };
+  });
 
   const earnedCount = galleryItems.filter((i) => i.earnedDate !== null).length;
 

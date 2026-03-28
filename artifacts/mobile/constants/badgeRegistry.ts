@@ -23,7 +23,7 @@ export interface BadgeMeta {
 export const BADGE_REGISTRY: Record<string, BadgeMeta> = {
   "speed-demon": {
     id: "speed-demon",
-    title: "Speed Demon",
+    title: "Speed",
     description: "Lightning-fast reflexes!",
     gradientColors: ["#FF6B35", "#C0392B"],
     SvgComponent: SpeedDemonBadge,
@@ -107,3 +107,18 @@ export function getBadgeMeta(id: string): BadgeMeta | undefined {
 export function resolveId(id: string): string {
   return LEGACY_ID_MAP[id] ?? id;
 }
+
+export const BADGE_UNLOCK_ORDER: string[] = [
+  "first-victory",
+  "speed-demon",
+  "drift-king",
+  "gearhead",
+  "night-rider",
+  "endurance",
+  "perfect-start",
+  "track-star",
+  "burnout",
+  "grand-champ",
+];
+
+export const DEFAULT_UNLOCKED_COUNT = 2;

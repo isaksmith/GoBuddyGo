@@ -122,13 +122,14 @@ const MINI_GAMES = [
 
 export default function GamesScreen() {
   const insets = useSafeAreaInsets();
-  const { settings } = useApp();
+  const { settings, incrementGamesPlayed } = useApp();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 82;
 
   const handlePlay = useCallback((gameId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    incrementGamesPlayed();
     if (gameId === "coin-dash") {
       router.push("/coin-dash");
     } else if (gameId === "race") {
@@ -136,7 +137,7 @@ export default function GamesScreen() {
     } else {
       router.push({ pathname: "/ar", params: { missionId: gameId } });
     }
-  }, []);
+  }, [incrementGamesPlayed]);
 
   const enabledIds = settings.enabledMissionIds;
 
