@@ -24,7 +24,6 @@ const DIFFICULTY_CONFIG: {
   tagline: string;
   icon: keyof typeof Ionicons.glyphMap;
   gradientColors: [string, string];
-  glowColor: string;
 }[] = [
   {
     level: "easy",
@@ -32,7 +31,6 @@ const DIFFICULTY_CONFIG: {
     tagline: "Fun for everyone!",
     icon: "star",
     gradientColors: ["#3ECF8E", "#2DB87A"],
-    glowColor: "#3ECF8E",
   },
   {
     level: "medium",
@@ -40,7 +38,6 @@ const DIFFICULTY_CONFIG: {
     tagline: "A bit more challenging",
     icon: "flash",
     gradientColors: ["#F5C518", "#D4A800"],
-    glowColor: "#F5C518",
   },
   {
     level: "hard",
@@ -48,7 +45,6 @@ const DIFFICULTY_CONFIG: {
     tagline: "For the bravest co-pilots!",
     icon: "flame",
     gradientColors: ["#F4633A", "#D94E28"],
-    glowColor: "#F4633A",
   },
 ];
 
