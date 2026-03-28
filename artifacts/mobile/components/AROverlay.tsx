@@ -179,7 +179,7 @@ interface SpeedStarProps {
 
 export function SpeedStar({ speed }: SpeedStarProps) {
   const pulse = useRef(new Animated.Value(1)).current;
-  const glow = useRef(new Animated.Value(0.7)).current;
+  const glowOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -190,8 +190,8 @@ export function SpeedStar({ speed }: SpeedStarProps) {
     );
     const glowLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 700, useNativeDriver: native }),
-        Animated.timing(glow, { toValue: 0.5, duration: 700, useNativeDriver: native }),
+        Animated.timing(glowOpacity, { toValue: 1, duration: 700, useNativeDriver: native }),
+        Animated.timing(glowOpacity, { toValue: 0.4, duration: 700, useNativeDriver: native }),
       ])
     );
     loop.start();
@@ -206,6 +206,7 @@ export function SpeedStar({ speed }: SpeedStarProps) {
     <Animated.View
       style={[styles.speedStar, { transform: [{ scale: pulse }] }]}
     >
+      <Animated.View style={[styles.speedStarGlowRing, { opacity: glowOpacity }]} />
       <View style={styles.speedStarInner}>
         <Animated.Text style={styles.speedStarLabel}>CO-PILOT</Animated.Text>
         <Animated.Text style={styles.speedStarValue}>{speed}</Animated.Text>
@@ -272,6 +273,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 20,
     elevation: 14,
+  },
+  speedStarGlowRing: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.secondary + "44",
+    top: -12,
+    left: -12,
   },
   speedStarInner: {
     alignItems: "center",

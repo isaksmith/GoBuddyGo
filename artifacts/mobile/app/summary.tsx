@@ -6,7 +6,6 @@ import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -19,8 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-
-const { width } = Dimensions.get("window");
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();

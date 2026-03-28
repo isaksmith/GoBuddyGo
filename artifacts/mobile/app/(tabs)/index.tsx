@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors } from "@/constants/colors";
+import { Colors, GlowShadows } from "@/constants/colors";
 import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
 const { width } = Dimensions.get("window");
@@ -441,11 +441,7 @@ const styles = StyleSheet.create({
     width: width - 40,
     borderRadius: 50,
     overflow: "hidden",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.65,
-    shadowRadius: 18,
-    elevation: 12,
+    ...GlowShadows.strong,
     marginBottom: 32,
   },
   startButtonGradient: {
