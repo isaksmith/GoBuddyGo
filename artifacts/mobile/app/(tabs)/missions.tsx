@@ -19,7 +19,7 @@ import { useApp } from "@/context/AppContext";
 
 export default function MissionsScreen() {
   const insets = useSafeAreaInsets();
-  const { sessionMissions, completeMission, sessionActive, endSession, startSession } = useApp();
+  const { sessionMissions, completeMission, sessionActive, endSession } = useApp();
   const [celebratingMission, setCelebratingMission] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
 
@@ -41,6 +41,7 @@ export default function MissionsScreen() {
 
   const completed = sessionMissions.filter((m) => m.completed).length;
   const total = sessionMissions.length;
+  const pct = total > 0 ? (completed / total) * 100 : 0;
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -48,17 +49,27 @@ export default function MissionsScreen() {
   if (!sessionActive) {
     return (
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundMid]}
+        colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
         style={styles.container}
       >
         <View style={[styles.emptyState, { paddingTop: topPad + 40 }]}>
-          <Ionicons name="list" size={60} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No Active Session</Text>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="rocket-outline" size={52} color={Colors.textMuted} />
+          </View>
+          <Text style={styles.emptyTitle}>NO ACTIVE MISSION</Text>
           <Text style={styles.emptySubtitle}>
-            Start a session from the Home tab to see your missions here
+            Head to Home and tap START MISSION to begin your adventure!
           </Text>
           <Pressable onPress={() => router.push("/")} style={styles.goHomeBtn}>
-            <Text style={styles.goHomeBtnText}>Go to Home</Text>
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.goHomeBtnGradient}
+            >
+              <Ionicons name="home" size={20} color="#FFFFFF" />
+              <Text style={styles.goHomeBtnText}>GO TO HOME</Text>
+            </LinearGradient>
           </Pressable>
         </View>
       </LinearGradient>
@@ -67,31 +78,42 @@ export default function MissionsScreen() {
 
   return (
     <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid]}
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <View>
-          <Text style={styles.headerTitle}>Missions</Text>
-          <Text style={styles.headerSub}>{completed}/{total} Complete</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>MISSIONS</Text>
+            <Text style={styles.headerSub}>
+              {completed}/{total} COMPLETE
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push("/ar")}
+            style={styles.arBtn}
+            testID="open-ar-btn"
+          >
+            <LinearGradient
+              colors={[Colors.accentBlue, "#2196F3"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.arBtnGradient}
+            >
+              <Ionicons name="camera" size={18} color="#FFFFFF" />
+              <Text style={styles.arBtnText}>AR VIEW</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
-        <Pressable onPress={() => router.push("/ar")} style={styles.arBtn} testID="open-ar-btn">
-          <Ionicons name="camera" size={20} color={Colors.primary} />
-          <Text style={styles.arBtnText}>AR View</Text>
-        </Pressable>
-      </View>
 
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${total > 0 ? (completed / total) * 100 : 0}%` },
-          ]}
-        />
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${pct}%` }]} />
+          <Text style={styles.progressLabel}>{Math.round(pct)}%</Text>
+        </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110 }]}
         showsVerticalScrollIndicator={false}
       >
         {sessionMissions.map((mission, i) => (
@@ -103,9 +125,20 @@ export default function MissionsScreen() {
           />
         ))}
 
-        <Pressable onPress={handleEndSession} style={styles.endButton} testID="end-session-btn">
-          <Ionicons name="flag" size={20} color={Colors.danger} />
-          <Text style={styles.endButtonText}>End Session</Text>
+        <Pressable
+          onPress={handleEndSession}
+          style={styles.endButton}
+          testID="end-session-btn"
+        >
+          <LinearGradient
+            colors={[Colors.danger, "#C03060"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.endButtonGradient}
+          >
+            <Ionicons name="flag" size={20} color="#FFFFFF" />
+            <Text style={styles.endButtonText}>END SESSION</Text>
+          </LinearGradient>
         </Pressable>
       </ScrollView>
 
@@ -127,13 +160,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    gap: 12,
+    gap: 14,
+  },
+  emptyIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.backgroundCard,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
   },
   emptyTitle: {
     color: Colors.text,
     fontSize: 22,
     fontFamily: "Nunito_700Bold",
-    marginTop: 8,
+    letterSpacing: 2,
+    marginTop: 4,
   },
   emptySubtitle: {
     color: Colors.textSecondary,
@@ -144,80 +189,126 @@ const styles = StyleSheet.create({
   },
   goHomeBtn: {
     marginTop: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  goHomeBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 50,
   },
   goHomeBtnText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
   header: {
+    paddingHorizontal: 20,
+    paddingBottom: 0,
+  },
+  headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    alignItems: "center",
+    marginBottom: 14,
   },
   headerTitle: {
     color: Colors.text,
     fontSize: 28,
     fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
   },
   headerSub: {
     color: Colors.primary,
-    fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+    marginTop: 2,
   },
   arBtn: {
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: Colors.accentBlue,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  arBtnGradient: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 50,
   },
   arBtnText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontFamily: "Nunito_600SemiBold",
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
   },
-  progressBar: {
-    height: 4,
+  progressTrack: {
+    height: 14,
     backgroundColor: Colors.border,
-    marginHorizontal: 20,
-    borderRadius: 2,
-    marginBottom: 16,
+    borderRadius: 7,
+    marginBottom: 18,
     overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "center",
   },
   progressFill: {
     height: "100%",
     backgroundColor: Colors.accent,
-    borderRadius: 2,
+    borderRadius: 7,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  progressLabel: {
+    position: "absolute",
+    right: 8,
+    color: Colors.text,
+    fontSize: 9,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
   },
   list: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingTop: 4,
   },
   endButton: {
+    marginTop: 16,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: Colors.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  endButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: Colors.danger,
-    backgroundColor: "rgba(239, 71, 111, 0.08)",
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 50,
   },
   endButtonText: {
-    color: Colors.danger,
-    fontSize: 16,
+    color: "#FFFFFF",
+    fontSize: 17,
     fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
 });

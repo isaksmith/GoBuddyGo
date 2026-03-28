@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/constants/colors";
@@ -11,11 +12,11 @@ const BADGE_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
   timer: "timer",
 };
 
-const BADGE_COLORS: Record<string, string> = {
-  star: Colors.secondary,
-  flame: Colors.primary,
-  rocket: Colors.accent,
-  timer: Colors.accentBlue,
+const BADGE_GRADIENT_MAP: Record<string, [string, string]> = {
+  star: [Colors.secondary, "#E8A800"],
+  flame: [Colors.primary, Colors.primaryDark],
+  rocket: [Colors.accent, "#26A36A"],
+  timer: [Colors.accentBlue, "#2196F3"],
 };
 
 interface BadgeCardProps {
@@ -50,57 +51,85 @@ export function BadgeCard({ badge, index }: BadgeCardProps) {
 
   const rotation = rotate.interpolate({
     inputRange: [0, 1],
-    outputRange: ["-10deg", "0deg"],
+    outputRange: ["-12deg", "0deg"],
   });
 
   const iconName = BADGE_ICON_MAP[badge.icon] ?? "ribbon";
-  const color = BADGE_COLORS[badge.icon] ?? Colors.primary;
+  const gradientColors = BADGE_GRADIENT_MAP[badge.icon] ?? [Colors.primary, Colors.primaryDark];
 
   return (
     <Animated.View
       style={[styles.card, { transform: [{ scale }, { rotate: rotation }] }]}
     >
-      <View style={[styles.iconCircle, { borderColor: color }]}>
-        <Ionicons name={iconName} size={36} color={color} />
-      </View>
-      <Text style={styles.title}>{badge.title}</Text>
-      <Text style={styles.description}>{badge.description}</Text>
+      <LinearGradient
+        colors={[gradientColors[0] + "33", gradientColors[1] + "11"]}
+        style={styles.cardInner}
+      >
+        <View
+          style={[
+            styles.iconCircle,
+            {
+              shadowColor: gradientColors[0],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={gradientColors}
+            style={styles.iconGradient}
+          >
+            <Ionicons name={iconName} size={38} color="#FFFFFF" />
+          </LinearGradient>
+        </View>
+        <Text style={styles.title}>{badge.title.toUpperCase()}</Text>
+        <Text style={styles.description}>{badge.description}</Text>
+      </LinearGradient>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 20,
-    padding: 20,
-    alignItems: "center",
-    width: 150,
+    width: 140,
     marginHorizontal: 6,
-    borderWidth: 1.5,
+    borderRadius: 22,
+    overflow: "hidden",
+    borderWidth: 2,
     borderColor: Colors.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  cardInner: {
+    padding: 18,
+    alignItems: "center",
+    borderRadius: 22,
   },
   iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 12,
+    overflow: "hidden",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  iconGradient: {
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
   },
   title: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Nunito_700Bold",
     textAlign: "center",
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   description: {
     color: Colors.textSecondary,

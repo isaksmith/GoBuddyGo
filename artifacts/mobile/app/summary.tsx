@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +19,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+
+const { width } = Dimensions.get("window");
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
@@ -52,8 +55,17 @@ export default function SummaryScreen() {
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.parallel([
-      Animated.spring(heroScale, { toValue: 1, tension: 100, friction: 7, useNativeDriver: native }),
-      Animated.timing(heroOpacity, { toValue: 1, duration: 600, useNativeDriver: native }),
+      Animated.spring(heroScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 7,
+        useNativeDriver: native,
+      }),
+      Animated.timing(heroOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: native,
+      }),
     ]).start();
   }, []);
 
@@ -67,16 +79,19 @@ export default function SummaryScreen() {
       const canShare = await Sharing.isAvailableAsync();
 
       if (Platform.OS !== "web" && canShare && recapRef.current) {
-        const uri = await (recapRef.current as ViewShot & { capture: () => Promise<string> }).capture();
+        const uri = await (
+          recapRef.current as ViewShot & { capture: () => Promise<string> }
+        ).capture();
         await Sharing.shareAsync(uri, {
           mimeType: "image/png",
           dialogTitle: "Share your Co-Pilot recap!",
         });
       } else {
         const driverLine = childName ? `Driver: ${childName}` : "";
-        const badgeLines = badges.length > 0
-          ? `Badges: ${badges.map((b) => b.title).join(", ")}`
-          : "More badges await next session!";
+        const badgeLines =
+          badges.length > 0
+            ? `Badges: ${badges.map((b) => b.title).join(", ")}`
+            : "More badges await next session!";
         const text = [
           "🚗 GoBabyGo Buddy-Link Co-Pilot Recap 🚗",
           driverLine,
@@ -96,10 +111,10 @@ export default function SummaryScreen() {
           } catch (_e) {
             base64 = btoa(text.replace(/[^\x00-\x7F]/g, "?"));
           }
-          await Sharing.shareAsync(
-            `data:text/plain;base64,${base64}`,
-            { mimeType: "text/plain", dialogTitle: "Share your Co-Pilot recap!" }
-          );
+          await Sharing.shareAsync(`data:text/plain;base64,${base64}`, {
+            mimeType: "text/plain",
+            dialogTitle: "Share your Co-Pilot recap!",
+          });
         }
       }
     } catch (_e) {
@@ -112,13 +127,13 @@ export default function SummaryScreen() {
 
   return (
     <LinearGradient
-      colors={[Colors.background, "#0A2233", Colors.backgroundMid]}
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
       style={styles.container}
     >
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: topPad + 20, paddingBottom: bottomPad + 40 },
+          { paddingTop: topPad + 16, paddingBottom: bottomPad + 50 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -128,7 +143,7 @@ export default function SummaryScreen() {
           style={styles.recapCard}
         >
           <LinearGradient
-            colors={[Colors.background, Colors.backgroundMid]}
+            colors={[Colors.backgroundCard, Colors.backgroundDeep]}
             style={styles.recapInner}
           >
             <Animated.View
@@ -137,48 +152,84 @@ export default function SummaryScreen() {
                 { opacity: heroOpacity, transform: [{ scale: heroScale }] },
               ]}
             >
-              <View style={styles.trophyCircle}>
-                <Ionicons name="trophy" size={64} color={Colors.secondary} />
+              <View style={styles.trophyGlowRing}>
+                <LinearGradient
+                  colors={[Colors.secondary + "55", Colors.secondary + "11"]}
+                  style={styles.trophyGlowInner}
+                />
               </View>
-              <Text style={styles.heroTitle}>Mission Complete!</Text>
-              {childName ? (
-                <Text style={styles.heroSubtitle}>
-                  Great co-pilot session with {childName}!
-                </Text>
-              ) : (
-                <Text style={styles.heroSubtitle}>Amazing co-pilot work!</Text>
-              )}
+              <View style={styles.trophyCircle}>
+                <Ionicons name="trophy" size={62} color={Colors.secondary} />
+              </View>
+              <Text style={styles.heroTitle}>MISSION COMPLETE!</Text>
+              <Text style={styles.heroSubtitle}>
+                {childName
+                  ? `Amazing co-pilot session with ${childName}!`
+                  : "Amazing co-pilot work! 🚀"}
+              </Text>
             </Animated.View>
 
             <View style={styles.scoreCard}>
               <View style={styles.scoreMain}>
                 <Text style={styles.scoreValue}>{completed}</Text>
-                <Text style={styles.scoreLabel}>of {total} missions</Text>
+                <Text style={styles.scoreDividerText}>/ {total}</Text>
+                <Text style={styles.scoreLabel}>MISSIONS</Text>
               </View>
               <View style={styles.scoreDivider} />
               <View style={styles.scoreSecondary}>
-                <Ionicons name="checkmark-circle" size={36} color={Colors.accent} />
-                <Text style={styles.scorePct}>{pct}%</Text>
+                <View
+                  style={[
+                    styles.pctCircle,
+                    {
+                      backgroundColor:
+                        pct >= 80
+                          ? Colors.accent
+                          : pct >= 50
+                          ? Colors.secondary
+                          : Colors.primary,
+                    },
+                  ]}
+                >
+                  <Text style={styles.pctText}>{pct}%</Text>
+                </View>
+                <Text style={styles.scoreLabel}>SCORE</Text>
               </View>
             </View>
 
             {missions.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>What You Did</Text>
+                <Text style={styles.sectionTitle}>WHAT YOU DID</Text>
                 {missions.map((m) => (
-                  <View key={m.id} style={styles.missionRow}>
-                    <Ionicons
-                      name={m.completed ? "checkmark-circle" : "close-circle"}
-                      size={22}
-                      color={m.completed ? Colors.accent : Colors.textMuted}
-                    />
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.missionRow,
+                      m.completed && styles.missionRowDone,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.missionRowIcon,
+                        {
+                          backgroundColor: m.completed
+                            ? Colors.accent + "22"
+                            : Colors.textMuted + "22",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={m.completed ? "checkmark-circle" : "close-circle"}
+                        size={20}
+                        color={m.completed ? Colors.accent : Colors.textMuted}
+                      />
+                    </View>
                     <Text
                       style={[
                         styles.missionRowText,
                         !m.completed && styles.missionRowMuted,
                       ]}
                     >
-                      {m.title}
+                      {m.title.toUpperCase()}
                     </Text>
                   </View>
                 ))}
@@ -187,24 +238,20 @@ export default function SummaryScreen() {
 
             {badges.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Badges Earned</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.badgesScroll}
-                >
+                <Text style={styles.sectionTitle}>🏅 BADGES EARNED</Text>
+                <View style={styles.badgesGrid}>
                   {badges.map((badge, i) => (
                     <BadgeCard key={badge.id} badge={badge} index={i} />
                   ))}
-                </ScrollView>
+                </View>
               </View>
             )}
 
             {badges.length === 0 && (
               <View style={styles.encourageCard}>
-                <Ionicons name="heart" size={28} color={Colors.primary} />
+                <Ionicons name="heart" size={30} color={Colors.primary} />
                 <Text style={styles.encourageText}>
-                  Keep going! More badges await next session
+                  Keep going! More badges await next session! 🌟
                 </Text>
               </View>
             )}
@@ -224,9 +271,9 @@ export default function SummaryScreen() {
           disabled={sharing}
           testID="share-recap-btn"
         >
-          <Ionicons name="share-social" size={20} color={Colors.secondary} />
+          <Ionicons name="share-social" size={22} color={Colors.secondary} />
           <Text style={styles.shareBtnText}>
-            {sharing ? "Sharing..." : "Share Recap"}
+            {sharing ? "SHARING..." : "SHARE RECAP"}
           </Text>
         </Pressable>
 
@@ -234,11 +281,11 @@ export default function SummaryScreen() {
           <LinearGradient
             colors={[Colors.primary, Colors.primaryDark]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 1, y: 0 }}
             style={styles.doneBtnGradient}
           >
             <Ionicons name="home" size={22} color="#FFFFFF" />
-            <Text style={styles.doneBtnText}>Back to Home</Text>
+            <Text style={styles.doneBtnText}>BACK TO HOME!</Text>
           </LinearGradient>
         </Pressable>
       </ScrollView>
@@ -251,152 +298,203 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     alignItems: "center",
   },
   recapCard: {
     width: "100%",
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: Colors.border,
   },
   recapInner: {
     padding: 24,
     alignItems: "center",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 26,
   },
   heroSection: {
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: 24,
     width: "100%",
+  },
+  trophyGlowRing: {
+    position: "absolute",
+    top: -10,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    overflow: "hidden",
+  },
+  trophyGlowInner: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 80,
   },
   trophyCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "rgba(255, 209, 102, 0.1)",
-    borderWidth: 3,
+    backgroundColor: Colors.secondary + "18",
+    borderWidth: 4,
     borderColor: Colors.secondary,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 18,
     shadowColor: Colors.secondary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.7,
+    shadowRadius: 24,
+    elevation: 14,
   },
   heroTitle: {
     color: Colors.text,
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: -0.5,
-    marginBottom: 6,
+    letterSpacing: 2,
+    marginBottom: 8,
+    textShadowColor: Colors.secondary + "66",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   heroSubtitle: {
     color: Colors.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
+    lineHeight: 22,
   },
   scoreCard: {
     width: "100%",
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: Colors.background,
+    borderRadius: 22,
+    padding: 22,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: Colors.border,
     marginBottom: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   scoreMain: {
     flex: 1,
     alignItems: "center",
+    gap: 2,
   },
   scoreValue: {
     color: Colors.primary,
-    fontSize: 56,
+    fontSize: 68,
     fontFamily: "Nunito_700Bold",
-    lineHeight: 60,
+    lineHeight: 72,
+  },
+  scoreDividerText: {
+    color: Colors.textMuted,
+    fontSize: 18,
+    fontFamily: "Nunito_700Bold",
   },
   scoreLabel: {
-    color: Colors.textSecondary,
-    fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
+    color: Colors.textMuted,
+    fontSize: 10,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
+    marginTop: 2,
   },
   scoreDivider: {
-    width: 1,
-    height: 60,
+    width: 1.5,
+    height: 80,
     backgroundColor: Colors.border,
+    marginHorizontal: 8,
   },
   scoreSecondary: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: 8,
   },
-  scorePct: {
-    color: Colors.accent,
-    fontSize: 22,
+  pctCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  pctText: {
+    color: "#FFFFFF",
+    fontSize: 18,
     fontFamily: "Nunito_700Bold",
   },
   section: {
     width: "100%",
-    marginBottom: 24,
+    marginBottom: 22,
   },
   sectionTitle: {
     color: Colors.textSecondary,
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Nunito_700Bold",
-    textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 2.5,
     marginBottom: 14,
   },
   missionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
+  missionRowDone: {
+    opacity: 0.85,
+  },
+  missionRowIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   missionRowText: {
     color: Colors.text,
-    fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+    flex: 1,
   },
   missionRowMuted: {
     color: Colors.textMuted,
     textDecorationLine: "line-through",
   },
-  badgesScroll: {
-    paddingBottom: 4,
+  badgesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    justifyContent: "center",
   },
   encourageCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
     width: "100%",
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: Colors.primary + "18",
+    borderRadius: 22,
+    padding: 18,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 2,
+    borderColor: Colors.primary + "55",
   },
   encourageText: {
     flex: 1,
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Nunito_400Regular",
+    fontFamily: "Nunito_700Bold",
     lineHeight: 22,
   },
   shareBtn: {
@@ -404,13 +502,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 18,
-    paddingVertical: 16,
+    gap: 10,
+    borderRadius: 50,
+    paddingVertical: 18,
     marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: Colors.secondary,
-    backgroundColor: "rgba(255, 209, 102, 0.08)",
+    backgroundColor: Colors.secondary + "15",
+    shadowColor: Colors.secondary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
   shareBtnDisabled: {
     opacity: 0.5,
@@ -420,44 +523,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     backgroundColor: "rgba(255, 107, 107, 0.12)",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#FF6B6B",
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 50,
+    padding: 14,
     marginBottom: 8,
     width: "100%",
   },
   errorBannerText: {
     color: "#FF6B6B",
     fontSize: 14,
-    fontFamily: "Nunito_600SemiBold",
+    fontFamily: "Nunito_700Bold",
     flex: 1,
   },
   shareBtnText: {
     color: Colors.secondary,
     fontSize: 17,
     fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
   doneBtn: {
     width: "100%",
-    borderRadius: 18,
+    borderRadius: 50,
     overflow: "hidden",
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 10,
   },
   doneBtnGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    paddingVertical: 18,
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
   },
   doneBtnText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
 });

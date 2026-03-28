@@ -20,11 +20,24 @@ import { useApp, countAvailableSessionMissions } from "@/context/AppContext";
 
 const { width } = Dimensions.get("window");
 
-function StatBadge({ label, value, color }: { label: string; value: string; color: string }) {
+function StatTile({
+  label,
+  value,
+  icon,
+  color,
+}: {
+  label: string;
+  value: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+}) {
   return (
-    <View style={[styles.statBadge, { borderColor: color }]}>
+    <View style={[styles.statTile, { borderColor: color + "55" }]}>
+      <View style={[styles.statIconCircle, { backgroundColor: color + "22" }]}>
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statLabel}>{label.toUpperCase()}</Text>
     </View>
   );
 }
@@ -36,6 +49,7 @@ export default function HomeScreen() {
   const [editingName, setEditingName] = useState(false);
   const [missionWarning, setMissionWarning] = useState(false);
   const rocketAnim = useRef(new Animated.Value(0)).current;
+  const rocketGlow = useRef(new Animated.Value(0.6)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,12 +59,24 @@ export default function HomeScreen() {
     if (Platform.OS === "web") return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(rocketAnim, { toValue: -12, duration: 1500, useNativeDriver: true }),
-        Animated.timing(rocketAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
+        Animated.timing(rocketAnim, { toValue: -14, duration: 1400, useNativeDriver: true }),
+        Animated.timing(rocketAnim, { toValue: 0, duration: 1400, useNativeDriver: true }),
       ])
     );
     loop.start();
-    return () => loop.stop();
+
+    const glowLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rocketGlow, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(rocketGlow, { toValue: 0.5, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    glowLoop.start();
+
+    return () => {
+      loop.stop();
+      glowLoop.stop();
+    };
   }, []);
 
   const handleSaveName = async () => {
@@ -83,8 +109,8 @@ export default function HomeScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const native = Platform.OS !== "web";
     Animated.sequence([
-      Animated.timing(buttonScale, { toValue: 0.94, duration: 80, useNativeDriver: native }),
-      Animated.timing(buttonScale, { toValue: 1, duration: 120, useNativeDriver: native }),
+      Animated.timing(buttonScale, { toValue: 0.92, duration: 80, useNativeDriver: native }),
+      Animated.timing(buttonScale, { toValue: 1, duration: 140, useNativeDriver: native }),
     ]).start(() => router.push("/ar"));
   };
 
@@ -97,22 +123,27 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid, "#0A2233"]}
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
       style={[styles.container, { paddingTop: topPad }]}
     >
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
           style={[styles.rocketContainer, { transform: [{ translateY: rocketAnim }] }]}
         >
-          <Ionicons name="rocket" size={80} color={Colors.primary} />
+          <Animated.View
+            style={[styles.rocketGlowRing, { opacity: rocketGlow }]}
+          />
+          <View style={styles.rocketCircle}>
+            <Ionicons name="rocket" size={56} color={Colors.primary} />
+          </View>
         </Animated.View>
 
-        <Text style={styles.appTitle}>Buddy-Link</Text>
+        <Text style={styles.appTitle}>BUDDY-LINK</Text>
         <Pressable onPress={handleHiddenTap} testID="settings-btn">
-          <Text style={styles.appSubtitle}>Co-Pilot Mode</Text>
+          <Text style={styles.appSubtitle}>⭐ CO-PILOT MODE ⭐</Text>
         </Pressable>
 
         <View style={styles.nameSection}>
@@ -135,8 +166,11 @@ export default function HomeScreen() {
             </View>
           ) : (
             <Pressable onPress={() => setEditingName(true)} style={styles.nameRow}>
+              <Ionicons name="person-circle" size={24} color={Colors.accentBlue} />
               <Text style={styles.nameLabel}>
-                {settings.childName ? `Driver: ${settings.childName}` : "Tap to set driver name"}
+                {settings.childName
+                  ? `DRIVER: ${settings.childName.toUpperCase()}`
+                  : "TAP TO SET DRIVER NAME"}
               </Text>
               <Ionicons name="pencil" size={16} color={Colors.primary} />
             </Pressable>
@@ -145,54 +179,88 @@ export default function HomeScreen() {
 
         {totalSessions > 0 && (
           <View style={styles.statsRow}>
-            <StatBadge label="Sessions" value={String(totalSessions)} color={Colors.accentBlue} />
-            <StatBadge label="Missions" value={String(totalMissions)} color={Colors.accent} />
-            <StatBadge label="Badges" value={String(totalBadges)} color={Colors.secondary} />
+            <StatTile
+              label="Rides"
+              value={String(totalSessions)}
+              icon="car-sport"
+              color={Colors.accentBlue}
+            />
+            <StatTile
+              label="Missions"
+              value={String(totalMissions)}
+              icon="checkmark-circle"
+              color={Colors.accent}
+            />
+            <StatTile
+              label="Badges"
+              value={String(totalBadges)}
+              icon="star"
+              color={Colors.secondary}
+            />
           </View>
         )}
 
         {missionWarning && (
           <View style={styles.missionWarningBanner}>
-            <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
+            <Ionicons name="warning" size={20} color={Colors.secondary} />
             <Text style={styles.missionWarningText}>
-              Enable at least 3 missions in Parent Mode before starting.
+              Enable at least 3 missions in Parent Mode first!
             </Text>
           </View>
         )}
 
-        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <Pressable onPress={handleStartSession} style={styles.startButton} testID="start-session-btn">
+        <Animated.View style={[styles.startButtonWrap, { transform: [{ scale: buttonScale }] }]}>
+          <Pressable onPress={handleStartSession} testID="start-session-btn">
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.startButtonGradient}
             >
-              <Ionicons name="play" size={28} color="#FFFFFF" />
-              <Text style={styles.startButtonText}>Start Mission</Text>
+              <Ionicons name="play-circle" size={32} color="#FFFFFF" />
+              <Text style={styles.startButtonText}>START MISSION!</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
 
         {sessionHistory.length > 0 && (
           <View style={styles.recentSection}>
-            <Text style={styles.sectionTitle}>Recent Sessions</Text>
-            {sessionHistory.slice(0, 3).map((session) => (
-              <View key={session.id} style={styles.sessionCard}>
+            <Text style={styles.sectionTitle}>⏱ RECENT RIDES</Text>
+            {sessionHistory.slice(0, 3).map((session, idx) => (
+              <View
+                key={session.id}
+                style={[
+                  styles.sessionCard,
+                  idx === 0 && styles.sessionCardFirst,
+                ]}
+              >
                 <View style={styles.sessionInfo}>
                   <Text style={styles.sessionDate}>
-                    {new Date(session.date).toLocaleDateString()}
+                    {new Date(session.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </Text>
                   <Text style={styles.sessionStats}>
-                    {session.missionsCompleted}/{session.totalMissions} missions
-                    {" · "}
-                    {Math.floor(session.durationSeconds / 60)}m {session.durationSeconds % 60}s
+                    {session.missionsCompleted}/{session.totalMissions} MISSIONS ·{" "}
+                    {Math.floor(session.durationSeconds / 60)}m
                   </Text>
                 </View>
-                <View style={styles.sessionBadges}>
-                  {session.badges.map((b) => (
-                    <Ionicons key={b.id} name="star" size={16} color={Colors.secondary} />
-                  ))}
+                <View style={styles.sessionRight}>
+                  <View style={styles.pctCircle}>
+                    <Text style={styles.pctText}>
+                      {session.totalMissions > 0
+                        ? Math.round(
+                            (session.missionsCompleted / session.totalMissions) * 100
+                          )
+                        : 0}%
+                    </Text>
+                  </View>
+                  <View style={styles.sessionBadges}>
+                    {session.badges.slice(0, 3).map((b) => (
+                      <Ionicons key={b.id} name="star" size={14} color={Colors.secondary} />
+                    ))}
+                  </View>
                 </View>
               </View>
             ))}
@@ -209,27 +277,57 @@ const styles = StyleSheet.create({
   },
   scroll: {
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
   rocketContainer: {
-    marginTop: 40,
-    marginBottom: 10,
+    marginTop: 32,
+    marginBottom: 14,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  rocketGlowRing: {
+    position: "absolute",
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: Colors.primary + "33",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 30,
+    elevation: 0,
+  },
+  rocketCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.backgroundCard,
+    borderWidth: 3,
+    borderColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 18,
+    elevation: 12,
   },
   appTitle: {
     color: Colors.text,
-    fontSize: 38,
+    fontSize: 40,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: -0.5,
+    letterSpacing: 4,
     marginBottom: 4,
+    textShadowColor: Colors.primary + "88",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
   appSubtitle: {
-    color: Colors.primary,
-    fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
-    letterSpacing: 3,
-    textTransform: "uppercase",
-    marginBottom: 32,
+    color: Colors.secondary,
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
+    marginBottom: 28,
   },
   nameSection: {
     width: "100%",
@@ -239,18 +337,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 10,
     backgroundColor: Colors.backgroundCard,
-    borderRadius: 14,
+    borderRadius: 50,
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderWidth: 1,
+    paddingHorizontal: 22,
+    borderWidth: 2,
     borderColor: Colors.border,
   },
   nameLabel: {
     color: Colors.textSecondary,
-    fontSize: 16,
-    fontFamily: "Nunito_600SemiBold",
+    fontSize: 14,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+    flex: 1,
+    textAlign: "center",
   },
   nameInputRow: {
     flexDirection: "row",
@@ -260,55 +361,73 @@ const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
     backgroundColor: Colors.backgroundCard,
-    borderRadius: 14,
+    borderRadius: 50,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 22,
     color: Colors.text,
     fontSize: 16,
-    fontFamily: "Nunito_600SemiBold",
-    borderWidth: 1.5,
+    fontFamily: "Nunito_700Bold",
+    borderWidth: 2,
     borderColor: Colors.primary,
   },
   saveBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 8,
   },
   statsRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 32,
+    gap: 10,
+    marginBottom: 28,
+    width: "100%",
   },
-  statBadge: {
+  statTile: {
     flex: 1,
     backgroundColor: Colors.backgroundCard,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
     alignItems: "center",
-    borderWidth: 1.5,
+    borderWidth: 2,
+    gap: 6,
+  },
+  statIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: "Nunito_700Bold",
-    marginBottom: 2,
+    lineHeight: 30,
   },
   statLabel: {
     color: Colors.textMuted,
-    fontSize: 12,
-    fontFamily: "Nunito_600SemiBold",
+    fontSize: 10,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
   },
   missionWarningBanner: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(255, 209, 102, 0.12)",
-    borderWidth: 1,
+    backgroundColor: Colors.secondary + "22",
+    borderWidth: 2,
     borderColor: Colors.secondary,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     marginBottom: 12,
     width: "100%",
   },
@@ -316,18 +435,17 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.secondary,
     fontSize: 14,
-    fontFamily: "Nunito_600SemiBold",
-    lineHeight: 20,
+    fontFamily: "Nunito_700Bold",
   },
-  startButton: {
-    width: width - 48,
-    borderRadius: 20,
+  startButtonWrap: {
+    width: width - 40,
+    borderRadius: 50,
     overflow: "hidden",
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.65,
+    shadowRadius: 18,
+    elevation: 12,
     marginBottom: 32,
   },
   startButtonGradient: {
@@ -335,22 +453,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    paddingVertical: 20,
+    paddingVertical: 22,
+    borderRadius: 50,
   },
   startButtonText: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: -0.3,
+    letterSpacing: 2,
   },
   recentSection: {
     width: "100%",
   },
   sectionTitle: {
     color: Colors.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Nunito_700Bold",
-    textTransform: "uppercase",
     letterSpacing: 2,
     marginBottom: 12,
   },
@@ -358,28 +476,59 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.backgroundCard,
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.border,
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  sessionCardFirst: {
+    borderColor: Colors.primary + "88",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sessionInfo: {
     flex: 1,
+    gap: 3,
   },
   sessionDate: {
     color: Colors.text,
     fontSize: 14,
-    fontFamily: "Nunito_600SemiBold",
-    marginBottom: 2,
+    fontFamily: "Nunito_700Bold",
   },
   sessionStats: {
     color: Colors.textMuted,
+    fontSize: 11,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.5,
+  },
+  sessionRight: {
+    alignItems: "center",
+    gap: 4,
+  },
+  pctCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  pctText: {
+    color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Nunito_400Regular",
+    fontFamily: "Nunito_700Bold",
   },
   sessionBadges: {
     flexDirection: "row",
-    gap: 4,
+    gap: 2,
   },
 });

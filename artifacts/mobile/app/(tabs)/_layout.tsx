@@ -1,11 +1,11 @@
 import { BlurView } from "expo-blur";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { Colors } from "@/constants/colors";
 
 function NativeTabLayout() {
@@ -27,77 +27,78 @@ function NativeTabLayout() {
   );
 }
 
+const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
+  index: { active: "home", inactive: "home-outline" },
+  missions: { active: "checkmark-circle", inactive: "checkmark-circle-outline" },
+  history: { active: "trophy", inactive: "trophy-outline" },
+};
+
 function ClassicTabLayout() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
   return (
     <Tabs
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: Colors.tabBarActive,
         tabBarInactiveTintColor: Colors.tabBarInactive,
         tabBarStyle: {
           position: "absolute",
           backgroundColor: isIOS ? "transparent" : Colors.tabBarBg,
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: Colors.border,
+          borderTopWidth: 0,
           elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
+          height: isWeb ? 84 : 72,
+          paddingBottom: isWeb ? 16 : 10,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontFamily: "Nunito_700Bold",
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          marginTop: 2,
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={90}
+              intensity={95}
               tint="dark"
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, styles.tabBarBlur]}
             />
-          ) : isWeb ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: Colors.tabBarBg },
-              ]}
-            />
-          ) : null,
-      }}
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.tabBarBg]} />
+          ),
+        tabBarIcon: ({ color, focused }) => {
+          const icons = TAB_ICONS[route.name] ?? TAB_ICONS["index"];
+          const iconName = focused ? icons.active : icons.inactive;
+          const iosName =
+            route.name === "index"
+              ? focused
+                ? "house.fill"
+                : "house"
+              : route.name === "missions"
+              ? focused
+                ? "checkmark.circle.fill"
+                : "checkmark.circle"
+              : focused
+              ? "trophy.fill"
+              : "trophy";
+          return (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              {isIOS ? (
+                <SymbolView name={iosName} tintColor={color} size={26} />
+              ) : (
+                <Ionicons name={iconName} size={26} color={color} />
+              )}
+            </View>
+          );
+        },
+      })}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="house.fill" tintColor={color} size={24} />
-            ) : (
-              <Feather name="home" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="missions"
-        options={{
-          title: "Missions",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="checkmark.circle.fill" tintColor={color} size={24} />
-            ) : (
-              <Ionicons name="checkmark-circle-outline" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "History",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="clock.fill" tintColor={color} size={24} />
-            ) : (
-              <Ionicons name="time-outline" size={22} color={color} />
-            ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="missions" options={{ title: "Missions" }} />
+      <Tabs.Screen name="history" options={{ title: "History" }} />
     </Tabs>
   );
 }
@@ -108,3 +109,30 @@ export default function TabLayout() {
   }
   return <ClassicTabLayout />;
 }
+
+const styles = StyleSheet.create({
+  tabBarBg: {
+    backgroundColor: Colors.tabBarBg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.primary + "33",
+  },
+  tabBarBlur: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.primary + "33",
+  },
+  iconWrap: {
+    width: 42,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 17,
+  },
+  iconWrapActive: {
+    backgroundColor: Colors.primary + "25",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+});
