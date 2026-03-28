@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -26,6 +27,33 @@ import { PlacedSticker, StickerDefinition, STICKER_CATALOG, useApp } from "@/con
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PHOTO_AREA_HEIGHT = 280;
+
+function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.replace("/");
+      }}
+      style={({ pressed }) => [
+        styles.homeBtn,
+        { bottom: bottomOffset },
+        pressed && styles.homeBtnPressed,
+      ]}
+      testID="home-btn-garage"
+    >
+      <LinearGradient
+        colors={["#F4633A", "#C13E20"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.homeBtnGradient}
+      >
+        <Ionicons name="home" size={28} color="#FFFFFF" />
+        <Text style={styles.homeBtnText}>HOME</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
 
 function DraggableSticker({
   placed,
@@ -121,6 +149,7 @@ export default function GarageScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const homeBtnBottom = insets.bottom + 82;
 
   const openPicker = useCallback(() => {
     setPickerVisible(true);
@@ -232,7 +261,7 @@ export default function GarageScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: topPad + 8, paddingBottom: bottomPad + 110 },
+          { paddingTop: topPad + 8, paddingBottom: homeBtnBottom + 76 },
         ]}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!pickerVisible}
@@ -424,6 +453,8 @@ export default function GarageScreen() {
         isStickerUnlocked={isStickerUnlocked}
         slideAnim={slideAnim}
       />
+
+      {!pickerVisible && <HomeButton bottomOffset={homeBtnBottom} />}
     </LinearGradient>
   );
 }
@@ -770,5 +801,36 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  homeBtn: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: "#F4633A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 100,
+  },
+  homeBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  homeBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  homeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
   },
 });

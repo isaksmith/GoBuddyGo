@@ -12,9 +12,37 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import MissionCard from "@/components/MissionCard";
 import { Colors } from "@/constants/colors";
 import { useApp, SessionMission } from "@/context/AppContext";
+
+function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.replace("/");
+      }}
+      style={({ pressed }) => [
+        styles.homeBtn,
+        { bottom: bottomOffset },
+        pressed && styles.homeBtnPressed,
+      ]}
+      testID="home-btn-games"
+    >
+      <LinearGradient
+        colors={["#F4633A", "#C13E20"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.homeBtnGradient}
+      >
+        <Ionicons name="home" size={28} color="#FFFFFF" />
+        <Text style={styles.homeBtnText}>HOME</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -55,6 +83,7 @@ export default function GamesScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const homeBtnBottom = insets.bottom + 82;
 
   const handleSelectDifficulty = (level: Difficulty) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -88,7 +117,7 @@ export default function GamesScreen() {
         </View>
 
         <ScrollView
-          contentContainerStyle={[styles.pickerList, { paddingBottom: bottomPad + 110 }]}
+          contentContainerStyle={[styles.pickerList, { paddingBottom: homeBtnBottom + 76 }]}
           showsVerticalScrollIndicator={false}
         >
           {DIFFICULTY_CONFIG.map((config) => (
@@ -118,6 +147,7 @@ export default function GamesScreen() {
             </Pressable>
           ))}
         </ScrollView>
+        <HomeButton bottomOffset={homeBtnBottom} />
       </LinearGradient>
     );
   }
@@ -148,7 +178,7 @@ export default function GamesScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76 }]}
         showsVerticalScrollIndicator={false}
       >
         {filteredMissions.length > 0 ? (
@@ -172,6 +202,7 @@ export default function GamesScreen() {
           </View>
         )}
       </ScrollView>
+      <HomeButton bottomOffset={homeBtnBottom} />
     </LinearGradient>
   );
 }
@@ -288,5 +319,36 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
     lineHeight: 22,
+  },
+  homeBtn: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: "#F4633A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 100,
+  },
+  homeBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  homeBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  homeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
   },
 });

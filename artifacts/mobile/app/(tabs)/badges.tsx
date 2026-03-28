@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -7,10 +8,38 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 
+function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.replace("/");
+      }}
+      style={({ pressed }) => [
+        styles.homeBtn,
+        { bottom: bottomOffset },
+        pressed && styles.homeBtnPressed,
+      ]}
+      testID="home-btn-badges"
+    >
+      <LinearGradient
+        colors={["#F4633A", "#C13E20"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.homeBtnGradient}
+      >
+        <Ionicons name="home" size={28} color="#FFFFFF" />
+        <Text style={styles.homeBtnText}>HOME</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
   const { sessionHistory } = useApp();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const homeBtnBottom = insets.bottom + 82;
 
   const allBadges = sessionHistory.flatMap((s) =>
     s.badges.map((b) => ({ ...b, date: s.date }))
@@ -22,9 +51,6 @@ export default function BadgesScreen() {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="badges-home-btn">
-          <Ionicons name="arrow-back" size={26} color={Colors.text} />
-        </Pressable>
         <Text style={styles.headerTitle}>⭐ Badges</Text>
         <View style={styles.countPill}>
           <Text style={styles.countText}>{allBadges.length} EARNED</Text>
@@ -35,7 +61,7 @@ export default function BadgesScreen() {
         data={allBadges}
         keyExtractor={(_, i) => String(i)}
         numColumns={2}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76 }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -60,6 +86,8 @@ export default function BadgesScreen() {
           </View>
         )}
       />
+
+      <HomeButton bottomOffset={homeBtnBottom} />
     </LinearGradient>
   );
 }
@@ -74,9 +102,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     gap: 10,
-  },
-  backBtn: {
-    marginRight: 2,
   },
   headerTitle: {
     flex: 1,
@@ -101,7 +126,6 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 12,
-    paddingBottom: 40,
     gap: 12,
   },
   badgeCard: {
@@ -167,5 +191,36 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
     lineHeight: 21,
+  },
+  homeBtn: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: "#F4633A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 100,
+  },
+  homeBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  homeBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  homeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
   },
 });

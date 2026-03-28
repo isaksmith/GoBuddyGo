@@ -1,6 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { useAudioPlayer } from "expo-audio";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -13,6 +15,67 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.replace("/");
+      }}
+      style={({ pressed }) => [
+        homeBtnStyles.homeBtn,
+        { bottom: bottomOffset },
+        pressed && homeBtnStyles.homeBtnPressed,
+      ]}
+      testID="home-btn-sounds"
+    >
+      <LinearGradient
+        colors={["#F4633A", "#C13E20"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={homeBtnStyles.homeBtnGradient}
+      >
+        <Ionicons name="home" size={28} color="#FFFFFF" />
+        <Text style={homeBtnStyles.homeBtnText}>HOME</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+const homeBtnStyles = StyleSheet.create({
+  homeBtn: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    borderRadius: 50,
+    overflow: "hidden",
+    shadowColor: "#F4633A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 12,
+    zIndex: 100,
+  },
+  homeBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  homeBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  homeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 3,
+  },
+});
 
 const { width } = Dimensions.get("window");
 const COLS = 3;
@@ -99,7 +162,7 @@ function SoundPad({ btn }: { btn: SoundButton }) {
 export default function SoundsScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const homeBtnBottom = insets.bottom + 82;
 
   return (
     <LinearGradient
@@ -112,13 +175,15 @@ export default function SoundsScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.grid, { paddingBottom: bottomPad + 90 }]}
+        contentContainerStyle={[styles.grid, { paddingBottom: homeBtnBottom + 76 }]}
         showsVerticalScrollIndicator={false}
       >
         {SOUNDS.map((btn) => (
           <SoundPad key={btn.id} btn={btn} />
         ))}
       </ScrollView>
+
+      <HomeButton bottomOffset={homeBtnBottom} />
     </LinearGradient>
   );
 }
