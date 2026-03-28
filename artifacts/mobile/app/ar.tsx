@@ -15,7 +15,6 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,23 +24,25 @@ import { ProximityWarning } from "@/components/ProximityWarning";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 
+type AccelerometerData = { x: number; y: number; z: number };
+type AccelerometerSubscription = { remove: () => void };
+
 function useAccelerometerProxy() {
   const [shaking, setShaking] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
 
-    let Accelerometer: any;
-    let sub: any;
+    let sub: AccelerometerSubscription | null = null;
 
     (async () => {
       try {
         const sensors = await import("expo-sensors");
-        Accelerometer = sensors.Accelerometer;
+        const { Accelerometer } = sensors;
         Accelerometer.setUpdateInterval(200);
         let lastMag = 0;
 
-        sub = Accelerometer.addListener((data: { x: number; y: number; z: number }) => {
+        sub = Accelerometer.addListener((data: AccelerometerData) => {
           const mag = Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z);
           const delta = Math.abs(mag - lastMag);
           lastMag = mag;
@@ -64,15 +65,14 @@ function useAccelerometerProxy() {
 export default function ARScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const { sessionMissions, completeMission, sessionActive, startSession } = useApp();
-  const [currentMissionIndex, setCurrentMissionIndex] = useState(0);
+  const { sessionMissions, completeMission, sessionActive, startSession, endSession } = useApp();
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [speed, setSpeed] = useState(0);
   const proximityWarning = useAccelerometerProxy();
+  const isNavigating = useRef(false);
 
   const pulseScale = useSharedValue(1);
-  const shieldOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (!sessionActive) {
@@ -92,13 +92,6 @@ export default function ARScreen() {
   }, []);
 
   useEffect(() => {
-    shieldOpacity.value = withSpring(
-      sessionMissions.length > 0 ? 1 : 0,
-      { mass: 0.5, stiffness: 120 }
-    );
-  }, [sessionMissions.length]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       setSpeed(Math.floor(Math.random() * 3));
     }, 3000);
@@ -110,6 +103,9 @@ export default function ARScreen() {
   }));
 
   const currentMission = sessionMissions.find((m) => !m.completed);
+  const completed = sessionMissions.filter((m) => m.completed).length;
+  const total = sessionMissions.length;
+  const allDone = !currentMission && total > 0;
 
   const handleCompleteMission = () => {
     if (!currentMission) return;
@@ -117,6 +113,13 @@ export default function ARScreen() {
     completeMission(currentMission.id);
     setCelebratingTitle(currentMission.title);
     setCelebrationVisible(true);
+  };
+
+  const handleGoToSummary = async () => {
+    if (isNavigating.current) return;
+    isNavigating.current = true;
+    await endSession();
+    router.push("/summary");
   };
 
   if (!permission) {
@@ -144,9 +147,6 @@ export default function ARScreen() {
       </View>
     );
   }
-
-  const completed = sessionMissions.filter((m) => m.completed).length;
-  const total = sessionMissions.length;
 
   return (
     <View style={styles.container}>
@@ -176,6 +176,11 @@ export default function ARScreen() {
           <View style={styles.statusDot} />
         </View>
 
+        <MissionShield
+          visible={!!currentMission}
+          label={currentMission ? currentMission.title : ""}
+        />
+
         {currentMission && (
           <Animated.View style={[styles.missionOverlay, pulseStyle]}>
             <View style={styles.missionBadge}>
@@ -204,15 +209,16 @@ export default function ARScreen() {
           </View>
         )}
 
-        {!currentMission && total > 0 && (
+        {allDone && (
           <View style={[styles.completeArea, { paddingBottom: insets.bottom + 20 }]}>
             <View style={styles.allDoneBadge}>
               <Ionicons name="trophy" size={24} color={Colors.secondary} />
               <Text style={styles.allDoneText}>All Missions Complete!</Text>
             </View>
             <Pressable
-              onPress={() => router.push("/summary")}
+              onPress={handleGoToSummary}
               style={styles.summaryBtn}
+              testID="see-summary-btn"
             >
               <Text style={styles.summaryBtnText}>See Summary</Text>
             </Pressable>

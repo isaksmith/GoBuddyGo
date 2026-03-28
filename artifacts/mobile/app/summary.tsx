@@ -1,8 +1,9 @@
 import * as Haptics from "expo-haptics";
+import * as Sharing from "expo-sharing";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -19,26 +20,70 @@ import { useApp } from "@/context/AppContext";
 
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
-  const { sessionMissions, currentBadges, settings, endSession } = useApp();
+  const { sessionMissions, currentBadges, settings, endSession, sessionActive } = useApp();
   const heroScale = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
+  const [sharing, setSharing] = useState(false);
 
   const completed = sessionMissions.filter((m) => m.completed).length;
   const total = sessionMissions.length;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const native = Platform.OS !== "web";
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.parallel([
-      Animated.spring(heroScale, { toValue: 1, tension: 100, friction: 7, useNativeDriver: true }),
-      Animated.timing(heroOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(heroScale, { toValue: 1, tension: 100, friction: 7, useNativeDriver: native }),
+      Animated.timing(heroOpacity, { toValue: 1, duration: 600, useNativeDriver: native }),
     ]).start();
   }, []);
 
   const handleDone = async () => {
-    await endSession();
+    if (sessionActive) {
+      await endSession();
+    }
     router.replace("/");
+  };
+
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      const driverLine = settings.childName ? `Driver: ${settings.childName}` : "";
+      const badgeLines = currentBadges.length > 0
+        ? `Badges earned: ${currentBadges.map((b) => b.title).join(", ")}`
+        : "Keep going — badges await next time!";
+      const missionLines = sessionMissions
+        .map((m) => `${m.completed ? "✅" : "⬜"} ${m.title}`)
+        .join("\n");
+
+      const text = [
+        "🚗 GoBabyGo Buddy-Link Co-Pilot Report 🚗",
+        driverLine,
+        "",
+        `Missions: ${completed}/${total} complete (${pct}%)`,
+        "",
+        missionLines,
+        "",
+        badgeLines,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(
+          `data:text/plain;base64,${btoa(unescape(encodeURIComponent(text)))}`,
+          { mimeType: "text/plain", dialogTitle: "Share your Co-Pilot recap!" }
+        );
+      } else {
+        console.log("Sharing not available on this platform");
+      }
+    } catch (_e) {
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -80,9 +125,7 @@ export default function SummaryScreen() {
           <View style={styles.scoreDivider} />
           <View style={styles.scoreSecondary}>
             <Ionicons name="checkmark-circle" size={36} color={Colors.accent} />
-            <Text style={styles.scorePct}>
-              {total > 0 ? Math.round((completed / total) * 100) : 0}%
-            </Text>
+            <Text style={styles.scorePct}>{pct}%</Text>
           </View>
         </View>
 
@@ -132,6 +175,18 @@ export default function SummaryScreen() {
             </Text>
           </View>
         )}
+
+        <Pressable
+          onPress={handleShare}
+          style={[styles.shareBtn, sharing && styles.shareBtnDisabled]}
+          disabled={sharing}
+          testID="share-recap-btn"
+        >
+          <Ionicons name="share-social" size={20} color={Colors.secondary} />
+          <Text style={styles.shareBtnText}>
+            {sharing ? "Sharing..." : "Share Recap"}
+          </Text>
+        </Pressable>
 
         <Pressable onPress={handleDone} style={styles.doneBtn} testID="done-btn">
           <LinearGradient
@@ -287,6 +342,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Nunito_400Regular",
     lineHeight: 22,
+  },
+  shareBtn: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 18,
+    paddingVertical: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: Colors.secondary,
+    backgroundColor: "rgba(255, 209, 102, 0.08)",
+  },
+  shareBtnDisabled: {
+    opacity: 0.5,
+  },
+  shareBtnText: {
+    color: Colors.secondary,
+    fontSize: 17,
+    fontFamily: "Nunito_700Bold",
   },
   doneBtn: {
     width: "100%",

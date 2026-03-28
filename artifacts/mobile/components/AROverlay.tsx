@@ -31,9 +31,9 @@ function createParticle(startX: number, startY: number): Particle {
   };
 }
 
-function animateParticle(particle: Particle, onEnd: () => void) {
-  const toX = (particle.x as any)._value + (Math.random() - 0.5) * 200;
-  const toY = (particle.y as any)._value - Math.random() * 300 - 50;
+function animateParticle(particle: Particle, startX: number, startY: number, onEnd: () => void) {
+  const toX = startX + (Math.random() - 0.5) * 200;
+  const toY = startY - Math.random() * 300 - 50;
 
   Animated.sequence([
     Animated.parallel([
@@ -91,7 +91,7 @@ export function SparkleEffect({ active, centerX = width / 2, centerY = height / 
         const p = createParticle(centerX, centerY);
         particles.current.push(p);
         const timer = setTimeout(() => {
-          animateParticle(p, () => {
+          animateParticle(p, centerX, centerY, () => {
             particles.current = particles.current.filter((x) => x !== p);
           });
         }, i * 80);

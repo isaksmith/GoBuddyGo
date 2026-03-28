@@ -85,8 +85,9 @@ export default function HomeScreen() {
             onPress={() => router.push("/parent-mode")}
             style={styles.settingsBtn}
             testID="settings-btn"
+            hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
           >
-            <Ionicons name="lock-closed" size={20} color={Colors.textMuted} />
+            <Ionicons name="lock-closed" size={14} color={Colors.border} />
           </Pressable>
         </View>
 
@@ -191,14 +192,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   settingsBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundCard,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.border,
+    opacity: 0.4,
   },
   rocketContainer: {
     marginTop: 20,

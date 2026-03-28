@@ -85,7 +85,7 @@ export default function MissionsScreen() {
         <View
           style={[
             styles.progressFill,
-            { width: `${total > 0 ? (completed / total) * 100 : 0}%` as any },
+            { width: `${total > 0 ? (completed / total) * 100 : 0}%` },
           ]}
         />
       </View>
