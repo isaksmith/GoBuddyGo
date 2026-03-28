@@ -82,7 +82,6 @@ export default function ARScreen() {
   const [celebratingTitle, setCelebratingTitle] = useState<string | null>(null);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [timeUp, setTimeUp] = useState(false);
   const proximityWarning = useAccelerometerProxy();
   const isNavigating = useRef(false);
   const hasAutoStarted = useRef(false);
@@ -123,7 +122,6 @@ export default function ARScreen() {
       const remaining = totalSeconds - elapsed;
       if (remaining <= 0) {
         setTimeLeft(0);
-        setTimeUp(true);
       } else {
         setTimeLeft(remaining);
       }
@@ -241,13 +239,6 @@ export default function ARScreen() {
               </View>
             )}
           </View>
-
-          {timeUp && !allDone && (
-            <View style={styles.timeUpBanner}>
-              <Ionicons name="alarm" size={20} color={Colors.secondary} />
-              <Text style={styles.timeUpText}>⏰ TIME'S UP! FINISH UP!</Text>
-            </View>
-          )}
 
           {currentMission && (
             <Animated.View style={[styles.missionOverlay, pulseStyle]}>
@@ -484,28 +475,6 @@ const styles = StyleSheet.create({
   },
   timerTextWarning: {
     color: Colors.secondary,
-  },
-  timeUpBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(244, 99, 58, 0.92)",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 50,
-    marginHorizontal: 20,
-    justifyContent: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  timeUpText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
   },
   missionOverlay: {
     marginHorizontal: 16,
