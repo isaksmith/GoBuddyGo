@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback } from "react";
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -15,51 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-
-function GoldCoinIcon({ size = 40 }: { size?: number }) {
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: "#D4A017",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 2,
-        borderColor: "#FFE066",
-        shadowColor: "#F5C518",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.8,
-        shadowRadius: 4,
-        elevation: 6,
-      }}
-    >
-      <View
-        style={{
-          width: size * 0.68,
-          height: size * 0.68,
-          borderRadius: (size * 0.68) / 2,
-          backgroundColor: "#F5C518",
-          justifyContent: "center",
-          alignItems: "center",
-          borderWidth: 1.5,
-          borderColor: "#FFE566",
-        }}
-      >
-        <Text
-          style={{
-            color: "#7A5000",
-            fontFamily: "Nunito_700Bold",
-            fontSize: size * 0.36,
-          }}
-        >
-          $
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
   return (
@@ -92,22 +48,14 @@ const FEATURED_GAMES = [
   {
     id: "race",
     title: "Race",
-    description: "Start your engines! Hit the gas at the green light and nail a pit stop.",
-    emoji: "🏎️",
-    colors: ["#F5C518CC", "#D4A80033"] as [string, string],
-    accentColor: "#F5C518",
-    borderColor: "#F5C51855",
-    isGoldCoin: false,
+    color: "#F5C518",
+    imageUri: "https://abs.twimg.com/emoji/v2/72x72/1f3ce.png",
   },
   {
     id: "coin-dash",
     title: "Coin Dash",
-    description: "Drive your car around and collect coins with the D-pad!",
-    emoji: "",
-    colors: ["#3ECF8ECC", "#2DB87A33"] as [string, string],
-    accentColor: "#3ECF8E",
-    borderColor: "#3ECF8E55",
-    isGoldCoin: true,
+    color: "#3ECF8E",
+    imageUri: "https://abs.twimg.com/emoji/v2/72x72/1f4b0.png",
   },
 ];
 
@@ -168,43 +116,27 @@ export default function GamesScreen() {
           </LinearGradient>
         </View>
 
-        {FEATURED_GAMES.map((game) => (
-          <Pressable
-            key={game.id}
-            onPress={() => handlePlay(game.id)}
-            style={({ pressed }) => [
-              styles.featuredCard,
-              { borderColor: game.borderColor },
-              pressed && styles.featuredCardPressed,
-            ]}
-            testID={`game-${game.id}`}
-          >
-            <LinearGradient
-              colors={game.colors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.featuredCardGradient}
+        <View style={styles.miniGrid}>
+          {FEATURED_GAMES.map((game) => (
+            <Pressable
+              key={game.id}
+              onPress={() => handlePlay(game.id)}
+              style={({ pressed }) => [
+                styles.miniCard,
+                { backgroundColor: game.color },
+                pressed && styles.miniCardPressed,
+              ]}
+              testID={`game-${game.id}`}
             >
-              <View style={[styles.featuredIconCircle, { backgroundColor: game.accentColor + "20", borderColor: game.accentColor + "55" }]}>
-                {game.isGoldCoin ? (
-                  <GoldCoinIcon size={48} />
-                ) : (
-                  <Text style={styles.featuredEmoji}>{game.emoji}</Text>
-                )}
-              </View>
-              <View style={styles.featuredInfo}>
-                <Text style={styles.featuredTitle}>{game.title}</Text>
-                <Text style={styles.featuredDesc}>{game.description}</Text>
-                <View style={styles.featuredPlayRow}>
-                  <View style={[styles.featuredPlayBtn, { backgroundColor: game.accentColor }]}>
-                    <Ionicons name="play" size={14} color="#FFFFFF" />
-                    <Text style={styles.featuredPlayText}>PLAY NOW</Text>
-                  </View>
-                </View>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        ))}
+              <Image
+                source={{ uri: game.imageUri }}
+                style={styles.miniGif}
+                resizeMode="contain"
+              />
+              <Text style={styles.miniLabel}>{game.title}</Text>
+            </Pressable>
+          ))}
+        </View>
 
         {/* ── MINI GAMES section ────────────────────────────── */}
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
@@ -284,74 +216,6 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1.5,
   },
-  featuredCard: {
-    borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 12,
-    borderWidth: 2,
-    shadowColor: "#F5C518",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 10,
-    backgroundColor: Colors.backgroundCard,
-  },
-  featuredCardPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.97 }],
-  },
-  featuredCardGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
-    gap: 16,
-  },
-  featuredIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  featuredEmoji: {
-    fontSize: 40,
-  },
-  featuredInfo: {
-    flex: 1,
-    gap: 6,
-  },
-  featuredTitle: {
-    color: Colors.text,
-    fontSize: 22,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-  },
-  featuredDesc: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontFamily: "Nunito_400Regular",
-    lineHeight: 18,
-  },
-  featuredPlayRow: {
-    flexDirection: "row",
-    marginTop: 4,
-  },
-  featuredPlayBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 50,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  featuredPlayText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1.5,
-  },
   miniGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -375,6 +239,10 @@ const styles = StyleSheet.create({
   miniCardPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.95 }],
+  },
+  miniGif: {
+    width: 64,
+    height: 64,
   },
   miniEmoji: {
     fontSize: 42,
