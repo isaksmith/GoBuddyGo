@@ -235,16 +235,61 @@ export default function CarDetailScreen() {
     ]);
   };
 
+  const autoConvertTo3d = useCallback(async (photoUri: string) => {
+    if (!carId) return;
+    try {
+      let imageDataUri: string;
+      if (Platform.OS === "web" || photoUri.startsWith("data:")) {
+        imageDataUri = photoUri;
+      } else {
+        const ext = photoUri.split(".").pop()?.toLowerCase() ?? "jpeg";
+        const mime = ext === "png" ? "image/png" : ext === "heic" ? "image/heic" : "image/jpeg";
+        const base64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
+        imageDataUri = `data:${mime};base64,${base64}`;
+      }
+      const res = await fetch(`${getApiBaseUrl()}/image-to-3d`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUri }),
+      });
+      if (!res.ok) {
+        await updateSavedCar(carId, { model3dStatus: "failed", model3dUrl: null });
+        return;
+      }
+      const data = await res.json() as { taskId: string };
+      await updateSavedCar(carId, { model3dTaskId: data.taskId, model3dStatus: "pending", model3dUrl: null });
+      startPolling(data.taskId);
+    } catch (_e) {
+      await updateSavedCar(carId, { model3dStatus: "failed", model3dUrl: null }).catch(() => {});
+    }
+  }, [carId, updateSavedCar, startPolling]);
+
   const doRescan = async () => {
     if (Platform.OS === "web") {
-      stopPolling();
-      await updateSavedCar(carId!, {
-        photoUri: "https://placehold.co/600x400/112840/F4633A?text=My+Ride",
-        stickers: [],
-        model3dTaskId: null,
-        model3dStatus: "idle",
-        model3dUrl: null,
-      });
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        stopPolling();
+        await updateSavedCar(carId!, {
+          photoUri: dataUri,
+          stickers: [],
+          model3dTaskId: null,
+          model3dStatus: "idle",
+          model3dUrl: null,
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        autoConvertTo3d(dataUri);
+      };
+      input.click();
       return;
     }
 
@@ -264,6 +309,7 @@ export default function CarDetailScreen() {
               model3dUrl: null,
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            autoConvertTo3d(result.assets[0].uri);
           }
         },
       },
@@ -281,6 +327,7 @@ export default function CarDetailScreen() {
               model3dUrl: null,
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            autoConvertTo3d(result.assets[0].uri);
           }
         },
       },

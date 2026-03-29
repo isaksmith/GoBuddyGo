@@ -1,5 +1,6 @@
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -28,6 +29,7 @@ import {
   DESIGN_ACCESSORIES,
   useApp,
 } from "@/context/AppContext";
+import { getApiBaseUrl } from "@/utils/apiUrl";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = 160;
@@ -59,16 +61,18 @@ const dpStyles = StyleSheet.create({
   accEmoji: {},
 });
 
-function SavedCarCard({ car, onPress, onDelete, onRename }: {
+function SavedCarCard({ car, onPress, onDelete, onRename, onView3d }: {
   car: SavedCar;
   onPress: () => void;
   onDelete: () => void;
   onRename: () => void;
+  onView3d?: () => void;
 }) {
+  const has3d = car.model3dStatus === "succeeded" && !!car.model3dUrl;
   return (
     <Pressable onPress={onPress} style={cardStyles.card}>
       <View style={cardStyles.imageArea}>
-        {car.model3dStatus === "succeeded" && car.model3dUrl ? (
+        {has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
             <WebView
               source={{ html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>` }}
@@ -87,6 +91,16 @@ function SavedCarCard({ car, onPress, onDelete, onRename }: {
           </View>
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
+        )}
+        {has3d && onView3d && (
+          <Pressable
+            onPress={(e) => { e.stopPropagation?.(); onView3d(); }}
+            style={cardStyles.view3dBadge}
+            hitSlop={6}
+          >
+            <Ionicons name="cube" size={11} color="#FFFFFF" />
+            <Text style={cardStyles.view3dBadgeText}>VIEW 3D</Text>
+          </Pressable>
         )}
       </View>
       <View style={cardStyles.footer}>
@@ -226,6 +240,26 @@ const cardStyles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 8,
   },
+  view3dBadge: {
+    position: "absolute",
+    bottom: 6,
+    right: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(90,31,138,0.88)",
+    borderRadius: 50,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "rgba(180,120,255,0.4)",
+  },
+  view3dBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
+  },
 });
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
@@ -281,26 +315,53 @@ export default function GarageScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  const autoConvertTo3d = useCallback(async (carId: string, photoUri: string) => {
+    try {
+      let imageDataUri: string;
+      if (Platform.OS === "web" || photoUri.startsWith("data:")) {
+        imageDataUri = photoUri;
+      } else {
+        const ext = photoUri.split(".").pop()?.toLowerCase() ?? "jpeg";
+        const mime = ext === "png" ? "image/png" : ext === "heic" ? "image/heic" : "image/jpeg";
+        const base64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
+        imageDataUri = `data:${mime};base64,${base64}`;
+      }
+      const res = await fetch(`${getApiBaseUrl()}/image-to-3d`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUri }),
+      });
+      if (!res.ok) {
+        await updateSavedCar(carId, { model3dStatus: "failed", model3dUrl: null });
+        return;
+      }
+      const data = await res.json() as { taskId: string };
+      await updateSavedCar(carId, { model3dTaskId: data.taskId, model3dStatus: "pending", model3dUrl: null });
+    } catch (_e) {
+      await updateSavedCar(carId, { model3dStatus: "failed", model3dUrl: null }).catch(() => {});
+    }
+  }, [updateSavedCar]);
+
   const handleScanNewCar = async () => {
     if (Platform.OS === "web") {
-      Alert.alert(
-        "Scan New Car",
-        "Camera scanning works on a real device. On web, use a placeholder?",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Use Placeholder",
-            onPress: async () => {
-              const car = await addSavedCar(
-                "https://placehold.co/600x400/112840/F4633A?text=My+Ride",
-                `Car ${savedCars.length + 1}`
-              );
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              router.push(`/car-detail?carId=${car.id}`);
-            },
-          },
-        ]
-      );
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const car = await addSavedCar(dataUri, `Car ${savedCars.length + 1}`);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        autoConvertTo3d(car.id, dataUri);
+        router.push(`/car-detail?carId=${car.id}`);
+      };
+      input.click();
       return;
     }
 
@@ -322,6 +383,7 @@ export default function GarageScreen() {
           if (!result.canceled && result.assets[0]) {
             const car = await addSavedCar(result.assets[0].uri, `Car ${savedCars.length + 1}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            autoConvertTo3d(car.id, result.assets[0].uri);
             router.push(`/car-detail?carId=${car.id}`);
           }
         },
@@ -333,6 +395,7 @@ export default function GarageScreen() {
           if (!result.canceled && result.assets[0]) {
             const car = await addSavedCar(result.assets[0].uri, `Car ${savedCars.length + 1}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            autoConvertTo3d(car.id, result.assets[0].uri);
             router.push(`/car-detail?carId=${car.id}`);
           }
         },
@@ -448,6 +511,7 @@ export default function GarageScreen() {
                   onPress={() => handleOpenCar(car)}
                   onDelete={() => handleDeleteCar(car)}
                   onRename={() => startRename(car.id, "cars", car.name)}
+                  onView3d={() => handleOpenCar(car)}
                 />
               ))}
               <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
