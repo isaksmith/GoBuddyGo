@@ -78,7 +78,7 @@ const homeBtnStyles = StyleSheet.create({
 const native = Platform.OS !== "web";
 
 const SOUND_SOURCES = {
-  vroom:   require("../../assets/sounds/vroom.wav"),
+  vroom:   require("../../assets/sounds/vroom-engine.mp3"),
   beep:    require("../../assets/sounds/car-horn.mp3"),
   siren:   require("../../assets/sounds/siren.wav"),
   zoom:    require("../../assets/sounds/zoom.wav"),
