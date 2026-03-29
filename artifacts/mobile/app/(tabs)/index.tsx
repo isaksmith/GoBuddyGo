@@ -65,7 +65,7 @@ const HUB_BUTTONS: HubButton[] = [
   },
 ];
 
-function CardEntrance({ delay, children, isTablet }: { delay: number; children: React.ReactNode; isTablet: boolean }) {
+function CardEntrance({ delay, children }: { delay: number; children: React.ReactNode }) {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,20 +80,18 @@ function CardEntrance({ delay, children, isTablet }: { delay: number; children: 
   }, []);
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] });
   const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] });
-  const flexBasis = isTablet ? "50%" : "47%";
-  const maxWidth = isTablet ? "50%" : "48%";
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY }, { scale }], flexBasis, maxWidth, flexGrow: 1 }}>
+    <Animated.View style={{ opacity: anim, transform: [{ translateY }, { scale }], flexBasis: "47%", flexGrow: 1, maxWidth: "48%" }}>
       {children}
     </Animated.View>
   );
 }
 
-function HubCard({ btn, isTablet }: { btn: HubButton; isTablet: boolean }) {
+function HubCard({ btn }: { btn: HubButton }) {
   const textScale = useTextScale();
 
   return (
-    <CardEntrance delay={btn.animDelay} isTablet={isTablet}>
+    <CardEntrance delay={btn.animDelay}>
       <Pressable
         testID={btn.testID}
         onPress={() => {
@@ -173,7 +171,6 @@ export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
   const textScale = useTextScale();
   const isLandscape = width > height;
-  const isTablet = width >= 768;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -231,7 +228,7 @@ export default function HomeScreen() {
         >
           <View style={styles.hubGrid}>
             {HUB_BUTTONS.map((btn) => (
-              <HubCard key={btn.label} btn={btn} isTablet={isTablet} />
+              <HubCard key={btn.label} btn={btn} />
             ))}
           </View>
         </ScrollView>
