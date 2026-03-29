@@ -133,7 +133,8 @@ export default function BadgesScreen() {
     <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
-        <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>🏆 Badges</Text>
+        <Ionicons name="trophy" size={26} color={Colors.primary} />
+        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>BADGES</Text>
         <View style={styles.countPill}>
           <Text style={[styles.countText, { fontSize: 11 * textScale }]}>
             {earnedCount}/{galleryItems.length} EARNED
@@ -172,9 +173,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     color: Colors.text,
-    fontSize: 26,
+    fontSize: 32,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
   countPill: {
     backgroundColor: Colors.backgroundCard,
