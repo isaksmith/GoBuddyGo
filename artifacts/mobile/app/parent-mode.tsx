@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
@@ -226,13 +227,16 @@ export default function ParentModeScreen() {
 
   if (!unlocked) {
     return (
-      <View style={{ flex: 1, paddingTop: topPad, backgroundColor: "transparent" }}>
-        <PinEntry onUnlock={() => setUnlocked(true)} pin={settings.parentPin} />
-      </View>
+      <AppBackground>
+        <View style={{ flex: 1, paddingTop: topPad }}>
+          <PinEntry onUnlock={() => setUnlocked(true)} pin={settings.parentPin} />
+        </View>
+      </AppBackground>
     );
   }
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -458,6 +462,7 @@ export default function ParentModeScreen() {
         </View>
       </Modal>
     </View>
+    </AppBackground>
   );
 }
 

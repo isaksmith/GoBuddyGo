@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { BadgeCard } from "@/components/BadgeCard";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
@@ -132,6 +133,7 @@ export default function SummaryScreen() {
   };
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[
@@ -294,6 +296,7 @@ export default function SummaryScreen() {
         </Pressable>
       </ScrollView>
     </View>
+    </AppBackground>
   );
 }
 

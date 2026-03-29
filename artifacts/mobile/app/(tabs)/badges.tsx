@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import React from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import { BADGE_REGISTRY, BADGE_UNLOCK_ORDER, DEFAULT_UNLOCKED_COUNT, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
 import { useApp } from "@/context/AppContext";
@@ -129,6 +130,7 @@ export default function BadgesScreen() {
   const earnedCount = galleryItems.filter((i) => i.earnedDate !== null).length;
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>🏆 Badges</Text>
@@ -151,6 +153,7 @@ export default function BadgesScreen() {
 
       <HomeButton bottomOffset={homeBtnBottom} />
     </View>
+    </AppBackground>
   );
 }
 

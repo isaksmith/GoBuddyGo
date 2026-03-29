@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import { SessionRecord, useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
@@ -103,6 +104,7 @@ export default function HistoryScreen() {
   const hPad = width > 600 ? 32 : 16;
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="history-home-btn">
@@ -137,6 +139,7 @@ export default function HistoryScreen() {
         }
       />
     </View>
+    </AppBackground>
   );
 }
 

@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
@@ -174,12 +175,11 @@ export default function SoundsScreen() {
   const CELL = Math.min((width - H_PAD * 2 - GAP * (COLS - 1)) / COLS, 130);
 
   return (
+    <AppBackground>
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Text style={[styles.headerTitle, { fontSize: 28 * textScale }]}>🚗 CAR SOUNDS 🚗</Text>
-        <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>
-          {soundsEnabled ? "Tap a button to make noise!" : "Sound effects are off"}
-        </Text>
+      <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: 20 }]}>
+        <Ionicons name="volume-high" size={26} color="rgba(255,255,255,0.8)" />
+        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>SOUNDS</Text>
       </View>
 
       <ScrollView
@@ -193,6 +193,7 @@ export default function SoundsScreen() {
 
       <HomeButton bottomOffset={homeBtnBottom} />
     </View>
+    </AppBackground>
   );
 }
 
@@ -202,19 +203,17 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   header: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 8,
+    gap: 10,
+    marginBottom: 12,
   },
   headerTitle: {
     color: "#FFFFFF",
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
-    textAlign: "center",
-    textShadowColor: "#FF6B9D",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    letterSpacing: 3,
   },
   headerSub: {
     color: "#FFD93D",

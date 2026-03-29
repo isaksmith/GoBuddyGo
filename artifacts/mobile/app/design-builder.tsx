@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import {
   VEHICLE_TYPES,
@@ -207,6 +208,7 @@ export default function DesignBuilderScreen() {
   const vt = VEHICLE_TYPES.find((v) => v.id === vehicleType) ?? VEHICLE_TYPES[0];
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 8, paddingBottom: 120 }]}
@@ -413,6 +415,7 @@ export default function DesignBuilderScreen() {
         </Animated.View>
       </View>
     </View>
+    </AppBackground>
   );
 }
 

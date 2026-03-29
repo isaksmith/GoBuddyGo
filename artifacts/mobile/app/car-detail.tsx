@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppBackground } from "@/components/AppBackground";
 import { StickerPicker } from "@/components/StickerPicker";
 import { Colors } from "@/constants/colors";
 import {
@@ -407,6 +408,7 @@ export default function CarDetailScreen() {
 
   if (!car) {
     return (
+      <AppBackground>
       <View style={styles.container}>
         <View style={[styles.notFound, { paddingTop: topPad + 20 }]}>
           <Text style={styles.notFoundText}>Car not found</Text>
@@ -415,10 +417,12 @@ export default function CarDetailScreen() {
           </Pressable>
         </View>
       </View>
+      </AppBackground>
     );
   }
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 8, paddingBottom: 120 }]}
@@ -616,6 +620,7 @@ export default function CarDetailScreen() {
         slideAnim={slideAnim}
       />
     </View>
+    </AppBackground>
   );
 }
 

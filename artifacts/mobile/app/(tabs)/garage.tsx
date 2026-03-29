@@ -22,6 +22,7 @@ import {
 import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DefaultCarSvg from "@/components/DefaultCarSvg";
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import {
   CarDesign,
@@ -528,6 +529,7 @@ export default function GarageScreen() {
   });
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[
@@ -537,12 +539,8 @@ export default function GarageScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>🏠 GARAGE</Text>
-            <Text style={styles.headerSub}>
-              {savedCars.length} {savedCars.length === 1 ? "CAR" : "CARS"} · {designs.length} {designs.length === 1 ? "DESIGN" : "DESIGNS"}
-            </Text>
-          </View>
+          <Ionicons name="car-sport" size={26} color={Colors.primary} />
+          <Text style={styles.headerTitle}>GARAGE</Text>
         </View>
 
         <View style={styles.tabContainer}>
@@ -673,6 +671,7 @@ export default function GarageScreen() {
         </View>
       )}
     </View>
+    </AppBackground>
   );
 }
 
@@ -681,17 +680,19 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 16 },
   header: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 20,
+    alignItems: "center",
+    paddingBottom: 8,
+    gap: 10,
+    marginBottom: 16,
   },
   backBtn: {
     marginRight: 2,
   },
   headerTitle: {
     color: Colors.text,
-    fontSize: 26,
+    fontSize: 32,
     fontFamily: "Nunito_700Bold",
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
   headerSub: {
     color: Colors.textMuted,

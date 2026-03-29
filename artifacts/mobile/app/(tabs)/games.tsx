@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 
@@ -124,6 +125,7 @@ export default function GamesScreen() {
   const enabledIds = settings.enabledMissionIds;
 
   return (
+    <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Ionicons name="game-controller" size={26} color={Colors.primary} />
@@ -201,6 +203,7 @@ export default function GamesScreen() {
 
       <HomeButton bottomOffset={homeBtnBottom} />
     </View>
+    </AppBackground>
   );
 }
 
