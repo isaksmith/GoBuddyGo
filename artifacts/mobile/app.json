@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0D1B2A"
+      "backgroundColor": "#1A1A1A"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,7 +24,8 @@
       "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.png",
+      "backgroundColor": "#1A1A1A"
     },
     "plugins": [
       [

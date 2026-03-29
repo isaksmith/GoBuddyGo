@@ -2,8 +2,8 @@ import React from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from "react-native-svg";
 
-const EDGE_W = 28;
-const STRIPE_H = 20;
+export const EDGE_W = 10;
+const STRIPE_H = 14;
 const CURB_RED = "#D0021B";
 const CURB_WHITE = "#FFFFFF";
 
@@ -32,30 +32,27 @@ export function RacetrackOverlay() {
   const dashCount = Math.ceil(H / 48) + 1;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}>
       <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
         <Defs>
           <SvgLinearGradient id="shadowL" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#000000" stopOpacity="0.35" />
+            <Stop offset="0" stopColor="#000000" stopOpacity="0.25" />
             <Stop offset="1" stopColor="#000000" stopOpacity="0" />
           </SvgLinearGradient>
           <SvgLinearGradient id="shadowR" x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor="#000000" stopOpacity="0" />
-            <Stop offset="1" stopColor="#000000" stopOpacity="0.35" />
+            <Stop offset="1" stopColor="#000000" stopOpacity="0.25" />
           </SvgLinearGradient>
         </Defs>
 
         <CurbStripes x={0} height={H} />
         <CurbStripes x={W - EDGE_W} height={H} />
 
-        <Rect x={EDGE_W} y={0} width={20} height={H} fill="url(#shadowL)" />
-        <Rect x={W - EDGE_W - 20} y={0} width={20} height={H} fill="url(#shadowR)" />
+        <Rect x={EDGE_W} y={0} width={12} height={H} fill="url(#shadowL)" />
+        <Rect x={W - EDGE_W - 12} y={0} width={12} height={H} fill="url(#shadowR)" />
 
-        <Rect x={EDGE_W + 1} y={0} width={3} height={H} fill="#FFFFFF" fillOpacity={0.18} />
-        <Rect x={W - EDGE_W - 4} y={0} width={3} height={H} fill="#FFFFFF" fillOpacity={0.18} />
-
-        <Rect x={EDGE_W + 20} y={0} width={1.5} height={H} fill="#FFFFFF" fillOpacity={0.06} />
-        <Rect x={W - EDGE_W - 21.5} y={0} width={1.5} height={H} fill="#FFFFFF" fillOpacity={0.06} />
+        <Rect x={EDGE_W + 1} y={0} width={2} height={H} fill="#FFFFFF" fillOpacity={0.15} />
+        <Rect x={W - EDGE_W - 3} y={0} width={2} height={H} fill="#FFFFFF" fillOpacity={0.15} />
 
         {Array.from({ length: dashCount }).map((_, i) => (
           <Rect
@@ -65,7 +62,7 @@ export function RacetrackOverlay() {
             width={4}
             height={24}
             fill="#FFFFFF"
-            fillOpacity={0.12}
+            fillOpacity={0.10}
             rx={2}
           />
         ))}

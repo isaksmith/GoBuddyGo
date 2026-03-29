@@ -54,6 +54,7 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+
   if (!fontsLoaded && !fontError) return null;
 
   return (
