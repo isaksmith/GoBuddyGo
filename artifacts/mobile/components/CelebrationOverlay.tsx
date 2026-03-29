@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.secondary,
     fontSize: 22,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     marginTop: 12,
   },
   subtitle: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Nunito_600SemiBold",
+    fontFamily: "Quicksand_600SemiBold",
     marginTop: 6,
     textAlign: "center",
   },

@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   titleText: {
     color: "#FFFFFF",
     fontSize: 24,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 3,
     textShadowColor: "rgba(0,0,0,0.8)",
     textShadowOffset: { width: 0, height: 1 },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   scoreText: {
     color: "#F5C518",
     fontSize: 22,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     textShadowColor: "rgba(0,0,0,0.8)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   },
   goldCoinSymbol: {
     color: "#7A5000",
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     lineHeight: undefined,
   },
   car: {

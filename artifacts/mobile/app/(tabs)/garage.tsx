@@ -207,7 +207,7 @@ const cardStyles = StyleSheet.create({
   name: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.3,
   },
   actions: {
@@ -244,7 +244,7 @@ const cardStyles = StyleSheet.create({
   createLabel: {
     color: Colors.primary,
     fontSize: 12,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
     paddingHorizontal: 8,
@@ -266,7 +266,7 @@ const cardStyles = StyleSheet.create({
   view3dBadgeText: {
     color: "#FFFFFF",
     fontSize: 9,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.8,
   },
 });
@@ -599,13 +599,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: Colors.text,
     fontSize: 32,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 3,
   },
   headerSub: {
     color: Colors.textMuted,
     fontSize: 11,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   homeBtnText: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 3,
   },
   tabContainer: {
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     color: Colors.textMuted,
     fontSize: 11,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.8,
   },
   tabLabelActive: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   sectionBadgeText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1.5,
   },
   cardRow: {
@@ -732,13 +732,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: Colors.text,
     fontSize: 20,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 2,
   },
   emptySubtitle: {
     color: Colors.textSecondary,
     fontSize: 14,
-    fontFamily: "Nunito_400Regular",
+    fontFamily: "Quicksand_400Regular",
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 8,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   emptyBtnText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
   },
   bottomActions: {
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
   fabText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
   },
   renameOverlay: {
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   renameTitle: {
     color: Colors.textMuted,
     fontSize: 11,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 2,
     textAlign: "center",
   },
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: Colors.text,
     fontSize: 16,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     borderWidth: 2,
     borderColor: Colors.border,
   },
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
   renameCancelText: {
     color: Colors.textMuted,
     fontSize: 13,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
   },
   renameSaveBtn: {
@@ -856,7 +856,7 @@ const styles = StyleSheet.create({
   renameSaveText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
   },
 });

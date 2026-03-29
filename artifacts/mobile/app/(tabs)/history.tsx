@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: Colors.text,
     fontSize: 26,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 2,
   },
   countPill: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   countText: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 1,
   },
   list: {
@@ -201,14 +201,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: Colors.text,
     fontSize: 20,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 2,
     marginTop: 4,
   },
   emptySubtitle: {
     color: Colors.textSecondary,
     fontSize: 14,
-    fontFamily: "Nunito_400Regular",
+    fontFamily: "Quicksand_400Regular",
     textAlign: "center",
     lineHeight: 21,
     paddingHorizontal: 28,
@@ -239,13 +239,13 @@ const styles = StyleSheet.create({
   cardDate: {
     color: Colors.text,
     fontSize: 15,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.5,
   },
   cardChild: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.3,
   },
   pctCircle: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   pctText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
   },
   statsRow: {
     flexDirection: "row",
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   statText: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
   },
   badgesRow: {
     flexDirection: "row",
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   badgeTokenText: {
     color: Colors.secondary,
     fontSize: 10,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 0.5,
   },
 });

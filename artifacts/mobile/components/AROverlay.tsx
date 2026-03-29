@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
   shieldLabel: {
     color: Colors.secondary,
     fontSize: 10,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     letterSpacing: 2,
   },
   shieldText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     textAlign: "center",
     letterSpacing: 0.5,
   },

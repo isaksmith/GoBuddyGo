@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
   text: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
   },
 });

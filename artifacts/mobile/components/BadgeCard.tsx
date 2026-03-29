@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 12,
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Quicksand_700Bold",
     textAlign: "center",
     marginBottom: 4,
     letterSpacing: 0.5,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   description: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontFamily: "Nunito_400Regular",
+    fontFamily: "Quicksand_400Regular",
     textAlign: "center",
     lineHeight: 15,
   },

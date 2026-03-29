@@ -1,9 +1,9 @@
 import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
+  Quicksand_400Regular,
+  Quicksand_600SemiBold,
+  Quicksand_700Bold,
   useFonts,
-} from "@expo-google-fonts/nunito";
+} from "@expo-google-fonts/quicksand";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -42,9 +42,9 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
+    Quicksand_400Regular,
+    Quicksand_600SemiBold,
+    Quicksand_700Bold,
   });
 
   useEffect(() => {
