@@ -83,7 +83,7 @@ const SOUND_SOURCES = {
   siren:   require("../../assets/sounds/siren.wav"),
   zoom:    require("../../assets/sounds/zoom.wav"),
   screech: require("../../assets/sounds/screech.wav"),
-  rev:     require("../../assets/sounds/rev.wav"),
+  rev:     require("../../assets/sounds/rev-engine.mp3"),
   crash:   require("../../assets/sounds/crash.wav"),
   thunk:   require("../../assets/sounds/thunk.wav"),
   win:     require("../../assets/sounds/win.wav"),
