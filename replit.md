@@ -59,6 +59,7 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 - Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
 - Image-to-3D: `src/routes/image-to-3d.ts` exposes `POST /api/image-to-3d` and `GET /api/image-to-3d/:taskId` — proxies to Meshy.ai API using `MESHY_API_KEY` secret
 - Depends on: `@workspace/db`, `@workspace/api-zod`
+- **Routing**: API server `paths` must be `["/api"]` (not `["/"]`) to avoid intercepting Expo domain traffic. Both the mobile and API artifacts claim root paths, and `["/"]` on the API server shadows the Expo dev server manifest, breaking Expo Go. In production, the API server serves the mobile web build at `/` via its catch-all route but routing is handled differently (no Expo dev server running).
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
 - Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
@@ -97,7 +98,7 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 Expo React Native mobile app — **GoBabyGo Buddy-Link AR**. A gamified companion app for siblings of children using WSU GoBabyGo modified ride-on vehicles.
 
 - Framework: Expo SDK with Expo Router (file-based navigation)
-- Fonts: `@expo-google-fonts/nunito` (Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold)
+- Fonts: `@expo-google-fonts/balsamiq-sans` (BalsamiqSans_400Regular, BalsamiqSans_700Bold)
 - Camera: `expo-camera` with `CameraView` + `useCameraPermissions()`
 - Sensors: `expo-sensors` Accelerometer used for shake/proximity detection
 - Storage: AsyncStorage (no backend — fully offline)
