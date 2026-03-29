@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Go Buddy Go</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --asphalt:    #1a1a2e;
+    --asphalt2:   #16213e;
+    --track-grey: #2d2d3a;
+    --line-white: rgba(255,255,255,0.85);
+    --red:        #e63946;
+    --yellow:     #ffd166;
+    --green:      #06d6a0;
+    --blue:       #4cc9f0;
+    --purple:     #c77dff;
+    --orange:     #ff9f1c;
+    --card-games: #3a86ff;
+    --card-garage:#06d6a0;
+    --card-badges:#ff9f1c;
+    --card-sounds:#c77dff;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #e8e8ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* ── Phone shell ── */
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: var(--asphalt);
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 10px #1a1a2e,
+      0 0 0 12px #2a2a3e,
+      0 40px 80px rgba(0,0,0,0.55);
+  }
+
+  /* ── Race track background ── */
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 110%, #0f3460 0%, #1a1a2e 70%);
+    overflow: hidden;
+  }
+
+  /* Track oval */
+  .track-oval {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -48%);
+    width: 500px; height: 700px;
+    border: 28px solid var(--track-grey);
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+  .track-oval::after {
+    content:'';
+    position: absolute; inset: 18px;
+    border: 6px dashed rgba(255,255,255,0.12);
+    border-radius: 50%;
+  }
+
+  /* Checkered flag stripe at top */
+  .checker-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 14px;
+    background-image:
+      repeating-conic-gradient(#000 0% 25%, #fff 0% 50%);
+    background-size: 14px 14px;
+    opacity: 0.55;
+  }
+  .checker-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 14px;
+    background-image:
+      repeating-conic-gradient(#000 0% 25%, #fff 0% 50%);
+    background-size: 14px 14px;
+    opacity: 0.55;
+  }
+
+  /* Speed lines */
+  @keyframes speedLine {
+    0%   { transform: translateX(-120%) skewX(-20deg); opacity:0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.18; }
+    100% { transform: translateX(200%) skewX(-20deg); opacity:0; }
+  }
+  .speed-line {
+    position: absolute;
+    height: 2px;
+    width: 120px;
+    background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+    border-radius: 2px;
+    animation: speedLine 2.8s linear infinite;
+  }
+  .sl1 { top: 38%; animation-delay: 0s;   width: 90px;  }
+  .sl2 { top: 44%; animation-delay: 0.7s; width: 140px; }
+  .sl3 { top: 50%; animation-delay: 1.4s; width: 70px;  }
+  .sl4 { top: 31%; animation-delay: 2.0s; width: 110px; }
+
+  /* Animated racing car (small, decorative) */
+  @keyframes carZoom {
+    0%   { transform: translateX(-60px); opacity:0; }
+    5%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { transform: translateX(420px); opacity:0; }
+  }
+  .deco-car {
+    position: absolute;
+    font-size: 22px;
+    top: 56%;
+    animation: carZoom 3.5s linear infinite;
+  }
+  .deco-car2 {
+    position: absolute;
+    font-size: 18px;
+    top: 61%;
+    animation: carZoom 4.2s linear infinite 1.8s;
+  }
+
+  /* Stars / confetti dots */
+  @keyframes twinkle { 0%,100%{opacity:.15;transform:scale(.7)} 50%{opacity:.9;transform:scale(1.2)} }
+  .star { position:absolute; width:5px; height:5px; border-radius:50%; animation: twinkle 2s ease-in-out infinite; }
+  .s1{background:var(--yellow);top:8%;left:12%;animation-delay:.2s}
+  .s2{background:var(--blue);top:12%;left:78%;animation-delay:.8s}
+  .s3{background:var(--green);top:6%;left:55%;animation-delay:1.3s}
+  .s4{background:var(--red);top:18%;left:33%;animation-delay:.5s}
+  .s5{background:var(--purple);top:22%;left:88%;animation-delay:1.7s}
+
+  /* ── Content layer ── */
+  .content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px 24px;
+  }
+
+  /* Settings icon */
+  .settings-btn {
+    position: absolute;
+    top: 52px; right: 24px;
+    font-size: 22px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: transform 0.3s, opacity 0.2s;
+  }
+  .settings-btn:hover { transform: rotate(60deg); opacity: 1; }
+
+  /* ── Header ── */
+  .header {
+    padding-top: 50px;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  /* Trophy / flags row */
+  .deco-row {
+    font-size: 26px;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+    animation: flagWave .9s ease-in-out infinite alternate;
+  }
+  @keyframes flagWave {
+    from { transform: rotate(-2deg) translateY(0); }
+    to   { transform: rotate(2deg) translateY(-3px); }
+  }
+
+  .app-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 52px;
+    line-height: 1.05;
+    color: #fff;
+    text-shadow:
+      0 4px 0 #aa2200,
+      0 6px 16px rgba(0,0,0,0.6),
+      0 0 40px rgba(255,90,0,0.35);
+    letter-spacing: 2px;
+  }
+  .app-title span { color: var(--yellow); }
+
+  .title-sub {
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ── Button grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+    align-content: center;
+  }
+
+  @keyframes cardIn {
+    from { opacity:0; transform: translateY(30px) scale(0.9); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  .card {
+    border-radius: 28px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1 / 1.05;
+    box-shadow:
+      0 8px 0 rgba(0,0,0,0.35),
+      0 14px 30px rgba(0,0,0,0.4),
+      inset 0 2px 0 rgba(255,255,255,0.25);
+    transition: transform 0.12s, box-shadow 0.12s;
+    animation: cardIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .card:nth-child(1){ animation-delay:.10s; background: var(--card-games);   box-shadow: 0 8px 0 #1c4e9e, 0 14px 30px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.25); }
+  .card:nth-child(2){ animation-delay:.18s; background: var(--card-garage);  box-shadow: 0 8px 0 #038c6a, 0 14px 30px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.25); }
+  .card:nth-child(3){ animation-delay:.26s; background: var(--card-badges);  box-shadow: 0 8px 0 #b86200, 0 14px 30px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.25); }
+  .card:nth-child(4){ animation-delay:.34s; background: var(--card-sounds);  box-shadow: 0 8px 0 #7a3db5, 0 14px 30px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.25); }
+
+  .card:active {
+    transform: translateY(5px) scale(0.97);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.2);
+  }
+
+  /* Inner track stripe on each card */
+  .card::before {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 10px;
+    background-image: repeating-conic-gradient(rgba(0,0,0,0.25) 0% 25%, rgba(255,255,255,0.18) 0% 50%);
+    background-size: 10px 10px;
+    border-radius: 0 0 28px 28px;
+  }
+
+  /* Shine */
+  .card::after {
+    content: '';
+    position: absolute; top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+    pointer-events: none;
+    transition: left 0.4s;
+  }
+  .card:hover::after { left: 130%; transition: left 0.5s; }
+
+  .card-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%; height: 100%;
+    padding-bottom: 18px;
+    gap: 10px;
+  }
+
+  /* Icon badge */
+  .icon-wrap {
+    width: 76px; height: 76px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.15);
+    position: relative;
+  }
+
+  /* Spin effect on icon for Games */
+  .card:nth-child(1) .icon-wrap:hover { animation: iconSpin .4s ease; }
+  @keyframes iconSpin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+
+  /* Bounce on hover for all icons */
+  .card:hover .icon-wrap {
+    animation: iconBounce 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes iconBounce {
+    0%{transform:scale(1)} 50%{transform:scale(1.2) translateY(-6px)} 100%{transform:scale(1)}
+  }
+
+  .card-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 20px;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* Lap counter bar at very bottom */
+  .lap-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 0 0;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .lap-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--yellow);
+    opacity: 0.5;
+  }
+  .lap-dot.active { opacity: 1; animation: twinkle 1s infinite; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- Background -->
+  <div class="bg">
+    <div class="checker-top"></div>
+    <div class="checker-bottom"></div>
+    <div class="track-oval"></div>
+
+    <div class="speed-line sl1"></div>
+    <div class="speed-line sl2"></div>
+    <div class="speed-line sl3"></div>
+    <div class="speed-line sl4"></div>
+
+    <div class="deco-car">🏎️</div>
+    <div class="deco-car2">🚗</div>
+
+    <div class="star s1"></div>
+    <div class="star s2"></div>
+    <div class="star s3"></div>
+    <div class="star s4"></div>
+    <div class="star s5"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <div class="settings-btn">⚙️</div>
+
+    <div class="header">
+      <div class="deco-row">🏁 🏆 🏁</div>
+      <div class="app-title">GO <span>BUDDY</span><br>GO</div>
+      <div class="title-sub">Start your engines!</div>
+    </div>
+
+    <div class="grid">
+      <!-- Games -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="icon-wrap">🕹️</div>
+          <div class="card-label">Games</div>
+        </div>
+      </div>
+      <!-- Garage -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="icon-wrap">🚗</div>
+          <div class="card-label">Garage</div>
+        </div>
+      </div>
+      <!-- Badges -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="icon-wrap">🏆</div>
+          <div class="card-label">Badges</div>
+        </div>
+      </div>
+      <!-- Sounds -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="icon-wrap">📢</div>
+          <div class="card-label">Sounds</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lap-bar">
+      <div class="lap-dot active"></div>
+      <div class="lap-dot"></div>
+      <div class="lap-dot"></div>
+      🏎️ On Your Mark
+      <div class="lap-dot"></div>
+      <div class="lap-dot"></div>
+      <div class="lap-dot active"></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
