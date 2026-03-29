@@ -11,34 +11,48 @@ const app: Express = express();
 
 const EXPO_DEV_PORT = 18115;
 
-app.use((req, res, next) => {
-  const expoPlatform = req.headers["expo-platform"];
-  if (expoPlatform && process.env.NODE_ENV !== "production") {
-    const proxyReq = http.request(
-      {
-        hostname: "localhost",
-        port: EXPO_DEV_PORT,
-        path: req.originalUrl,
-        method: req.method,
-        headers: req.headers,
-      },
-      (proxyRes) => {
-        res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
-        proxyRes.pipe(res);
-      },
-    );
-    proxyReq.on("error", () => {
-      next();
-    });
-    if (req.method === "POST" || req.method === "PUT") {
-      req.pipe(proxyReq);
-    } else {
-      proxyReq.end();
-    }
-    return;
+function isExpoDevRequest(req: express.Request): boolean {
+  if (req.headers["expo-platform"]) return true;
+
+  const url = req.originalUrl;
+  if (url.includes(".bundle")) return true;
+  if (url.includes("platform=ios") || url.includes("platform=android")) return true;
+  if (url.startsWith("/inspector") || url.startsWith("/debugger") || url.startsWith("/symbolicate")) return true;
+  if (url.startsWith("/logs") || url.startsWith("/status")) return true;
+  if (url === "/message" || url.startsWith("/message?")) return true;
+  if (url.startsWith("/.expo")) return true;
+
+  return false;
+}
+
+function proxyToExpo(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (process.env.NODE_ENV === "production") return next();
+  if (!isExpoDevRequest(req)) return next();
+
+  const proxyReq = http.request(
+    {
+      hostname: "localhost",
+      port: EXPO_DEV_PORT,
+      path: req.originalUrl,
+      method: req.method,
+      headers: req.headers,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+      proxyRes.pipe(res);
+    },
+  );
+  proxyReq.on("error", () => {
+    next();
+  });
+  if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
+    req.pipe(proxyReq);
+  } else {
+    proxyReq.end();
   }
-  next();
-});
+}
+
+app.use(proxyToExpo);
 
 app.use(
   pinoHttp({

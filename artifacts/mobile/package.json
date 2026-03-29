@@ -61,6 +61,7 @@
     "@expo-google-fonts/balsamiq-sans": "^0.4.1",
     "@expo-google-fonts/nunito": "^0.4.2",
     "@expo-google-fonts/quicksand": "^0.4.1",
+    "buffer": "^6.0.3",
     "expo-audio": "1.1.1",
     "expo-camera": "17.0.10",
     "expo-document-picker": "14.0.8",
