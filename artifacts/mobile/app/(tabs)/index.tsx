@@ -65,7 +65,7 @@ const HUB_BUTTONS: HubButton[] = [
   },
 ];
 
-function CardEntrance({ delay, children }: { delay: number; children: React.ReactNode }) {
+function CardEntrance({ delay, children, isTablet }: { delay: number; children: React.ReactNode; isTablet: boolean }) {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,18 +80,20 @@ function CardEntrance({ delay, children }: { delay: number; children: React.Reac
   }, []);
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] });
   const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] });
+  const flexBasis = isTablet ? "50%" : "47%";
+  const maxWidth = isTablet ? "50%" : "48%";
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY }, { scale }], flexBasis: "47%", flexGrow: 1, maxWidth: "48%" }}>
+    <Animated.View style={{ opacity: anim, transform: [{ translateY }, { scale }], flexBasis, maxWidth, flexGrow: 1 }}>
       {children}
     </Animated.View>
   );
 }
 
-function HubCard({ btn }: { btn: HubButton }) {
+function HubCard({ btn, isTablet }: { btn: HubButton; isTablet: boolean }) {
   const textScale = useTextScale();
 
   return (
-    <CardEntrance delay={btn.animDelay}>
+    <CardEntrance delay={btn.animDelay} isTablet={isTablet}>
       <Pressable
         testID={btn.testID}
         onPress={() => {
@@ -171,6 +173,7 @@ export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
   const textScale = useTextScale();
   const isLandscape = width > height;
+  const isTablet = width >= 768;
   const hiddenTapCount = useRef(0);
   const hiddenTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -228,7 +231,7 @@ export default function HomeScreen() {
         >
           <View style={styles.hubGrid}>
             {HUB_BUTTONS.map((btn) => (
-              <HubCard key={btn.label} btn={btn} />
+              <HubCard key={btn.label} btn={btn} isTablet={isTablet} />
             ))}
           </View>
         </ScrollView>
