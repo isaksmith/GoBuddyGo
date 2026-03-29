@@ -167,13 +167,13 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 14,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.5,
   },
   description: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
     lineHeight: 17,
   },
   difficultyPill: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: 9,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
   playBtn: {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   playBtnText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
 });

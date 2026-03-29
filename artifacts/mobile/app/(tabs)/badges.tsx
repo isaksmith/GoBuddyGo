@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.text,
     fontSize: 32,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 3,
   },
   countPill: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   countText: {
     color: Colors.secondary,
     fontSize: 11,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
   list: {
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   badgeTitle: {
     color: Colors.text,
     fontSize: 13,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
     textAlign: "center",
   },
@@ -251,12 +251,12 @@ const styles = StyleSheet.create({
   badgeDate: {
     color: Colors.textMuted,
     fontSize: 11,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
   },
   badgeUnearned: {
     color: Colors.textMuted,
     fontSize: 10,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
     letterSpacing: 0.5,
   },
   homeBtn: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   homeBtnText: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 3,
   },
 });

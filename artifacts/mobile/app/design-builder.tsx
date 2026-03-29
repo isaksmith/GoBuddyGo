@@ -95,7 +95,7 @@ function DesignPreview({
       <View style={[previewStyles.container, containerSize, { backgroundColor: "#09192A", borderRadius, alignItems: "center", justifyContent: "center", gap: 10 }]}>
         <Text style={{ fontSize: size === "large" ? 48 : 24 }}>🚗</Text>
         {size === "large" && (
-          <Text style={{ color: "#8ca0b5", fontSize: 12, fontFamily: "Quicksand_700Bold", letterSpacing: 1 }}>
+          <Text style={{ color: "#8ca0b5", fontSize: 12, fontFamily: "Baloo2_700Bold", letterSpacing: 1 }}>
             GENERATING 3D MODEL...
           </Text>
         )}
@@ -198,7 +198,7 @@ const previewStyles = StyleSheet.create({
   },
   vehicleLabel: {
     color: "#FFFFFF",
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
 });
@@ -761,8 +761,8 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center",
   },
   headerCenter: { flex: 1 },
-  headerTitle: { color: Colors.text, fontSize: 20, fontFamily: "Quicksand_700Bold", letterSpacing: 1.5 },
-  headerSub: { color: Colors.accent, fontSize: 10, fontFamily: "Quicksand_700Bold", letterSpacing: 1.5, marginTop: 2 },
+  headerTitle: { color: Colors.text, fontSize: 20, fontFamily: "Baloo2_700Bold", letterSpacing: 1.5 },
+  headerSub: { color: Colors.accent, fontSize: 10, fontFamily: "Baloo2_700Bold", letterSpacing: 1.5, marginTop: 2 },
   previewSection: {
     alignItems: "center",
     marginBottom: 28,
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
   previewLabelText: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1.5,
   },
   section: {
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.textSecondary,
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 2,
   },
   vtRow: { gap: 10, paddingRight: 4 },
@@ -841,14 +841,14 @@ const styles = StyleSheet.create({
   scanBtnText: {
     color: Colors.primary,
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
   },
   vtEmoji: { fontSize: 32 },
   vtLabel: {
     color: Colors.textMuted,
     fontSize: 9,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
     textAlign: "center",
   },
@@ -876,13 +876,13 @@ const styles = StyleSheet.create({
   colorPickerLabel: {
     color: Colors.text,
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
   colorPickerHint: {
     color: Colors.textMuted,
     fontSize: 9,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
     marginTop: 1,
   },
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
   accCountText: {
     color: "#FFFFFF",
     fontSize: 11,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
   },
   accGrid: {
     flexDirection: "row",
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
   accLabel: {
     color: Colors.textMuted,
     fontSize: 8,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
   },
@@ -973,14 +973,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: Colors.text,
     fontSize: 15,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     borderWidth: 2,
     borderColor: Colors.border,
   },
   nameHint: {
     color: Colors.textMuted,
     fontSize: 10,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
     marginTop: 8,
     paddingLeft: 8,
@@ -1011,7 +1011,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1.5,
   },
   confirmOverlay: {
@@ -1049,13 +1049,13 @@ const styles = StyleSheet.create({
   confirmTitle: {
     color: Colors.text,
     fontSize: 18,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 2,
   },
   confirmBody: {
     color: Colors.textSecondary,
     fontSize: 13,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
     textAlign: "center",
     lineHeight: 20,
   },
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
   confirmCancelText: {
     color: Colors.textMuted,
     fontSize: 13,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
   confirmDeleteBtn: {
@@ -1093,7 +1093,7 @@ const styles = StyleSheet.create({
   confirmDeleteText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1,
   },
   deleteFloatingBtn: {
@@ -1111,7 +1111,7 @@ const styles = StyleSheet.create({
   deleteBtnText: {
     color: "#FF3B30",
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
   },
 });

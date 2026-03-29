@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: Colors.text,
     fontSize: 28,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 2,
     marginBottom: 8,
     textShadowColor: Colors.secondary + "66",
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
     textAlign: "center",
     lineHeight: 22,
   },
@@ -397,18 +397,18 @@ const styles = StyleSheet.create({
   scoreValue: {
     color: Colors.primary,
     fontSize: 68,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     lineHeight: 72,
   },
   scoreDividerText: {
     color: Colors.textMuted,
     fontSize: 18,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
   },
   scoreLabel: {
     color: Colors.textMuted,
     fontSize: 10,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 2,
     marginTop: 2,
   },
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   pctText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
   },
   section: {
     width: "100%",
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 2.5,
     marginBottom: 14,
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   missionRowText: {
     color: Colors.text,
     fontSize: 13,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.5,
     flex: 1,
   },
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     lineHeight: 22,
   },
   shareBtn: {
@@ -540,13 +540,13 @@ const styles = StyleSheet.create({
   errorBannerText: {
     color: "#FF6B6B",
     fontSize: 14,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     flex: 1,
   },
   shareBtnText: {
     color: Colors.secondary,
     fontSize: 17,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1.5,
   },
   doneBtn: {
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   doneBtnText: {
     color: "#FFFFFF",
     fontSize: 20,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1.5,
   },
 });

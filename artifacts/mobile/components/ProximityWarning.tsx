@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
   text: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
   },
 });

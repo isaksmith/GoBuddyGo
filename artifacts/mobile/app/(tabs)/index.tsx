@@ -80,8 +80,9 @@ function CardEntrance({ delay, children, isTablet }: { delay: number; children: 
   }, []);
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] });
   const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] });
-  const flexBasis = isTablet ? "50%" : "47%";
-  const maxWidth = isTablet ? "50%" : "48%";
+  const isWeb = Platform.OS === "web";
+  const flexBasis = isTablet || isWeb ? "46%" : "47%";
+  const maxWidth = isTablet || isWeb ? "46%" : "48%";
   return (
     <Animated.View style={{ opacity: anim, transform: [{ translateY }, { scale }], flexBasis, maxWidth, flexGrow: 1 }}>
       {children}
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   appTitle: {
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     fontSize: 36,
     lineHeight: 42,
     color: "#fff",
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   },
   titleSub: {
     fontSize: 13,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     color: "rgba(255,255,255,0.5)",
     letterSpacing: 4,
     textTransform: "uppercase",
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
   },
   cardLabel: {
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     fontSize: 20,
     color: "#fff",
     letterSpacing: 0.5,
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
   },
   lapText: {
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     color: "rgba(255,255,255,0.45)",
     letterSpacing: 3,
     textTransform: "uppercase",

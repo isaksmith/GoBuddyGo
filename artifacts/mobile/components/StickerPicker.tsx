@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   panelTitle: {
     color: Colors.text,
     fontSize: 15,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 1.5,
   },
   closeBtn: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   stickerLabel: {
     fontSize: 8,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
   },
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   unlockHint: {
     color: Colors.textMuted,
     fontSize: 7,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
   },

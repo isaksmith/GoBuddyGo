@@ -1,9 +1,9 @@
 import {
-  Quicksand_400Regular,
-  Quicksand_600SemiBold,
-  Quicksand_700Bold,
+  Baloo2_400Regular,
+  Baloo2_600SemiBold,
+  Baloo2_700Bold,
   useFonts,
-} from "@expo-google-fonts/quicksand";
+} from "@expo-google-fonts/baloo-2";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -42,9 +42,9 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Quicksand_400Regular,
-    Quicksand_600SemiBold,
-    Quicksand_700Bold,
+    Baloo2_400Regular,
+    Baloo2_600SemiBold,
+    Baloo2_700Bold,
   });
 
   useEffect(() => {

@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 12,
-    fontFamily: "Quicksand_700Bold",
+    fontFamily: "Baloo2_700Bold",
     textAlign: "center",
     marginBottom: 4,
     letterSpacing: 0.5,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   description: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontFamily: "Quicksand_400Regular",
+    fontFamily: "Baloo2_400Regular",
     textAlign: "center",
     lineHeight: 15,
   },
