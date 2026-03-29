@@ -98,8 +98,8 @@ function ModelViewer({ modelUrl, onClose }: { modelUrl: string; onClose: () => v
 <html lang="en"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-<style>* { margin:0;padding:0;box-sizing:border-box; } html,body{width:100%;height:100%;background:#09192A;overflow:hidden;}
-model-viewer{width:100%;height:100%;background-color:#09192A;}</style></head>
+<style>* { margin:0;padding:0;box-sizing:border-box; } html,body{width:100%;height:100%;background:#1A1A1A;overflow:hidden;}
+model-viewer{width:100%;height:100%;background-color:#1A1A1A;}</style></head>
 <body><model-viewer src="${modelUrl}" camera-controls auto-rotate auto-rotate-delay="0"
 rotation-per-second="30deg" shadow-intensity="1" environment-image="neutral" exposure="1"
 alt="3D model of your GoBabyGo vehicle"></model-viewer></body></html>`;
@@ -368,19 +368,19 @@ export default function CarDetailScreen() {
 
   if (!car) {
     return (
-      <LinearGradient colors={[Colors.background, Colors.backgroundDeep]} style={styles.container}>
+      <View style={styles.container}>
         <View style={[styles.notFound, { paddingTop: topPad + 20 }]}>
           <Text style={styles.notFoundText}>Car not found</Text>
           <Pressable onPress={() => router.back()} style={styles.backBtnAlt}>
             <Text style={styles.backBtnAltText}>← Back to Garage</Text>
           </Pressable>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 8, paddingBottom: 120 }]}
         showsVerticalScrollIndicator={false}
@@ -444,7 +444,7 @@ export default function CarDetailScreen() {
           ) : (
             <Image source={{ uri: car.photoUri }} style={styles.vehiclePhoto} resizeMode="cover" />
           )}
-          <LinearGradient colors={["transparent", "rgba(9,25,42,0.5)"]} style={styles.vehiclePhotoOverlay} />
+          <LinearGradient colors={["transparent", "rgba(26,26,26,0.5)"]} style={styles.vehiclePhotoOverlay} />
           {car.stickers.map((placed) => (
             <DraggableSticker key={placed.uid} placed={placed} onMove={handleMoveSticker} onRemove={handleRemoveSticker} />
           ))}
@@ -566,12 +566,12 @@ export default function CarDetailScreen() {
         slideAnim={slideAnim}
       />
       {viewerVisible && model3dUrl && <ModelViewer modelUrl={model3dUrl} onClose={() => setViewerVisible(false)} />}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.background },
   scroll: { paddingHorizontal: 16 },
   notFound: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
   notFoundText: { color: Colors.text, fontSize: 18, fontFamily: "Nunito_700Bold" },

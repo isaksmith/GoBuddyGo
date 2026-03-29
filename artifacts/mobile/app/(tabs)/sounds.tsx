@@ -3,6 +3,7 @@ import { useAudioPlayer } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { Colors } from "@/constants/colors";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -174,10 +175,7 @@ export default function SoundsScreen() {
   const CELL = Math.min((width - H_PAD * 2 - GAP * (COLS - 1)) / COLS, 130);
 
   return (
-    <LinearGradient
-      colors={["#1B0B54", "#1A3399", "#0A5FA0"]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Text style={[styles.headerTitle, { fontSize: 28 * textScale }]}>🚗 CAR SOUNDS 🚗</Text>
         <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>
@@ -195,13 +193,14 @@ export default function SoundsScreen() {
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   header: {
     alignItems: "center",

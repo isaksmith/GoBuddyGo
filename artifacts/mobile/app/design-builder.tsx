@@ -266,10 +266,7 @@ export default function DesignBuilderScreen() {
   const vt = VEHICLE_TYPES.find((v) => v.id === vehicleType) ?? VEHICLE_TYPES[0];
 
   return (
-    <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 8, paddingBottom: 120 }]}
         showsVerticalScrollIndicator={false}
@@ -474,12 +471,12 @@ export default function DesignBuilderScreen() {
           </Pressable>
         </Animated.View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.background },
   scroll: { paddingHorizontal: 16 },
   headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 12 },
   backBtn: {

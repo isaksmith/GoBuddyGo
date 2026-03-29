@@ -101,7 +101,7 @@ Expo React Native mobile app — **GoBabyGo Buddy-Link AR**. A gamified companio
 - Camera: `expo-camera` with `CameraView` + `useCameraPermissions()`
 - Sensors: `expo-sensors` Accelerometer used for shake/proximity detection
 - Storage: AsyncStorage (no backend — fully offline)
-- Design: Deep navy (#0D1B2A) + orange accent (#FF6B2B) + amber secondary (#FFD166)
+- Design: Dark asphalt racetrack theme (#1A1A1A background) with red/white curb stripes overlay, orange accent (#F4633A), amber secondary (#F5C518)
 - Navigation: 4 bottom tabs (Home/Games/Garage/Sounds) + stack routes /ar, /summary, /parent-mode, /coin-dash, /car-detail, /design-builder
 - Screens: Home, Games, Garage, Sounds, AR Drive (Coin Dash), Car Detail, Design Builder, Session Summary, Parent Mode (PIN: 1234)
 - Components: DefaultCarSvg (configurable SVG car), AROverlay, MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning

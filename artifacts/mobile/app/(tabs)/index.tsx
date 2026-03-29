@@ -18,125 +18,6 @@ import { useTextScale } from "@/hooks/useTextScale";
 
 const native = Platform.OS !== "web";
 
-const DOTS = [
-  { rx: 0.06, ry: 0.05, s: 22, c: "#FF6B9D" },
-  { rx: 0.88, ry: 0.08, s: 14, c: "#FFD93D" },
-  { rx: 0.02, ry: 0.28, s: 18, c: "#6BCB77" },
-  { rx: 0.91, ry: 0.24, s: 26, c: "#4D96FF" },
-  { rx: 0.10, ry: 0.58, s: 20, c: "#F4633A" },
-  { rx: 0.84, ry: 0.62, s: 16, c: "#C084FC" },
-  { rx: 0.46, ry: 0.04, s: 12, c: "#34D399" },
-  { rx: 0.60, ry: 0.88, s: 18, c: "#F59E0B" },
-  { rx: 0.20, ry: 0.88, s: 22, c: "#60A5FA" },
-  { rx: 0.78, ry: 0.50, s: 14, c: "#F472B6" },
-  { rx: 0.30, ry: 0.15, s: 10, c: "#A78BFA" },
-  { rx: 0.68, ry: 0.12, s: 24, c: "#FCD34D" },
-  { rx: 0.95, ry: 0.44, s: 13, c: "#4ADE80" },
-  { rx: 0.01, ry: 0.46, s: 19, c: "#FB923C" },
-  { rx: 0.54, ry: 0.93, s: 15, c: "#38BDF8" },
-  { rx: 0.38, ry: 0.40, s: 8, c: "#F472B6" },
-  { rx: 0.74, ry: 0.33, s: 11, c: "#6EE7B7" },
-  { rx: 0.18, ry: 0.42, s: 16, c: "#FDE68A" },
-  { rx: 0.50, ry: 0.70, s: 10, c: "#C4B5FD" },
-  { rx: 0.86, ry: 0.80, s: 20, c: "#86EFAC" },
-];
-
-const STARS = [
-  { rx: 0.14, ry: 0.10, size: 18, delay: 0 },
-  { rx: 0.78, ry: 0.18, size: 22, delay: 600 },
-  { rx: 0.06, ry: 0.72, size: 16, delay: 300 },
-  { rx: 0.90, ry: 0.68, size: 20, delay: 900 },
-  { rx: 0.50, ry: 0.82, size: 14, delay: 450 },
-  { rx: 0.36, ry: 0.05, size: 12, delay: 1200 },
-  { rx: 0.62, ry: 0.55, size: 10, delay: 750 },
-];
-
-function TwinklingStar({ rx, ry, size, delay, w, h }: { rx: number; ry: number; size: number; delay: number; w: number; h: number }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: native }),
-          Animated.timing(scale, { toValue: 1.3, duration: 800, useNativeDriver: native }),
-        ]),
-        Animated.parallel([
-          Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: native }),
-          Animated.timing(scale, { toValue: 0.8, duration: 800, useNativeDriver: native }),
-        ]),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, []);
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        left: w * rx - size / 2,
-        top: h * ry - size / 2,
-        opacity,
-        transform: [{ scale }],
-        zIndex: 0,
-      }}
-    >
-      <Text style={{ fontSize: size, lineHeight: size + 4 }}>⭐</Text>
-    </Animated.View>
-  );
-}
-
-const BLOBS = [
-  { rx: 0.0,  ry: 0.0,  w: 220, h: 220, colors: ["#7C3AED88", "#3B82F688"] as [string,string], delay: 0 },
-  { rx: 0.55, ry: 0.0,  w: 180, h: 200, colors: ["#EC489988", "#F9731688"] as [string,string], delay: 400 },
-  { rx: 0.0,  ry: 0.55, w: 200, h: 220, colors: ["#059669AA", "#3B82F688"] as [string,string], delay: 800 },
-  { rx: 0.5,  ry: 0.6,  w: 240, h: 200, colors: ["#D9770688", "#A21CAFAA"] as [string,string], delay: 1200 },
-];
-
-function AnimatedBlob({ rx, ry, w, h, colors, delay, screenW, screenH }: typeof BLOBS[0] & { screenW: number; screenH: number }) {
-  const translateY = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(translateY, { toValue: -18, duration: 3000, useNativeDriver: native }),
-        Animated.timing(translateY, { toValue: 0, duration: 3000, useNativeDriver: native }),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, []);
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        left: screenW * rx - w * 0.3,
-        top: screenH * ry - h * 0.3,
-        width: w,
-        height: h,
-        borderRadius: w * 0.5,
-        overflow: "hidden",
-        zIndex: 0,
-        transform: [{ translateY }],
-      }}
-    >
-      <LinearGradient
-        colors={colors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ flex: 1 }}
-      />
-    </Animated.View>
-  );
-}
-
 type HubButton = {
   label: string;
   tagline: string;
@@ -298,32 +179,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["#1B0B54", "#1A3399", "#0A5FA0"]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {BLOBS.map((b, i) => <AnimatedBlob key={i} {...b} screenW={width} screenH={height} />)}
-
-      {DOTS.map((d, i) => (
-        <View
-          key={i}
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: width * d.rx - d.s / 2,
-            top: height * d.ry - d.s / 2,
-            width: d.s,
-            height: d.s,
-            borderRadius: d.s / 2,
-            backgroundColor: d.c + "66",
-            zIndex: 0,
-          }}
-        />
-      ))}
-
-      {STARS.map((s, i) => <TwinklingStar key={i} {...s} w={width} h={height} />)}
-
       <View style={[styles.inner, { paddingTop: topPad, paddingBottom: bottomPad, paddingHorizontal: H_PAD }]}>
         <View style={[styles.header, { height: headerH }]}>
           <Pressable onPress={handleHiddenTap} testID="settings-btn" style={styles.titleWrap}>
@@ -355,7 +210,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1B0B54",
+    backgroundColor: Colors.background,
   },
   inner: {
     flex: 1,

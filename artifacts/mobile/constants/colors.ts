@@ -7,25 +7,25 @@ export const Colors = {
   accentBlue: "#4FC3F7",
   danger: "#EF476F",
 
-  background: "#0D2035",
-  backgroundCard: "#112840",
-  backgroundMid: "#0F2030",
-  backgroundDeep: "#09192A",
+  background: "#1A1A1A",
+  backgroundCard: "#2A2A2A",
+  backgroundMid: "#1C1C1C",
+  backgroundDeep: "#141414",
 
   text: "#FFFFFF",
-  textSecondary: "#B8D4EC",
-  textMuted: "#5A7A96",
+  textSecondary: "#CCCCCC",
+  textMuted: "#777777",
 
-  border: "#1A3A5C",
-  borderLight: "#255075",
+  border: "#3A3A3A",
+  borderLight: "#4A4A4A",
   borderGlow: "#F4633A",
 
   success: "#3ECF8E",
   warning: "#F5C518",
 
-  tabBarBg: "#09192A",
+  tabBarBg: "#141414",
   tabBarActive: "#F4633A",
-  tabBarInactive: "#4A7090",
+  tabBarInactive: "#666666",
 
   glowOrange: "#F4633A",
   glowGold: "#F5C518",
