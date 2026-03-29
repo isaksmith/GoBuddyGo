@@ -79,7 +79,7 @@ const native = Platform.OS !== "web";
 
 const SOUND_SOURCES = {
   vroom:   require("../../assets/sounds/vroom.wav"),
-  beep:    require("@assets/freesound_community-car-horn-beep-beep-two-beeps-honk-honk-618_1774754922573.mp3"),
+  beep:    require("../../assets/sounds/car-horn.mp3"),
   siren:   require("../../assets/sounds/siren.wav"),
   zoom:    require("../../assets/sounds/zoom.wav"),
   screech: require("../../assets/sounds/screech.wav"),
