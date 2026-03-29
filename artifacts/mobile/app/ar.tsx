@@ -129,7 +129,6 @@ export default function ARScreen() {
     sessionActive,
     startSession,
     startSingleMission,
-    endSession,
     settings,
     sessionStartTime,
     isLoaded,
@@ -139,7 +138,6 @@ export default function ARScreen() {
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const proximityWarning = useAccelerometerProxy();
-  const isNavigating = useRef(false);
   const hasAutoStarted = useRef(false);
 
   const isSingleMissionMode = !!missionId;
@@ -225,13 +223,6 @@ export default function ARScreen() {
     completeMission(missionId);
     setCelebratingTitle(mission.title);
     setCelebrationVisible(true);
-  };
-
-  const handleGoToSummary = async () => {
-    if (isNavigating.current) return;
-    isNavigating.current = true;
-    await endSession();
-    router.push("/summary");
   };
 
   if (!permission) {
@@ -338,21 +329,6 @@ export default function ARScreen() {
                 <Ionicons name="trophy" size={26} color={Colors.secondary} />
                 <Text style={styles.allDoneText}>ALL DONE! AMAZING! 🎉</Text>
               </View>
-              <Pressable
-                onPress={handleGoToSummary}
-                style={styles.summaryBtn}
-                testID="see-summary-btn"
-              >
-                <LinearGradient
-                  colors={[Colors.secondary, "#D4A800"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.summaryBtnGradient}
-                >
-                  <Ionicons name="star" size={22} color="#FFFFFF" />
-                  <Text style={styles.summaryBtnText}>SEE RESULTS!</Text>
-                </LinearGradient>
-              </Pressable>
             </View>
           ) : (
             sessionMissions.length > 0 && (
@@ -622,29 +598,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 0.5,
-  },
-  summaryBtn: {
-    borderRadius: 50,
-    overflow: "hidden",
-    shadowColor: Colors.secondary,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.65,
-    shadowRadius: 14,
-    elevation: 10,
-  },
-  summaryBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 18,
-    borderRadius: 50,
-  },
-  summaryBtnText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 1,
   },
   missionStripWrapper: {
     gap: 6,
