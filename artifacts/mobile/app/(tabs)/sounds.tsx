@@ -53,11 +53,6 @@ const homeBtnStyles = StyleSheet.create({
     right: 20,
     borderRadius: 50,
     overflow: "hidden",
-    shadowColor: "#F4633A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 12,
     zIndex: 100,
   },
   homeBtnPressed: {
@@ -227,11 +222,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   padWrap: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 10,
   },
   pad: {
     alignItems: "center",

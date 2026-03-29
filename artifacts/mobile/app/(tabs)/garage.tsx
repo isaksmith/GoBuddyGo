@@ -63,16 +63,17 @@ const dpStyles = StyleSheet.create({
   accEmoji: {},
 });
 
-function SavedCarCard({ car, onPress, onDelete, onRename, onView3d }: {
+function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }: {
   car: SavedCar;
   onPress: () => void;
   onDelete: () => void;
   onRename: () => void;
   onView3d?: () => void;
+  cardColor?: string;
 }) {
   const has3d = car.model3dStatus === "succeeded" && !!car.model3dUrl;
   return (
-    <Pressable onPress={onPress} style={cardStyles.card}>
+    <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
       <View style={cardStyles.imageArea}>
         {has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
@@ -110,10 +111,10 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d }: {
         {!car.isDefault && (
           <View style={cardStyles.actions}>
             <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
-              <Ionicons name="pencil" size={14} color={Colors.primary} />
+              <Ionicons name="pencil" size={14} color="rgba(255,255,255,0.9)" />
             </Pressable>
             <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
-              <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+              <Ionicons name="trash-outline" size={14} color="rgba(255,255,255,0.9)" />
             </Pressable>
           </View>
         )}
@@ -122,25 +123,26 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d }: {
   );
 }
 
-function DesignCard({ design, onPress, onDelete, onRename }: {
+function DesignCard({ design, onPress, onDelete, onRename, cardColor }: {
   design: CarDesign;
   onPress: () => void;
   onDelete: () => void;
   onRename: () => void;
+  cardColor?: string;
 }) {
   return (
-    <Pressable onPress={onPress} style={cardStyles.card}>
-      <View style={[cardStyles.imageArea, { justifyContent: "center", alignItems: "center", backgroundColor: Colors.backgroundDeep }]}>
+    <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
+      <View style={[cardStyles.imageArea, { justifyContent: "center", alignItems: "center" }]}>
         <DesignPreview design={design} size={70} />
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{design.name}</Text>
         <View style={cardStyles.actions}>
           <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="pencil" size={14} color={Colors.primary} />
+            <Ionicons name="pencil" size={14} color="rgba(255,255,255,0.9)" />
           </Pressable>
           <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+            <Ionicons name="trash-outline" size={14} color="rgba(255,255,255,0.9)" />
           </Pressable>
         </View>
       </View>
@@ -161,19 +163,25 @@ function CreateCard({ label, onPress }: { label: string; onPress: () => void }) 
   );
 }
 
+const CAR_CARD_COLORS = ["#4F8EF7", "#3ECF8E", "#F5C518", "#EF476F", "#9B5DE5", "#F4633A"];
+const DESIGN_CARD_COLORS = ["#7B2FBE", "#EF476F", "#3ECF8E", "#F5C518", "#4F8EF7", "#F4633A"];
+
 const cardStyles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 18,
-    backgroundColor: Colors.backgroundCard,
-    borderWidth: 2,
-    borderColor: Colors.border,
+    borderRadius: 24,
+    backgroundColor: "#4F8EF7",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   imageArea: {
     flex: 1,
-    backgroundColor: Colors.backgroundDeep,
+    backgroundColor: "rgba(0,0,0,0.08)",
   },
   image: {
     width: "100%",
@@ -196,9 +204,10 @@ const cardStyles = StyleSheet.create({
   footer: {
     padding: 10,
     gap: 4,
+    backgroundColor: "rgba(0,0,0,0.18)",
   },
   name: {
-    color: Colors.text,
+    color: "#FFFFFF",
     fontSize: 13,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 0.3,
@@ -213,7 +222,7 @@ const cardStyles = StyleSheet.create({
   createCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 18,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: Colors.primary + "55",
     borderStyle: "dashed",
@@ -557,12 +566,17 @@ export default function GarageScreen() {
 
         {activeTab === "cars" && (
           <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <LinearGradient colors={["#4F8EF7", "#2563EB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>🚗 MY CARS</Text>
+              </LinearGradient>
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.cardRow}
             >
-              {savedCars.map((car) => (
+              {savedCars.map((car, idx) => (
                 <SavedCarCard
                   key={car.id}
                   car={car}
@@ -570,6 +584,7 @@ export default function GarageScreen() {
                   onDelete={() => handleDeleteCar(car)}
                   onRename={() => startRename(car.id, "cars", car.name)}
                   onView3d={() => handleOpenCar(car)}
+                  cardColor={CAR_CARD_COLORS[idx % CAR_CARD_COLORS.length]}
                 />
               ))}
               <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
@@ -584,6 +599,11 @@ export default function GarageScreen() {
 
         {activeTab === "designs" && (
           <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>🎨 MY DESIGNS</Text>
+              </LinearGradient>
+            </View>
             {designs.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>🎨</Text>
@@ -602,13 +622,14 @@ export default function GarageScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.cardRow}
               >
-                {designs.map((design) => (
+                {designs.map((design, idx) => (
                   <DesignCard
                     key={design.id}
                     design={design}
                     onPress={() => handleOpenDesign(design)}
                     onDelete={() => handleDeleteDesign(design)}
                     onRename={() => startRename(design.id, "designs", design.name)}
+                    cardColor={DESIGN_CARD_COLORS[idx % DESIGN_CARD_COLORS.length]}
                   />
                 ))}
                 <CreateCard label="Design New Car" onPress={handleDesignNew} />
@@ -770,6 +791,26 @@ const styles = StyleSheet.create({
   },
   section: {
     minHeight: CARD_HEIGHT + 40,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  sectionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 50,
+  },
+  sectionBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1.5,
   },
   cardRow: {
     paddingRight: 16,

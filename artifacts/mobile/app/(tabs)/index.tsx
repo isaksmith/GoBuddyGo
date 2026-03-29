@@ -125,9 +125,6 @@ export default function HomeScreen() {
     <AppBackground>
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: 20 }]}>
-        <Pressable onPress={handleHiddenTap} testID="settings-btn" style={styles.titleWrap}>
-          <Text style={[styles.appTitle, { fontSize: (isLandscape ? 32 : 48) * textScale }]}>🏎️ GO BUDDY GO 🏎️</Text>
-        </Pressable>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -138,6 +135,11 @@ export default function HomeScreen() {
           hitSlop={12}
         >
           <Ionicons name="settings-outline" size={26} color="rgba(255,255,255,0.8)" />
+        </Pressable>
+      </View>
+      <View style={[styles.titleSection, { paddingHorizontal: 8, paddingBottom: 8 }]}>
+        <Pressable onPress={handleHiddenTap} testID="settings-btn" style={styles.titleWrap}>
+          <Text style={[styles.appTitle, { fontSize: (isLandscape ? 28 : 42) * textScale }]} numberOfLines={1} adjustsFontSizeToFit>🏎️ Go Buddy Go 🏎️</Text>
         </Pressable>
       </View>
 
@@ -161,11 +163,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-end",
     paddingBottom: 8,
     gap: 10,
   },
+  titleSection: {
+    alignItems: "center",
+  },
   titleWrap: {
-    flex: 1,
+    width: "100%",
     alignItems: "center",
   },
   settingsCog: {
@@ -188,9 +194,9 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   gameCard: {
-    width: "47%",
+    width: "48%",
     borderRadius: 28,
-    paddingVertical: 72,
+    paddingVertical: 92,
     paddingHorizontal: 20,
     alignItems: "center",
     justifyContent: "center",
