@@ -3,3 +3,7 @@
 
 # No need to store the pnpm store twice.
 .local
+
+# Exclude mobile workspace from deployment (Metro bundler not compatible with Autoscale)
+artifacts/mobile/
+artifacts/mockup-sandbox/node_modules/
