@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   Animated,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -72,7 +73,11 @@ export function StickerPicker({
             >
               {unlocked ? (
                 <>
-                  <Text style={styles.stickerEmoji}>{sticker.emoji}</Text>
+                  {sticker.image ? (
+                    <Image source={sticker.image} style={styles.stickerImage} />
+                  ) : (
+                    <Text style={styles.stickerEmoji}>{sticker.emoji}</Text>
+                  )}
                   <Text style={[styles.stickerLabel, { color: sticker.color }]}>
                     {sticker.label.toUpperCase()}
                   </Text>
@@ -80,7 +85,11 @@ export function StickerPicker({
               ) : (
                 <>
                   <View style={styles.lockedOverlay}>
-                    <Text style={styles.stickerEmojiLocked}>{sticker.emoji}</Text>
+                    {sticker.image ? (
+                      <Image source={sticker.image} style={[styles.stickerImage, { opacity: 0.3 }]} />
+                    ) : (
+                      <Text style={styles.stickerEmojiLocked}>{sticker.emoji}</Text>
+                    )}
                     <View style={styles.lockBadge}>
                       <Ionicons name="lock-closed" size={12} color="#FFFFFF" />
                     </View>
@@ -173,6 +182,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 4,
+  },
+  stickerImage: {
+    width: 36,
+    height: 36,
+    resizeMode: "contain",
   },
   stickerEmoji: {
     fontSize: 30,

@@ -119,7 +119,8 @@ export interface CarDesign {
 
 export interface StickerDefinition {
   id: string;
-  emoji: string;
+  emoji?: string;
+  image?: ReturnType<typeof require>;
   label: string;
   color: string;
   unlockCondition: null | { type: "sessions"; count: number } | { type: "badges"; count: number };
@@ -140,6 +141,16 @@ export const STICKER_CATALOG: StickerDefinition[] = [
   { id: "s_unicorn", emoji: "🦄", label: "Unicorn", color: "#CE93D8", unlockCondition: { type: "badges", count: 3 } },
   { id: "s_explosion", emoji: "💥", label: "Blast!", color: "#FF7043", unlockCondition: { type: "sessions", count: 5 } },
   { id: "s_alien", emoji: "👾", label: "Alien", color: "#4FC3F7", unlockCondition: { type: "sessions", count: 5 } },
+  { id: "s_img_cat", image: require("../assets/images/sticker-cat.png"), label: "Cat", color: "#7EB8C9", unlockCondition: null },
+  { id: "s_img_cloud", image: require("../assets/images/sticker-cloud.png"), label: "Cloud", color: "#A8C5CE", unlockCondition: null },
+  { id: "s_img_heart", image: require("../assets/images/sticker-heart.png"), label: "Heart", color: "#D4907A", unlockCondition: null },
+  { id: "s_img_redpanda", image: require("../assets/images/sticker-red-panda.png"), label: "Red Panda", color: "#E07830", unlockCondition: null },
+  { id: "s_img_pineapple", image: require("../assets/images/sticker-pineapple.png"), label: "Pineapple", color: "#F5C518", unlockCondition: null },
+  { id: "s_img_koala", image: require("../assets/images/sticker-koala.png"), label: "Koala", color: "#7BB8E8", unlockCondition: null },
+  { id: "s_img_corgi", image: require("../assets/images/sticker-corgi.png"), label: "Good Boy", color: "#E8A048", unlockCondition: null },
+  { id: "s_img_sun", image: require("../assets/images/sticker-sun.png"), label: "Sun", color: "#F5A623", unlockCondition: null },
+  { id: "s_img_rainbow", image: require("../assets/images/sticker-rainbow.png"), label: "Rainbow", color: "#E8547A", unlockCondition: null },
+  { id: "s_img_giraffe", image: require("../assets/images/sticker-giraffe.png"), label: "Giraffe", color: "#E8904A", unlockCondition: null },
 ];
 
 export const VEHICLE_TYPES = [

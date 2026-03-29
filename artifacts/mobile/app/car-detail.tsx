@@ -87,7 +87,11 @@ function DraggableSticker({
   if (!sticker) return null;
   return (
     <Animated.View style={[styles.stickerOnVehicle, { transform: pan.getTranslateTransform() }]} {...panResponder.panHandlers}>
-      <Text style={styles.stickerOnVehicleEmoji}>{sticker.emoji}</Text>
+      {sticker.image ? (
+        <Image source={sticker.image} style={styles.stickerOnVehicleImage} />
+      ) : (
+        <Text style={styles.stickerOnVehicleEmoji}>{sticker.emoji}</Text>
+      )}
     </Animated.View>
   );
 }
@@ -593,7 +597,11 @@ export default function CarDetailScreen() {
                       unlocked ? { borderColor: sticker.color + "66", backgroundColor: sticker.color + "15" } : { borderColor: Colors.border, opacity: 0.5 },
                     ]}
                   >
-                    <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>{sticker.emoji}</Text>
+                    {sticker.image ? (
+                      <Image source={sticker.image} style={[styles.catalogStickerImage, !unlocked && { opacity: 0.3 }]} />
+                    ) : (
+                      <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>{sticker.emoji}</Text>
+                    )}
                     {!unlocked && (
                       <View style={styles.catalogLock}>
                         <Ionicons name="lock-closed" size={10} color={Colors.textMuted} />
@@ -675,6 +683,7 @@ const styles = StyleSheet.create({
   vehiclePhotoOverlay: { position: "absolute", bottom: 0, left: 0, right: 0, height: 60 },
   stickerOnVehicle: { position: "absolute", top: 0, left: 0 },
   stickerOnVehicleEmoji: { fontSize: 42 },
+  stickerOnVehicleImage: { width: 52, height: 52, resizeMode: "contain" },
   stickerHint: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, justifyContent: "center", alignItems: "center" },
   stickerHintText: { color: "rgba(255,255,255,0.5)", fontSize: 13, fontFamily: "Nunito_700Bold", letterSpacing: 1.5 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
@@ -709,6 +718,7 @@ const styles = StyleSheet.create({
   catalogGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   catalogCell: { width: 52, height: 52, borderRadius: 16, borderWidth: 2, justifyContent: "center", alignItems: "center", position: "relative" },
   catalogEmoji: { fontSize: 26 },
+  catalogStickerImage: { width: 34, height: 34, resizeMode: "contain" },
   catalogLock: { position: "absolute", bottom: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.backgroundDeep, borderWidth: 1, borderColor: Colors.border, justifyContent: "center", alignItems: "center" },
   pickerBackdrop: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.4)" },
   viewerContainer: { flex: 1, backgroundColor: Colors.backgroundDeep },
