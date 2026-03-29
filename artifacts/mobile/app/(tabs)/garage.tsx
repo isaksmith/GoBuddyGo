@@ -33,8 +33,14 @@ import {
 import { getApiBaseUrl } from "@/utils/apiUrl";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = 160;
-const CARD_HEIGHT = 210;
+const IS_PAD = SCREEN_WIDTH >= 768;
+const PAD_COLUMNS = 3;
+const PAD_H_PADDING = 32;
+const PAD_GAP = 16;
+const CARD_WIDTH = IS_PAD
+  ? Math.floor((SCREEN_WIDTH - PAD_H_PADDING - PAD_GAP * (PAD_COLUMNS - 1)) / PAD_COLUMNS)
+  : 160;
+const CARD_HEIGHT = IS_PAD ? Math.round(CARD_WIDTH * 1.31) : 210;
 
 function DesignPreview({ design, size = 60 }: { design: CarDesign; size?: number }) {
   const vt = VEHICLE_TYPES.find((v) => v.id === design.vehicleType) ?? VEHICLE_TYPES[0];
@@ -490,11 +496,7 @@ export default function GarageScreen() {
                 <Text style={styles.sectionBadgeText}>🚗 MY CARS</Text>
               </LinearGradient>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cardRow}
-            >
+            <View style={styles.cardRow}>
               {savedCars.map((car, idx) => (
                 <SavedCarCard
                   key={car.id}
@@ -507,8 +509,7 @@ export default function GarageScreen() {
                 />
               ))}
               <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
-            </ScrollView>
-            <Text style={styles.scrollHint}>← Swipe to see more cars</Text>
+            </View>
           </View>
         )}
 
@@ -532,11 +533,7 @@ export default function GarageScreen() {
                 </Pressable>
               </View>
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.cardRow}
-              >
+              <View style={styles.cardRow}>
                 {designs.map((design, idx) => (
                   <DesignCard
                     key={design.id}
@@ -546,11 +543,7 @@ export default function GarageScreen() {
                   />
                 ))}
                 <CreateCard label="Design New Car" onPress={handleDesignNew} />
-              </ScrollView>
-            )}
-
-            {designs.length > 0 && (
-              <Text style={styles.scrollHint}>← Swipe to see more designs</Text>
+              </View>
             )}
           </View>
         )}
@@ -707,17 +700,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   cardRow: {
-    paddingRight: 16,
-    gap: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
     alignItems: "flex-start",
-  },
-  scrollHint: {
-    color: Colors.textMuted,
-    fontSize: 10,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.8,
-    marginTop: 12,
-    textAlign: "center",
+    justifyContent: "center",
   },
   emptyState: {
     alignItems: "center",
