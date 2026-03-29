@@ -36,8 +36,14 @@ app.use("/api", router);
 
 const webBuildDir = path.join(__dirname, "../../mobile/dist");
 if (fs.existsSync(webBuildDir)) {
-  app.use(express.static(webBuildDir));
-  app.get("/{*splat}", (_req, res) => {
+  app.use(express.static(webBuildDir, { dotfiles: "allow" }));
+  app.get("/{*splat}", (req, res) => {
+    const decodedPath = decodeURIComponent(req.path);
+    const filePath = path.join(webBuildDir, decodedPath);
+    const normalizedPath = path.normalize(filePath);
+    if (normalizedPath.startsWith(webBuildDir) && fs.existsSync(normalizedPath) && fs.statSync(normalizedPath).isFile()) {
+      return res.sendFile(normalizedPath);
+    }
     const indexPath = path.join(webBuildDir, "index.html");
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
