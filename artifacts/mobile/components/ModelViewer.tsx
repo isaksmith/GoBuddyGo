@@ -22,23 +22,33 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
   }
 
   const { WebView } = require("react-native-webview");
+  const injectedHTML = html.replace(
+    '<body>',
+    '<body style="background-color: transparent !important;">'
+  );
   return (
-    <WebView
-      source={{ html }}
-      style={style}
-      originWhitelist={["*"]}
-      javaScriptEnabled
-      domStorageEnabled
-      allowFileAccess
-      mixedContentMode="always"
-      scrollEnabled={scrollEnabled}
-    />
+    <View style={[styles.webviewContainer, style]}>
+      <WebView
+        source={{ html: injectedHTML }}
+        style={styles.fill}
+        originWhitelist={["*"]}
+        javaScriptEnabled
+        domStorageEnabled
+        allowFileAccess
+        mixedContentMode="always"
+        scrollEnabled={scrollEnabled}
+        backgroundColor="transparent"
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
+  },
+  webviewContainer: {
+    backgroundColor: "transparent",
   },
 });
 

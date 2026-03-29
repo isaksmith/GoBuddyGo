@@ -27,8 +27,6 @@ import { useApp } from "@/context/AppContext";
 import ModelViewer from "@/components/ModelViewer";
 import { getApiBaseUrl } from "@/utils/apiUrl";
 
-const buddyCarRender = require("@/assets/images/buddy-car-render.png");
-
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 const CAR_W = 200;
@@ -246,11 +244,11 @@ export default function CoinDashScreen() {
       if (dir === "down") ny += MOVE_STEP;
       if (dir === "left") {
         nx -= MOVE_STEP;
-        carFlip.value = 1;
+        carFlip.value = -1;
       }
       if (dir === "right") {
         nx += MOVE_STEP;
-        carFlip.value = -1;
+        carFlip.value = 1;
       }
 
       nx = Math.max(playfield.minX, Math.min(playfield.maxX, nx));
@@ -315,11 +313,6 @@ export default function CoinDashScreen() {
             />
           ) : (
             <View style={styles.carModel}>
-              <Image
-                source={buddyCarRender}
-                style={[StyleSheet.absoluteFill, { zIndex: 0 }]}
-                resizeMode="contain"
-              />
               <ModelViewer
                 html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;}</style></head><body><model-viewer src="${getApiBaseUrl()}/assets/buddy-car-game.glb" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Buddy Car"></model-viewer></body></html>`}
                 style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
