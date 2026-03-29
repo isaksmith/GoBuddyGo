@@ -12,7 +12,6 @@ import {
   Dimensions,
   Image,
   LayoutChangeEvent,
-  Modal,
   Platform,
   Pressable,
   PanResponder,
@@ -92,8 +91,7 @@ function DraggableSticker({
   );
 }
 
-function ModelViewer({ modelUrl, onClose }: { modelUrl: string; onClose: () => void }) {
-  const insets = useSafeAreaInsets();
+function InlineModelViewer({ modelUrl }: { modelUrl: string }) {
   const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -104,20 +102,7 @@ model-viewer{width:100%;height:100%;background-color:#09192A;}</style></head>
 rotation-per-second="30deg" shadow-intensity="1" environment-image="neutral" exposure="1"
 alt="3D model of your GoBabyGo vehicle"></model-viewer></body></html>`;
   return (
-    <Modal animationType="slide" presentationStyle="fullScreen" statusBarTranslucent>
-      <View style={[styles.viewerContainer, { paddingTop: insets.top }]}>
-        <View style={styles.viewerHeader}>
-          <Text style={styles.viewerTitle}>🚀 YOUR 3D RIDE</Text>
-          <Pressable onPress={onClose} style={styles.viewerCloseBtn} hitSlop={10}>
-            <Ionicons name="close" size={24} color={Colors.text} />
-          </Pressable>
-        </View>
-        <WebView source={{ html }} style={styles.webView} originWhitelist={["*"]} javaScriptEnabled domStorageEnabled allowFileAccess mixedContentMode="always" />
-        <View style={[styles.viewerFooter, { paddingBottom: insets.bottom + 12 }]}>
-          <Text style={styles.viewerHint}>Drag to rotate · Pinch to zoom</Text>
-        </View>
-      </View>
-    </Modal>
+    <WebView source={{ html }} style={styles.webView} originWhitelist={["*"]} javaScriptEnabled domStorageEnabled allowFileAccess mixedContentMode="always" />
   );
 }
 
@@ -133,10 +118,10 @@ export default function CarDetailScreen() {
   const [nameInput, setNameInput] = useState(car?.name ?? "My Ride");
   const [photoAreaLayout, setPhotoAreaLayout] = useState({ width: SCREEN_WIDTH - 32, height: PHOTO_AREA_HEIGHT });
   const slideAnim = useRef(new Animated.Value(400)).current;
-  const [viewerVisible, setViewerVisible] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeTaskIdRef = useRef<string | null>(null);
   const dotAnim = useRef(new Animated.Value(0)).current;
+  const autoConvertTriggeredRef = useRef(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -302,7 +287,7 @@ export default function CarDetailScreen() {
     ]);
   };
 
-  const handleConvertTo3d = async () => {
+  const handleConvertTo3d = useCallback(async () => {
     if (!car?.photoUri || !carId) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
@@ -338,12 +323,20 @@ export default function CarDetailScreen() {
     } catch (e) {
       Alert.alert("Conversion failed", e instanceof Error ? e.message : "Unknown error");
     }
-  };
+  }, [car?.photoUri, carId, updateSavedCar, startPolling]);
+
+  useEffect(() => {
+    if (!isLoaded || !carId || !car?.photoUri || car?.isDefault) return;
+    if (model3dStatus === "idle" && !autoConvertTriggeredRef.current) {
+      autoConvertTriggeredRef.current = true;
+      handleConvertTo3d();
+    }
+  }, [isLoaded, carId, car?.photoUri, car?.isDefault, model3dStatus, handleConvertTo3d]);
 
   const handleRetry3d = async () => {
     if (!carId) return;
     await updateSavedCar(carId, { model3dTaskId: null, model3dStatus: "idle", model3dUrl: null });
-    setTimeout(() => handleConvertTo3d(), 100);
+    autoConvertTriggeredRef.current = false;
   };
 
   const handleDelete = () => {
@@ -362,25 +355,24 @@ export default function CarDetailScreen() {
   };
 
   const unlockedCount = STICKER_CATALOG.filter((s) => isStickerUnlocked(s)).length;
-  const showConvertBtn = !!car?.photoUri && (model3dStatus === "idle" || model3dStatus === "failed");
+  const has3dModel = model3dStatus === "succeeded" && !!model3dUrl;
   const showPending = model3dStatus === "pending";
-  const showViewBtn = model3dStatus === "succeeded" && !!model3dUrl;
 
   if (!car) {
     return (
-      <LinearGradient colors={[Colors.background, Colors.backgroundDeep]} style={styles.container}>
+      <View style={styles.container}>
         <View style={[styles.notFound, { paddingTop: topPad + 20 }]}>
           <Text style={styles.notFoundText}>Car not found</Text>
           <Pressable onPress={() => router.back()} style={styles.backBtnAlt}>
             <Text style={styles.backBtnAltText}>← Back to Garage</Text>
           </Pressable>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 8, paddingBottom: 120 }]}
         showsVerticalScrollIndicator={false}
@@ -437,56 +429,70 @@ export default function CarDetailScreen() {
           const { width, height } = e.nativeEvent.layout;
           setPhotoAreaLayout({ width, height });
         }}>
-          {car.isDefault ? (
+          {has3dModel ? (
+            <InlineModelViewer modelUrl={model3dUrl!} />
+          ) : car.isDefault ? (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(79,142,247,0.08)" }}>
               <DefaultCarSvg width={280} height={170} bodyColor="#4F8EF7" accentColor="#FFD93D" />
             </View>
           ) : (
             <Image source={{ uri: car.photoUri }} style={styles.vehiclePhoto} resizeMode="cover" />
           )}
-          <LinearGradient colors={["transparent", "rgba(9,25,42,0.5)"]} style={styles.vehiclePhotoOverlay} />
-          {car.stickers.map((placed) => (
-            <DraggableSticker key={placed.uid} placed={placed} onMove={handleMoveSticker} onRemove={handleRemoveSticker} />
-          ))}
-          {car.stickers.length === 0 && (
-            <View style={styles.stickerHint} pointerEvents="none">
-              <Text style={styles.stickerHintText}>TAP + TO ADD STICKERS!</Text>
+          {!has3dModel && (
+            <>
+              <LinearGradient colors={["transparent", "rgba(9,25,42,0.5)"]} style={styles.vehiclePhotoOverlay} />
+              {car.stickers.map((placed) => (
+                <DraggableSticker key={placed.uid} placed={placed} onMove={handleMoveSticker} onRemove={handleRemoveSticker} />
+              ))}
+              {car.stickers.length === 0 && (
+                <View style={styles.stickerHint} pointerEvents="none">
+                  <Text style={styles.stickerHintText}>TAP + TO ADD STICKERS!</Text>
+                </View>
+              )}
+            </>
+          )}
+          {has3dModel && (
+            <View style={styles.model3dHint} pointerEvents="none">
+              <Text style={styles.model3dHintText}>DRAG TO ROTATE · PINCH TO ZOOM</Text>
             </View>
           )}
         </View>
 
-        <View style={styles.actionRow}>
-          <Pressable onPress={openPicker} style={styles.addStickerBtn}>
-            <LinearGradient colors={[Colors.accent, "#2DB87A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addStickerBtnGrad}>
-              <Ionicons name="add-circle" size={22} color="#FFFFFF" />
-              <Text style={styles.addStickerBtnText}>ADD STICKER</Text>
-            </LinearGradient>
-          </Pressable>
-          {car.stickers.length > 0 && (
-            <View style={styles.stickerCountPill}>
-              <Text style={styles.stickerCountText}>{car.stickers.length} ON RIDE</Text>
+        {!has3dModel && (
+          <>
+            <View style={styles.actionRow}>
+              <Pressable onPress={openPicker} style={styles.addStickerBtn}>
+                <LinearGradient colors={[Colors.accent, "#2DB87A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addStickerBtnGrad}>
+                  <Ionicons name="add-circle" size={22} color="#FFFFFF" />
+                  <Text style={styles.addStickerBtnText}>ADD STICKER</Text>
+                </LinearGradient>
+              </Pressable>
+              {car.stickers.length > 0 && (
+                <View style={styles.stickerCountPill}>
+                  <Text style={styles.stickerCountText}>{car.stickers.length} ON RIDE</Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
 
-        <View style={styles.helpRow}>
-          <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
-          <Text style={styles.helpText}>DRAG stickers to move · HOLD to remove</Text>
-        </View>
-
-        {showConvertBtn && (
-          <Pressable onPress={handleConvertTo3d} style={styles.convert3dBtn}>
-            <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.convert3dBtnGrad}>
-              <Text style={styles.convert3dBtnText}>CONVERT TO 3D ✨</Text>
-            </LinearGradient>
-          </Pressable>
+            <View style={styles.helpRow}>
+              <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
+              <Text style={styles.helpText}>DRAG stickers to move · HOLD to remove</Text>
+            </View>
+          </>
         )}
 
         {model3dStatus === "failed" && (
-          <View style={styles.errorRow}>
-            <Ionicons name="alert-circle" size={16} color={Colors.danger} />
-            <Text style={styles.errorText}>3D conversion failed. Try again.</Text>
-          </View>
+          <>
+            <View style={styles.errorRow}>
+              <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+              <Text style={styles.errorText}>3D conversion failed.</Text>
+            </View>
+            <Pressable onPress={handleRetry3d} style={styles.convert3dBtn}>
+              <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.convert3dBtnGrad}>
+                <Text style={styles.convert3dBtnText}>RETRY 3D CONVERSION</Text>
+              </LinearGradient>
+            </Pressable>
+          </>
         )}
 
         {showPending && (
@@ -504,57 +510,54 @@ export default function CarDetailScreen() {
           </View>
         )}
 
-        {showViewBtn && (
-          <Pressable onPress={() => setViewerVisible(true)} style={styles.view3dBtn}>
-            <LinearGradient colors={[Colors.accentBlue, "#1565C0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.view3dBtnGrad}>
-              <Ionicons name="cube" size={22} color="#FFFFFF" />
-              <Text style={styles.view3dBtnText}>VIEW IN 3D 🚀</Text>
-            </LinearGradient>
-          </Pressable>
-        )}
-
-        {showViewBtn && (
+        {has3dModel && (
           <Pressable onPress={handleRetry3d} style={styles.regenerateRow}>
             <Ionicons name="refresh" size={13} color={Colors.textMuted} />
             <Text style={styles.regenerateText}>REGENERATE 3D MODEL</Text>
           </Pressable>
         )}
 
-        <View style={styles.stickerCatalog}>
-          <Text style={styles.catalogTitle}>YOUR STICKER COLLECTION</Text>
-          <View style={styles.catalogGrid}>
-            {STICKER_CATALOG.map((sticker) => {
-              const unlocked = isStickerUnlocked(sticker);
-              return (
-                <Pressable
-                  key={sticker.id}
-                  onPress={() => {
-                    if (!unlocked || !car || !carId) return;
-                    const newSticker: PlacedSticker = {
-                      uid: makeStickerUid(),
-                      stickerId: sticker.id,
-                      x: photoAreaLayout.width / 2 - 20,
-                      y: photoAreaLayout.height / 2 - 20,
-                    };
-                    updateSavedCar(carId, { stickers: [...car.stickers, newSticker] });
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  }}
-                  style={[
-                    styles.catalogCell,
-                    unlocked ? { borderColor: sticker.color + "66", backgroundColor: sticker.color + "15" } : { borderColor: Colors.border, opacity: 0.5 },
-                  ]}
-                >
-                  <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>{sticker.emoji}</Text>
-                  {!unlocked && (
-                    <View style={styles.catalogLock}>
-                      <Ionicons name="lock-closed" size={10} color={Colors.textMuted} />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
+        {!has3dModel ? (
+          <View style={styles.stickerCatalog}>
+            <Text style={styles.catalogTitle}>YOUR STICKER COLLECTION</Text>
+            <View style={styles.catalogGrid}>
+              {STICKER_CATALOG.map((sticker) => {
+                const unlocked = isStickerUnlocked(sticker);
+                return (
+                  <Pressable
+                    key={sticker.id}
+                    onPress={() => {
+                      if (!unlocked || !car || !carId) return;
+                      const newSticker: PlacedSticker = {
+                        uid: makeStickerUid(),
+                        stickerId: sticker.id,
+                        x: photoAreaLayout.width / 2 - 20,
+                        y: photoAreaLayout.height / 2 - 20,
+                      };
+                      updateSavedCar(carId, { stickers: [...car.stickers, newSticker] });
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    }}
+                    style={[
+                      styles.catalogCell,
+                      unlocked ? { borderColor: sticker.color + "66", backgroundColor: sticker.color + "15" } : { borderColor: Colors.border, opacity: 0.5 },
+                    ]}
+                  >
+                    <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>{sticker.emoji}</Text>
+                    {!unlocked && (
+                      <View style={styles.catalogLock}>
+                        <Ionicons name="lock-closed" size={10} color={Colors.textMuted} />
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.stickerCatalog}>
+            <Text style={styles.catalogTitle}>STICKERS SAVED · RESCAN TO PLACE THEM</Text>
+          </View>
+        )}
       </ScrollView>
 
       {pickerVisible && <Pressable style={styles.pickerBackdrop} onPress={closePicker} />}
@@ -565,13 +568,12 @@ export default function CarDetailScreen() {
         isStickerUnlocked={isStickerUnlocked}
         slideAnim={slideAnim}
       />
-      {viewerVisible && model3dUrl && <ModelViewer modelUrl={model3dUrl} onClose={() => setViewerVisible(false)} />}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: "transparent" },
   scroll: { paddingHorizontal: 16 },
   notFound: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
   notFoundText: { color: Colors.text, fontSize: 18, fontFamily: "Nunito_700Bold" },
@@ -648,6 +650,8 @@ const styles = StyleSheet.create({
   view3dBtnText: { color: "#FFFFFF", fontSize: 17, fontFamily: "Nunito_700Bold", letterSpacing: 1.5 },
   regenerateRow: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "center", marginBottom: 16 },
   regenerateText: { color: Colors.textMuted, fontSize: 10, fontFamily: "Nunito_700Bold", letterSpacing: 1 },
+  model3dHint: { position: "absolute", bottom: 8, left: 0, right: 0, alignItems: "center" },
+  model3dHintText: { color: "rgba(255,255,255,0.45)", fontSize: 10, fontFamily: "Nunito_700Bold", letterSpacing: 1.2 },
   stickerCatalog: { marginTop: 4 },
   catalogTitle: { color: Colors.textSecondary, fontSize: 11, fontFamily: "Nunito_700Bold", letterSpacing: 2, marginBottom: 12 },
   catalogGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },

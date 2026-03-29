@@ -129,10 +129,7 @@ export default function BadgesScreen() {
   const earnedCount = galleryItems.filter((i) => i.earnedDate !== null).length;
 
   return (
-    <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Text style={[styles.headerTitle, { fontSize: 26 * textScale }]}>🏆 Badges</Text>
         <View style={styles.countPill}>
@@ -153,13 +150,14 @@ export default function BadgesScreen() {
       />
 
       <HomeButton bottomOffset={homeBtnBottom} />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

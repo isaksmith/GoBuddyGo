@@ -17,6 +17,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Colors } from "@/constants/colors";
@@ -67,17 +68,25 @@ function SavedCarCard({ car, onPress, onDelete, onRename }: {
   return (
     <Pressable onPress={onPress} style={cardStyles.card}>
       <View style={cardStyles.imageArea}>
-        {car.isDefault ? (
+        {car.model3dStatus === "succeeded" && car.model3dUrl ? (
+          <View style={cardStyles.model3dThumb} pointerEvents="none">
+            <WebView
+              source={{ html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>` }}
+              style={cardStyles.model3dWebView}
+              originWhitelist={["*"]}
+              javaScriptEnabled
+              domStorageEnabled
+              allowFileAccess
+              mixedContentMode="always"
+              scrollEnabled={false}
+            />
+          </View>
+        ) : car.isDefault ? (
           <View style={cardStyles.defaultCarArea}>
             <DefaultCarSvg width={140} height={90} bodyColor="#4F8EF7" accentColor="#FFD93D" />
           </View>
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
-        )}
-        {car.model3dUrl && (
-          <View style={cardStyles.badge3d}>
-            <Text style={cardStyles.badge3dText}>3D</Text>
-          </View>
         )}
       </View>
       <View style={cardStyles.footer}>
@@ -160,20 +169,13 @@ const cardStyles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(79,142,247,0.08)",
   },
-  badge3d: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: Colors.accentBlue,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+  model3dThumb: {
+    flex: 1,
+    backgroundColor: "#09192A",
   },
-  badge3dText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.5,
+  model3dWebView: {
+    flex: 1,
+    backgroundColor: "#09192A",
   },
   footer: {
     padding: 10,
@@ -403,10 +405,7 @@ export default function GarageScreen() {
   });
 
   return (
-    <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -545,12 +544,12 @@ export default function GarageScreen() {
           </View>
         </View>
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: "transparent" },
   scroll: { paddingHorizontal: 16 },
   header: {
     flexDirection: "row",

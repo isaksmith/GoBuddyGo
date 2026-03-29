@@ -103,10 +103,7 @@ export default function HistoryScreen() {
   const hPad = width > 600 ? 32 : 16;
 
   return (
-    <LinearGradient
-      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="history-home-btn">
           <Ionicons name="arrow-back" size={26} color={Colors.text} />
@@ -139,13 +136,14 @@ export default function HistoryScreen() {
           </View>
         }
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",
