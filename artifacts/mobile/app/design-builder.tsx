@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import {
@@ -22,6 +23,7 @@ import {
   DESIGN_ACCESSORIES,
   useApp,
 } from "@/context/AppContext";
+import { getApiBaseUrl } from "@/utils/apiUrl";
 
 const PICKER_COLORS = [
   "#FF3B30", "#FF9500", "#FFD60A", "#34C759",
@@ -127,6 +129,63 @@ const previewStyles = StyleSheet.create({
     letterSpacing: 1,
   },
 });
+
+
+
+function VehicleCardPreview({ modelUrl, primaryColor, emoji }: { modelUrl?: string; primaryColor: string; emoji: string }) {
+  if (modelUrl) {
+    const apiBase = getApiBaseUrl();
+    const fullUrl = `${apiBase}${modelUrl}`;
+    const html = `<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"><\/script>
+<style>*{margin:0;padding:0}body{background:transparent;overflow:hidden}
+model-viewer{width:70px;height:60px;--poster-color:transparent}</style></head>
+<body><model-viewer src="${fullUrl}" auto-rotate camera-orbit="45deg 55deg 2.5m"
+interaction-prompt="none" shadow-intensity="0" environment-image="neutral"
+style="background:transparent"></model-viewer></body></html>`;
+    return (
+      <WebView
+        source={{ html }}
+        style={{ width: 70, height: 60, backgroundColor: "transparent" }}
+        scrollEnabled={false}
+        pointerEvents="none"
+        originWhitelist={["*"]}
+      />
+    );
+  }
+
+  const html = `<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{margin:0;padding:0}body{display:flex;align-items:center;justify-content:center;
+height:60px;width:70px;background:transparent;overflow:hidden}
+.scene{perspective:200px;width:50px;height:40px;display:flex;align-items:center;justify-content:center}
+.box{width:36px;height:22px;position:relative;transform-style:preserve-3d;
+transform:rotateX(-20deg) rotateY(35deg);animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotateX(-20deg) rotateY(395deg)}}
+.face{position:absolute;width:36px;height:22px;border:1px solid rgba(255,255,255,0.3);
+display:flex;align-items:center;justify-content:center;font-size:16px;backface-visibility:visible}
+.front{background:${primaryColor};transform:translateZ(18px)}
+.back{background:${primaryColor}CC;transform:translateZ(-18px) rotateY(180deg)}
+.left{width:36px;background:${primaryColor}AA;transform:rotateY(-90deg) translateZ(18px)}
+.right{width:36px;background:${primaryColor}DD;transform:rotateY(90deg) translateZ(18px)}
+.top{height:36px;background:${primaryColor}EE;transform:rotateX(90deg) translateZ(11px)}
+.bottom{height:36px;background:${primaryColor}99;transform:rotateX(-90deg) translateZ(11px)}
+</style></head><body><div class="scene"><div class="box">
+<div class="face front">${emoji}</div><div class="face back"></div>
+<div class="face left"></div><div class="face right"></div>
+<div class="face top"></div><div class="face bottom"></div>
+</div></div></body></html>`;
+  return (
+    <WebView
+      source={{ html }}
+      style={{ width: 70, height: 60, backgroundColor: "transparent" }}
+      scrollEnabled={false}
+      pointerEvents="none"
+      originWhitelist={["*"]}
+    />
+  );
+}
 
 export default function DesignBuilderScreen() {
   const insets = useSafeAreaInsets();
@@ -258,7 +317,7 @@ export default function DesignBuilderScreen() {
                   vehicleType === v.id && { borderColor: primaryColor },
                 ]}
               >
-                <Text style={styles.vtEmoji}>{v.emoji}</Text>
+                <VehicleCardPreview modelUrl={v.modelUrl} primaryColor={vehicleType === v.id ? primaryColor : v.defaultPrimary} emoji={v.emoji} />
                 <Text style={[styles.vtLabel, vehicleType === v.id && { color: Colors.text }]}>
                   {v.label.toUpperCase()}
                 </Text>
