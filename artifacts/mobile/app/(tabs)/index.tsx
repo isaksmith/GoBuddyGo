@@ -29,7 +29,7 @@ type HubButton = {
 const HUB_BUTTONS: HubButton[] = [
   {
     label: "GAMES",
-    emoji: "🕹️",
+    emoji: "🎮",
     route: "/(tabs)/games",
     bg: "#3a86ff",
     shadowColor: "#1c4e9e",
@@ -56,7 +56,7 @@ const HUB_BUTTONS: HubButton[] = [
   },
   {
     label: "SOUNDS",
-    emoji: "📢",
+    emoji: "🔊",
     route: "/(tabs)/sounds",
     bg: "#c77dff",
     shadowColor: "#7a3db5",
