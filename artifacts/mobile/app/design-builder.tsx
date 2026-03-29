@@ -1,11 +1,15 @@
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
+  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -17,6 +21,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import ModelViewer from "@/components/ModelViewer";
+import { getApiBaseUrl } from "@/utils/apiUrl";
 import {
   VEHICLE_TYPES,
   DESIGN_COLORS,
@@ -24,11 +30,38 @@ import {
   useApp,
 } from "@/context/AppContext";
 
+type ScanStatus = "idle" | "pending" | "failed";
+
+type ScannedVehicle = {
+  id: string;
+  modelUrl: string;
+  label: string;
+};
+
+const SCANNED_RESTORED_ID = "scanned-restored";
+
 const PICKER_COLORS = [
   "#FF3B30", "#FF9500", "#FFD60A", "#34C759",
   "#007AFF", "#5856D6", "#AF52DE", "#FF2D55",
   "#FFFFFF", "#C0C0C0", "#4A4A4A", "#1C1C1E",
 ];
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const LARGE_PREVIEW_WIDTH = SCREEN_WIDTH - 32;
+const LARGE_PREVIEW_HEIGHT = Math.round(LARGE_PREVIEW_WIDTH * 0.62);
+
+function VehicleModelViewer({ modelUrl, size, interactive = false }: { modelUrl: string; size: "large" | "medium"; interactive?: boolean }) {
+  const containerSize = size === "large"
+    ? { width: LARGE_PREVIEW_WIDTH, height: LARGE_PREVIEW_HEIGHT }
+    : { width: 70, height: 52 };
+  const controls = interactive ? "camera-controls" : 'camera-controls="false" interaction-prompt="none"';
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${modelUrl}" camera-orbit="225deg 65deg auto" ${controls} auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D vehicle preview"></model-viewer></body></html>`;
+  return (
+    <View style={[containerSize, { borderRadius: size === "large" ? 28 : 14, overflow: "hidden" }]} pointerEvents={interactive ? "auto" : "none"}>
+      <ModelViewer html={html} style={{ flex: 1 }} scrollEnabled={false} />
+    </View>
+  );
+}
 
 function DesignPreview({
   vehicleType,
@@ -36,20 +69,60 @@ function DesignPreview({
   accentColor,
   accessories,
   size = "large",
+  customModelUrl,
 }: {
   vehicleType: string;
   primaryColor: string;
   accentColor: string;
   accessories: string[];
   size?: "large" | "medium";
+  customModelUrl?: string | null;
 }) {
   const vt = VEHICLE_TYPES.find((v) => v.id === vehicleType) ?? VEHICLE_TYPES[0];
   const activeAcc = DESIGN_ACCESSORIES.filter((a) => accessories.includes(a.id));
-  const containerSize = size === "large" ? { width: 260, height: 180 } : { width: 120, height: 80 };
-  const emojiSize = size === "large" ? 80 : 36;
+  const containerSize = size === "large"
+    ? { width: LARGE_PREVIEW_WIDTH, height: LARGE_PREVIEW_HEIGHT }
+    : { width: 120, height: 80 };
   const accSize = size === "large" ? 20 : 10;
   const borderRadius = size === "large" ? 28 : 14;
 
+  const isScannedType = vehicleType.startsWith("scanned-");
+  const effectiveModelUrl = isScannedType ? customModelUrl : vt.modelUrl;
+
+  if (isScannedType && !effectiveModelUrl) {
+    return (
+      <View style={[previewStyles.container, containerSize, { backgroundColor: "#09192A", borderRadius, alignItems: "center", justifyContent: "center", gap: 10 }]}>
+        <Text style={{ fontSize: size === "large" ? 48 : 24 }}>🚗</Text>
+        {size === "large" && (
+          <Text style={{ color: "#8ca0b5", fontSize: 12, fontFamily: "Nunito_700Bold", letterSpacing: 1 }}>
+            GENERATING 3D MODEL...
+          </Text>
+        )}
+      </View>
+    );
+  }
+
+  if (effectiveModelUrl) {
+    return (
+      <View style={[previewStyles.container, containerSize, { backgroundColor: "#09192A", borderRadius }]}>
+        <VehicleModelViewer modelUrl={effectiveModelUrl} size={size} interactive={size === "large"} />
+        {activeAcc.length > 0 && (
+          <View style={[previewStyles.topBadges, size === "large" && { gap: 4 }]}>
+            {activeAcc.slice(0, 5).map((a) => (
+              <Text key={a.id} style={{ fontSize: accSize }}>{a.emoji}</Text>
+            ))}
+          </View>
+        )}
+        {size !== "large" && (
+          <View style={[previewStyles.nameTag, { backgroundColor: "#1C1C1EDD" }]}>
+            <Text style={[previewStyles.vehicleLabel, { fontSize: 6 }]}>{vt.label.toUpperCase()}</Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  const emojiSize = size === "large" ? 100 : 36;
   return (
     <View
       style={[
@@ -136,25 +209,166 @@ export default function DesignBuilderScreen() {
 
   const existingDesign = designId ? designs.find((d) => d.id === designId) : null;
 
-  const [vehicleType, setVehicleType] = useState(existingDesign?.vehicleType ?? VEHICLE_TYPES[0].id);
-  const [primaryColor, setPrimaryColor] = useState(existingDesign?.primaryColor ?? VEHICLE_TYPES[0].defaultPrimary);
-  const [accentColor, setAccentColor] = useState(existingDesign?.accentColor ?? VEHICLE_TYPES[0].defaultAccent);
+  const isRestoredCustom = existingDesign?.vehicleType === "custom" && !!existingDesign?.customVehicleModelUrl;
+  const vehicleTypeIsValid = existingDesign?.vehicleType
+    ? (VEHICLE_TYPES.some((v) => v.id === existingDesign.vehicleType) || isRestoredCustom)
+    : true;
+  const validVehicleType = isRestoredCustom
+    ? SCANNED_RESTORED_ID
+    : vehicleTypeIsValid
+    ? (existingDesign?.vehicleType ?? VEHICLE_TYPES[0].id)
+    : VEHICLE_TYPES[0].id;
+
+  const [vehicleType, setVehicleType] = useState(validVehicleType);
+  const [primaryColor, setPrimaryColor] = useState(
+    vehicleTypeIsValid
+      ? (existingDesign?.primaryColor ?? VEHICLE_TYPES[0].defaultPrimary)
+      : VEHICLE_TYPES[0].defaultPrimary
+  );
+  const [accentColor, setAccentColor] = useState(
+    vehicleTypeIsValid
+      ? (existingDesign?.accentColor ?? VEHICLE_TYPES[0].defaultAccent)
+      : VEHICLE_TYPES[0].defaultAccent
+  );
   const [accessories, setAccessories] = useState<string[]>(existingDesign?.accessories ?? []);
   const [name, setName] = useState(existingDesign?.name ?? "");
   const [activeColorPicker, setActiveColorPicker] = useState<"primary" | "accent" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
+  const [scannedVehicles, setScannedVehicles] = useState<ScannedVehicle[]>(() =>
+    isRestoredCustom
+      ? [{ id: SCANNED_RESTORED_ID, modelUrl: existingDesign!.customVehicleModelUrl!, label: existingDesign!.name?.trim() || "New Car" }]
+      : []
+  );
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const previewAnim = useRef(new Animated.Value(1)).current;
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeTaskIdRef = useRef<string | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const isEditing = !!existingDesign;
 
-  const animatePreview = () => {
+  const animatePreview = useCallback(() => {
     Animated.sequence([
       Animated.timing(previewAnim, { toValue: 0.93, duration: 100, useNativeDriver: true }),
       Animated.spring(previewAnim, { toValue: 1, tension: 200, friction: 8, useNativeDriver: true }),
     ]).start();
-  };
+  }, [previewAnim]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
+    activeTaskIdRef.current = null;
+  }, []);
+
+  const startPolling = useCallback((taskId: string) => {
+    stopPolling();
+    activeTaskIdRef.current = taskId;
+    const poll = async () => {
+      if (activeTaskIdRef.current !== taskId) return;
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/image-to-3d/${taskId}`);
+        if (!res.ok) return;
+        const data = await res.json() as { status: "pending" | "succeeded" | "failed"; modelUrl?: string | null };
+        if (activeTaskIdRef.current !== taskId) return;
+        if (data.status === "succeeded") {
+          stopPolling();
+          const url = data.modelUrl ?? null;
+          if (url) {
+            const newId = `scanned-${Date.now()}`;
+            setScannedVehicles((prev) => [...prev, { id: newId, modelUrl: url, label: "New Car" }]);
+            setVehicleType(newId);
+            setScanStatus("idle");
+            animatePreview();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } else {
+            setScanStatus("failed");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+        } else if (data.status === "failed") {
+          stopPolling();
+          setScanStatus("failed");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      } catch (e) { console.warn("Scan polling failed:", e); }
+    };
+    pollTimerRef.current = setInterval(poll, 5000);
+    poll();
+  }, [stopPolling, animatePreview]);
+
+  useEffect(() => { return () => stopPolling(); }, [stopPolling]);
+
+  const submitImageForScan = useCallback(async (photoUri: string) => {
+    try {
+      let imageDataUri: string;
+      if (Platform.OS === "web" || photoUri.startsWith("data:")) {
+        imageDataUri = photoUri;
+      } else {
+        const ext = photoUri.split(".").pop()?.toLowerCase() ?? "jpeg";
+        const mime = ext === "png" ? "image/png" : ext === "heic" ? "image/heic" : "image/jpeg";
+        const base64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
+        imageDataUri = `data:${mime};base64,${base64}`;
+      }
+      const res = await fetch(`${getApiBaseUrl()}/image-to-3d`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUri }),
+      });
+      if (!res.ok) {
+        setScanStatus("failed");
+        return;
+      }
+      const data = await res.json() as { taskId: string };
+      setScanStatus("pending");
+      startPolling(data.taskId);
+    } catch (_e) {
+      setScanStatus("failed");
+    }
+  }, [startPolling]);
+
+  const handleScanNewCar = useCallback(async () => {
+    if (Platform.OS === "web") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        const file = (input as HTMLInputElement).files?.[0];
+        if (!file) return;
+        setScanStatus("pending");
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        submitImageForScan(dataUri);
+      };
+      input.click();
+      return;
+    }
+    Alert.alert("Scan Your Car", "Add a photo to generate a 3D model", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Take Photo",
+        onPress: async () => {
+          const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.85 });
+          if (!result.canceled && result.assets[0]) {
+            setScanStatus("pending");
+            submitImageForScan(result.assets[0].uri);
+          }
+        },
+      },
+      {
+        text: "Choose from Library",
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3], quality: 0.85 });
+          if (!result.canceled && result.assets[0]) {
+            setScanStatus("pending");
+            submitImageForScan(result.assets[0].uri);
+          }
+        },
+      },
+    ]);
+  }, [submitImageForScan]);
 
   const handleSelectVehicleType = (id: string) => {
     setVehicleType(id);
@@ -191,10 +405,13 @@ export default function DesignBuilderScreen() {
       Animated.spring(bounceAnim, { toValue: 1, tension: 200, friction: 8, useNativeDriver: true }),
     ]).start();
     try {
+      const isScanned = vehicleType.startsWith("scanned-");
+      const customUrl = isScanned ? (scannedVehicles.find((sv) => sv.id === vehicleType)?.modelUrl ?? null) : null;
+      const savedVehicleType = isScanned ? "custom" : vehicleType;
       if (isEditing && designId) {
-        await updateDesign(designId, { name: finalName, vehicleType, primaryColor, accentColor, accessories });
+        await updateDesign(designId, { name: finalName, vehicleType: savedVehicleType, primaryColor, accentColor, accessories, customVehicleModelUrl: customUrl });
       } else {
-        await addDesign({ name: finalName, vehicleType, primaryColor, accentColor, accessories });
+        await addDesign({ name: finalName, vehicleType: savedVehicleType, primaryColor, accentColor, accessories, customVehicleModelUrl: customUrl });
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
@@ -206,6 +423,9 @@ export default function DesignBuilderScreen() {
   };
 
   const vt = VEHICLE_TYPES.find((v) => v.id === vehicleType) ?? VEHICLE_TYPES[0];
+  const isScannedVehicle = vehicleType.startsWith("scanned-");
+  const currentScanned = isScannedVehicle ? scannedVehicles.find((sv) => sv.id === vehicleType) : null;
+  const customModelUrl = currentScanned?.modelUrl ?? null;
 
   return (
     <AppBackground>
@@ -234,11 +454,23 @@ export default function DesignBuilderScreen() {
               accentColor={accentColor}
               accessories={accessories}
               size="large"
+              customModelUrl={customModelUrl}
             />
           </Animated.View>
-          <View style={styles.previewLabel}>
-            <Text style={styles.previewLabelText}>{vt.emoji} {vt.label.toUpperCase()}</Text>
-          </View>
+          {isScannedVehicle && scanStatus === "pending" ? (
+            <View style={styles.previewLabel}>
+              <ActivityIndicator size="small" color={Colors.primary} style={{ marginRight: 6 }} />
+              <Text style={styles.previewLabelText}>GENERATING 3D MODEL...</Text>
+            </View>
+          ) : (
+            <View style={styles.previewLabel}>
+              <Text style={styles.previewLabelText}>
+                {isScannedVehicle
+                  ? `✨ ${currentScanned?.label?.toUpperCase() ?? "MY CAR"}`
+                  : (!vt.modelUrl && vt.emoji ? `${vt.emoji} ` : "") + vt.label.toUpperCase()}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -257,13 +489,56 @@ export default function DesignBuilderScreen() {
                   vehicleType === v.id && { borderColor: primaryColor },
                 ]}
               >
-                <Text style={styles.vtEmoji}>{v.emoji}</Text>
+                {v.modelUrl ? (
+                  <VehicleModelViewer modelUrl={v.modelUrl} size="medium" />
+                ) : (
+                  <Text style={styles.vtEmoji}>{v.emoji}</Text>
+                )}
                 <Text style={[styles.vtLabel, vehicleType === v.id && { color: Colors.text }]}>
                   {v.label.toUpperCase()}
                 </Text>
               </Pressable>
             ))}
+            {scannedVehicles.map((sv) => (
+              <Pressable
+                key={sv.id}
+                onPress={() => handleSelectVehicleType(sv.id)}
+                style={[
+                  styles.vtCard,
+                  vehicleType === sv.id && styles.vtCardActive,
+                  vehicleType === sv.id && { borderColor: primaryColor },
+                ]}
+              >
+                <VehicleModelViewer modelUrl={sv.modelUrl} size="medium" />
+                <Text style={[styles.vtLabel, vehicleType === sv.id && { color: Colors.text }]}>
+                  {sv.label.toUpperCase()}
+                </Text>
+              </Pressable>
+            ))}
           </ScrollView>
+
+          <Pressable
+            onPress={scanStatus === "pending" ? undefined : handleScanNewCar}
+            style={[styles.scanBtn, scanStatus === "pending" && styles.scanBtnPending]}
+          >
+            {scanStatus === "pending" ? (
+              <>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <Text style={styles.scanBtnText}>SCANNING YOUR CAR...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons
+                  name={scanStatus === "failed" ? "refresh" : "camera-outline"}
+                  size={18}
+                  color={scanStatus === "failed" ? "#FF3B30" : Colors.primary}
+                />
+                <Text style={[styles.scanBtnText, scanStatus === "failed" && { color: "#FF3B30" }]}>
+                  {scanStatus === "failed" ? "SCAN FAILED — TRY AGAIN" : scannedVehicles.length > 0 ? "SCAN ANOTHER CAR" : "SCAN NEW CAR"}
+                </Text>
+              </>
+            )}
+          </Pressable>
         </View>
 
         <View style={styles.section}>
@@ -387,7 +662,14 @@ export default function DesignBuilderScreen() {
           <TextInput
             style={styles.nameInput}
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => {
+              setName(text);
+              if (isScannedVehicle) {
+                setScannedVehicles((prev) =>
+                  prev.map((sv) => sv.id === vehicleType ? { ...sv, label: text.trim() || "New Car" } : sv)
+                );
+              }
+            }}
             placeholder={`e.g. "${vt.label} Mk. 1"`}
             placeholderTextColor={Colors.textMuted}
             maxLength={30}
@@ -443,6 +725,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderWidth: 2,
+    flexDirection: "row",
+    alignItems: "center",
     borderColor: Colors.border,
   },
   previewLabelText: {
@@ -487,6 +771,29 @@ const styles = StyleSheet.create({
   vtCardActive: {
     backgroundColor: Colors.background,
     borderWidth: 3,
+  },
+  scanBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    backgroundColor: `${Colors.primary}18`,
+  },
+  scanBtnPending: {
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundDeep,
+  },
+  scanBtnText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
   },
   vtEmoji: { fontSize: 32 },
   vtLabel: {

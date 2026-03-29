@@ -83,6 +83,24 @@ export function getBuddyCarModelUrl(): string {
   return `${getApiBaseUrl()}/assets/buddy-car.glb`;
 }
 
+export function getJeepModelUrl(): string {
+  const { Platform } = require("react-native");
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}/api/assets/jeep.glb`;
+  }
+  const { getApiBaseUrl } = require("@/utils/apiUrl");
+  return `${getApiBaseUrl()}/assets/jeep.glb`;
+}
+
+export function getMiniCoopModelUrl(): string {
+  const { Platform } = require("react-native");
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}/api/assets/mini-coop.glb`;
+  }
+  const { getApiBaseUrl } = require("@/utils/apiUrl");
+  return `${getApiBaseUrl()}/assets/mini-coop.glb`;
+}
+
 export function getDefaultCar(): SavedCar {
   return {
     id: "default-car",
@@ -115,6 +133,7 @@ export interface CarDesign {
   accentColor: string;
   accessories: string[];
   createdAt: number;
+  customVehicleModelUrl?: string | null;
 }
 
 export interface StickerDefinition {
@@ -154,12 +173,8 @@ export const STICKER_CATALOG: StickerDefinition[] = [
 ];
 
 export const VEHICLE_TYPES = [
-  { id: "speeder", label: "Speeder", emoji: "🏎️", defaultPrimary: "#FF3B30", defaultAccent: "#1C1C1E" },
-  { id: "cruiser", label: "Cruiser", emoji: "🚗", defaultPrimary: "#007AFF", defaultAccent: "#C0C0C0" },
-  { id: "monster", label: "Monster", emoji: "🚛", defaultPrimary: "#34C759", defaultAccent: "#FFD60A" },
-  { id: "rescue", label: "Rescue", emoji: "🚒", defaultPrimary: "#FF3B30", defaultAccent: "#FFFFFF" },
-  { id: "explorer", label: "Explorer", emoji: "🚙", defaultPrimary: "#FF9500", defaultAccent: "#1C1C1E" },
-  { id: "rocket", label: "Rocket Ride", emoji: "🚀", defaultPrimary: "#AF52DE", defaultAccent: "#FFD60A" },
+  { id: "jeep", label: "Jeep", emoji: "🚙", modelUrl: getJeepModelUrl(), defaultPrimary: "#E91E8C", defaultAccent: "#1C1C1E" },
+  { id: "mini-coop", label: "Mini Coop", emoji: "🚗", modelUrl: getMiniCoopModelUrl(), defaultPrimary: "#3A86FF", defaultAccent: "#FFFFFF" },
 ];
 
 export const DESIGN_COLORS = [

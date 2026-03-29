@@ -1,4 +1,7 @@
 artifacts/api-server/public/assets/buddy-car.glb filter=lfs diff=lfs merge=lfs -text
 attached_assets/Meshy_AI_McLaren_0329010935_texture_1774749036187.glb filter=lfs diff=lfs merge=lfs -text
+artifacts/api-server/public/assets/jeep.glb filter=lfs diff=lfs merge=lfs -text
 attached_assets/Meshy_AI_Pink_Off_Road_Ride_On_0329024035_texture_1774752072028.glb filter=lfs diff=lfs merge=lfs -text
+artifacts/api-server/public/assets/mini-coop.glb filter=lfs diff=lfs merge=lfs -text
+attached_assets/Meshy_AI_Mini_Cooper_Ride_On_C_0329023459_texture_1774754601168.glb filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
