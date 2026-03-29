@@ -14,9 +14,8 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { RacetrackBackground } from "@/components/RacetrackBackground";
+import { CurbEdgeOverlay, RoadBackground } from "@/components/RacetrackBackground";
 import { AppProvider } from "@/context/AppContext";
-import { Colors } from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,7 +26,7 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: { backgroundColor: "transparent" },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -64,9 +63,10 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <AppProvider>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, backgroundColor: "#1A1A1A" }}>
+                  <RoadBackground />
                   <RootLayoutNav />
-                  <RacetrackBackground />
+                  <CurbEdgeOverlay />
                 </View>
               </AppProvider>
             </KeyboardProvider>

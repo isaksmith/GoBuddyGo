@@ -1,81 +1,102 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { useWindowDimensions } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from "react-native-svg";
 
-const CHECK = 16;
-const EDGE_W = 32;
+const EDGE_W = 28;       // curb width on each side
+const STRIPE_H = 20;     // height of each red/white stripe
+const CURB_RED = "#D0021B";
+const CURB_WHITE = "#FFFFFF";
 
-function CheckerColumn({ x, height, mirror }: { x: number; height: number; mirror?: boolean }) {
-  const rows = Math.ceil(height / CHECK) + 1;
-  const cols = EDGE_W / CHECK;
-  const squares: React.ReactElement[] = [];
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const colIndex = mirror ? cols - 1 - c : c;
-      const isWhite = (r + colIndex) % 2 === 0;
-      squares.push(
+function CurbStripes({ x, height }: { x: number; height: number }) {
+  const count = Math.ceil(height / STRIPE_H) + 1;
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
         <Rect
-          key={`${r}-${c}`}
-          x={x + c * CHECK}
-          y={r * CHECK}
-          width={CHECK}
-          height={CHECK}
-          fill={isWhite ? "#FFFFFF" : "#000000"}
-          fillOpacity={isWhite ? 0.88 : 0.92}
+          key={i}
+          x={x}
+          y={i * STRIPE_H}
+          width={EDGE_W}
+          height={STRIPE_H}
+          fill={i % 2 === 0 ? CURB_RED : CURB_WHITE}
         />
-      );
-    }
-  }
-  return <>{squares}</>;
+      ))}
+    </>
+  );
 }
 
-export function RacetrackBackground() {
+/** Full asphalt road — placed BEHIND the navigator at the very bottom */
+export function RoadBackground() {
   const { width: W, height: H } = useWindowDimensions();
-  const dashCount = Math.ceil(H / 44) + 1;
+  const dashCount = Math.ceil(H / 48) + 1;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
         <Defs>
-          <LinearGradient id="fadeL" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#000000" stopOpacity="0.55" />
-            <Stop offset="1" stopColor="#000000" stopOpacity="0" />
-          </LinearGradient>
-          <LinearGradient id="fadeR" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#000000" stopOpacity="0" />
-            <Stop offset="1" stopColor="#000000" stopOpacity="0.55" />
-          </LinearGradient>
+          <SvgLinearGradient id="asphalt" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#141414" stopOpacity="1" />
+            <Stop offset="1" stopColor="#1E1E1E" stopOpacity="1" />
+          </SvgLinearGradient>
         </Defs>
 
-        {/* Left checkered edge */}
-        <CheckerColumn x={0} height={H} />
+        {/* Dark asphalt surface */}
+        <Rect x={0} y={0} width={W} height={H} fill="url(#asphalt)" />
 
-        {/* Right checkered edge */}
-        <CheckerColumn x={W - EDGE_W} height={H} mirror />
+        {/* White edge lines just inside where curbs will be */}
+        <Rect x={EDGE_W} y={0} width={3} height={H} fill="#FFFFFF" fillOpacity={0.22} />
+        <Rect x={W - EDGE_W - 3} y={0} width={3} height={H} fill="#FFFFFF" fillOpacity={0.22} />
 
-        {/* Fade blend from checkered into screen content */}
-        <Rect x={EDGE_W} y={0} width={24} height={H} fill="url(#fadeL)" />
-        <Rect x={W - EDGE_W - 24} y={0} width={24} height={H} fill="url(#fadeR)" />
+        {/* Inner track lines */}
+        <Rect x={EDGE_W + 18} y={0} width={1.5} height={H} fill="#FFFFFF" fillOpacity={0.07} />
+        <Rect x={W - EDGE_W - 19.5} y={0} width={1.5} height={H} fill="#FFFFFF" fillOpacity={0.07} />
 
-        {/* Thin yellow border lines just inside checkered area */}
-        <Rect x={EDGE_W + 1} y={0} width={2.5} height={H} fill="#FFD93D" fillOpacity={0.55} />
-        <Rect x={W - EDGE_W - 3.5} y={0} width={2.5} height={H} fill="#FFD93D" fillOpacity={0.55} />
-
-        {/* Center lane dashes — very subtle */}
+        {/* Center dashed line */}
         {Array.from({ length: dashCount }).map((_, i) => (
           <Rect
             key={i}
             x={W / 2 - 2}
-            y={i * 44 + 6}
+            y={i * 48 + 8}
             width={4}
-            height={22}
+            height={24}
             fill="#FFFFFF"
-            fillOpacity={0.07}
+            fillOpacity={0.18}
             rx={2}
           />
         ))}
+      </Svg>
+    </View>
+  );
+}
+
+/** Red/white curb stripes — placed ON TOP of the navigator as a framing overlay */
+export function CurbEdgeOverlay() {
+  const { width: W, height: H } = useWindowDimensions();
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
+        <Defs>
+          {/* Subtle inner shadow to blend curb into screen content */}
+          <SvgLinearGradient id="shadowL" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#000000" stopOpacity="0.35" />
+            <Stop offset="1" stopColor="#000000" stopOpacity="0" />
+          </SvgLinearGradient>
+          <SvgLinearGradient id="shadowR" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#000000" stopOpacity="0" />
+            <Stop offset="1" stopColor="#000000" stopOpacity="0.35" />
+          </SvgLinearGradient>
+        </Defs>
+
+        {/* Left red/white curb */}
+        <CurbStripes x={0} height={H} />
+
+        {/* Right red/white curb */}
+        <CurbStripes x={W - EDGE_W} height={H} />
+
+        {/* Inner shadow to blend edges into content */}
+        <Rect x={EDGE_W} y={0} width={20} height={H} fill="url(#shadowL)" />
+        <Rect x={W - EDGE_W - 20} y={0} width={20} height={H} fill="url(#shadowR)" />
       </Svg>
     </View>
   );
