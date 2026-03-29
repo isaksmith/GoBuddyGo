@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/"
-title = "GoBabyGo Buddy-Link AR"
+title = "GoBuddyGo"
 version = "1.0.0"
 id = "artifacts/mobile"
 router = "expo-domain"
