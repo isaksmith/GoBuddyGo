@@ -22,14 +22,17 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { Colors } from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import ModelViewer from "@/components/ModelViewer";
+import { getApiBaseUrl } from "@/utils/apiUrl";
+
+const buddyCarRender = require("@/assets/images/buddy-car-render.png");
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
-const CAR_W = 100;
-const CAR_H = 70;
+const CAR_W = 200;
+const CAR_H = 140;
 const COIN_R = 20;
 const MOVE_STEP = 28;
 const PLAYFIELD_TOP = 100;
@@ -311,12 +314,18 @@ export default function CoinDashScreen() {
               resizeMode="cover"
             />
           ) : (
-            <DefaultCarSvg
-              width={CAR_W}
-              height={CAR_H}
-              bodyColor="#4F8EF7"
-              accentColor="#FFD93D"
-            />
+            <View style={styles.carModel}>
+              <Image
+                source={buddyCarRender}
+                style={[StyleSheet.absoluteFill, { zIndex: 0 }]}
+                resizeMode="contain"
+              />
+              <ModelViewer
+                html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;}</style></head><body><model-viewer src="${getApiBaseUrl()}/assets/buddy-car-game.glb" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Buddy Car"></model-viewer></body></html>`}
+                style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
+                scrollEnabled={false}
+              />
+            </View>
           )}
         </Animated.View>
       </View>
@@ -446,6 +455,11 @@ const styles = StyleSheet.create({
     width: CAR_W,
     height: CAR_H,
     borderRadius: 8,
+  },
+  carModel: {
+    width: CAR_W,
+    height: CAR_H,
+    backgroundColor: "transparent",
   },
   dpadWrapper: {
     alignItems: "center",
