@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Buddy-Link AR",
-    "slug": "mobile",
+    "name": "GoBuddyGo",
+    "slug": "gobuddygo",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "gobuddygo",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -18,13 +18,18 @@
       "infoPlist": {
         "NSCameraUsageDescription": "The AR Co-Pilot view uses your camera to overlay mission graphics and sparkle effects during your GoBabyGo session.",
         "NSMicrophoneUsageDescription": "The Coin Dash AR game uses the microphone for the AR WebView camera feed."
-      }
+      },
+      "bundleIdentifier": "com.gobuddygo.app"
     },
     "android": {
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ],
+      "package": "com.gobuddygo.app"
     },
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       [
