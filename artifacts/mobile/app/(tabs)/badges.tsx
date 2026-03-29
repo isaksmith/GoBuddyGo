@@ -53,16 +53,16 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
       colors={
         earned
           ? [gradientColors[0] + "44", gradientColors[1] + "22"]
-          : [Colors.backgroundCard + "CC", Colors.backgroundCard + "CC"]
+          : [gradientColors[0] + "33", gradientColors[1] + "22"]
       }
-      style={[styles.badgeCard, !earned && styles.badgeCardLocked]}
+      style={[styles.badgeCard, !earned && styles.badgeCardLocked, !earned && { borderColor: gradientColors[0] + "66" }]}
     >
       <View
         style={[
           styles.badgeIconCircle,
           earned
             ? { borderColor: gradientColors[0] + "99", shadowColor: gradientColors[0] }
-            : { borderColor: Colors.border, shadowColor: "transparent" },
+            : { borderColor: gradientColors[0] + "55", shadowColor: "transparent" },
           !earned && styles.badgeIconCircleLocked,
         ]}
       >
@@ -89,7 +89,7 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
           {new Date(earnedDate!).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
         </Text>
       ) : (
-        <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale }]}>NOT YET EARNED</Text>
+        <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale, color: gradientColors[0] + "BB" }]}>NOT YET EARNED</Text>
       )}
     </LinearGradient>
   );
@@ -206,7 +206,6 @@ const styles = StyleSheet.create({
   },
   badgeCardLocked: {
     borderColor: Colors.border,
-    opacity: 0.6,
   },
   badgeIconCircle: {
     width: 80,
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   lockedSvgWrapper: {
-    opacity: 0.3,
+    opacity: 0.55,
   },
   lockOverlay: {
     position: "absolute",
