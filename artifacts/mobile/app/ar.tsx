@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   missionOverlay: {
     marginHorizontal: 16,
-    backgroundColor: "rgba(26, 26, 26, 0.92)",
+    backgroundColor: "rgba(9, 25, 42, 0.90)",
     borderRadius: 22,
     padding: 18,
     borderWidth: 2,
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   },
   missionCard: {
     width: 130,
-    backgroundColor: "rgba(26, 26, 26, 0.90)",
+    backgroundColor: "rgba(9, 25, 42, 0.88)",
     borderRadius: 18,
     padding: 14,
     alignItems: "center",

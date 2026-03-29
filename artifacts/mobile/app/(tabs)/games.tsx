@@ -90,7 +90,10 @@ export default function GamesScreen() {
   const enabledIds = settings.enabledMissionIds;
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
+      style={styles.container}
+    >
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Ionicons name="game-controller" size={26} color={Colors.primary} />
         <Text style={styles.headerTitle}>GAMES</Text>
@@ -168,14 +171,13 @@ export default function GamesScreen() {
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: "row",

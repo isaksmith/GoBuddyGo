@@ -118,23 +118,13 @@ export const STICKER_CATALOG: StickerDefinition[] = [
   { id: "s_alien", emoji: "👾", label: "Alien", color: "#4FC3F7", unlockCondition: { type: "sessions", count: 5 } },
 ];
 
-export interface VehicleType {
-  id: string;
-  label: string;
-  emoji: string;
-  defaultPrimary: string;
-  defaultAccent: string;
-  modelUrl?: string;
-}
-
-export const VEHICLE_TYPES: VehicleType[] = [
+export const VEHICLE_TYPES = [
   { id: "speeder", label: "Speeder", emoji: "🏎️", defaultPrimary: "#FF3B30", defaultAccent: "#1C1C1E" },
   { id: "cruiser", label: "Cruiser", emoji: "🚗", defaultPrimary: "#007AFF", defaultAccent: "#C0C0C0" },
   { id: "monster", label: "Monster", emoji: "🚛", defaultPrimary: "#34C759", defaultAccent: "#FFD60A" },
   { id: "rescue", label: "Rescue", emoji: "🚒", defaultPrimary: "#FF3B30", defaultAccent: "#FFFFFF" },
   { id: "explorer", label: "Explorer", emoji: "🚙", defaultPrimary: "#FF9500", defaultAccent: "#1C1C1E" },
   { id: "rocket", label: "Rocket Ride", emoji: "🚀", defaultPrimary: "#AF52DE", defaultAccent: "#FFD60A" },
-  { id: "jeep", label: "Jeep", emoji: "🚙", defaultPrimary: "#FF69B4", defaultAccent: "#8B4513", modelUrl: "/api/models/jeep.glb" },
 ];
 
 export const DESIGN_COLORS = [

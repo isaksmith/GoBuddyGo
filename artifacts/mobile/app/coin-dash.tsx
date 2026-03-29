@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
   },
   fallbackBg: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0A1A10",
   },
   topBar: {
     flexDirection: "row",

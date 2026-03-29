@@ -226,14 +226,20 @@ export default function ParentModeScreen() {
 
   if (!unlocked) {
     return (
-      <View style={{ flex: 1, paddingTop: topPad, backgroundColor: Colors.background }}>
+      <LinearGradient
+        colors={[Colors.background, Colors.backgroundMid]}
+        style={{ flex: 1, paddingTop: topPad }}
+      >
         <PinEntry onUnlock={() => setUnlocked(true)} pin={settings.parentPin} />
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.background, Colors.backgroundMid]}
+      style={styles.container}
+    >
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
@@ -457,14 +463,13 @@ export default function ParentModeScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   warningBanner: {
     flexDirection: "row",

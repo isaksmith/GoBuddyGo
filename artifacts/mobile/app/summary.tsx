@@ -132,7 +132,10 @@ export default function SummaryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
+      style={styles.container}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -293,14 +296,13 @@ export default function SummaryScreen() {
           </LinearGradient>
         </Pressable>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scroll: {
     alignItems: "center",

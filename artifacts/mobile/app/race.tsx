@@ -455,10 +455,10 @@ export default function RaceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0D0D1A",
   },
   fallbackBg: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0D0D1A",
   },
   topBar: {
     flexDirection: "row",

@@ -403,7 +403,10 @@ export default function GarageScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.background, Colors.backgroundMid, Colors.backgroundDeep]}
+      style={styles.container}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -542,12 +545,12 @@ export default function GarageScreen() {
           </View>
         </View>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   scroll: { paddingHorizontal: 16 },
   header: {
     flexDirection: "row",
