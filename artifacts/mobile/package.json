@@ -59,6 +59,7 @@
     "@expo-google-fonts/nunito": "^0.4.2",
     "expo-audio": "1.1.1",
     "expo-camera": "17.0.10",
+    "expo-document-picker": "14.0.8",
     "expo-file-system": "19.0.21",
     "expo-sensors": "15.0.8",
     "expo-sharing": "14.0.8",
