@@ -554,25 +554,6 @@ export default function GarageScreen() {
             )}
           </View>
         )}
-
-        <View style={styles.bottomActions}>
-          {activeTab === "cars" && savedCars.length > 0 && (
-            <Pressable onPress={handleScanNewCar} style={styles.fabBtn}>
-              <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.fabGrad}>
-                <Ionicons name="camera" size={20} color="#FFFFFF" />
-                <Text style={styles.fabText}>SCAN NEW CAR</Text>
-              </LinearGradient>
-            </Pressable>
-          )}
-          {activeTab === "designs" && designs.length > 0 && (
-            <Pressable onPress={handleDesignNew} style={styles.fabBtn}>
-              <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} style={styles.fabGrad}>
-                <Ionicons name="color-palette" size={20} color="#FFFFFF" />
-                <Text style={styles.fabText}>DESIGN NEW CAR</Text>
-              </LinearGradient>
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
