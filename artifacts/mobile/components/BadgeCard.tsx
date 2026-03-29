@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 12,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     marginBottom: 4,
     letterSpacing: 0.5,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   description: {
     color: Colors.textSecondary,
     fontSize: 11,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textAlign: "center",
     lineHeight: 15,
   },

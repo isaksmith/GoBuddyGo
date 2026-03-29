@@ -1,9 +1,8 @@
 import {
-  Baloo2_400Regular,
-  Baloo2_600SemiBold,
-  Baloo2_700Bold,
+  BalsamiqSans_400Regular,
+  BalsamiqSans_700Bold,
   useFonts,
-} from "@expo-google-fonts/baloo-2";
+} from "@expo-google-fonts/balsamiq-sans";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -42,9 +41,8 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Baloo2_400Regular,
-    Baloo2_600SemiBold,
-    Baloo2_700Bold,
+    BalsamiqSans_400Regular,
+    BalsamiqSans_700Bold,
   });
 
   useEffect(() => {

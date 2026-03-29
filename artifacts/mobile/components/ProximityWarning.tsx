@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
   text: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
 });

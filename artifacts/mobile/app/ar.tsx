@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: Colors.textSecondary,
     fontSize: 16,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
   },
   permIconCircle: {
     width: 100,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   permTitle: {
     color: Colors.text,
     fontSize: 26,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     letterSpacing: 2,
     marginTop: 4,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   permSubtitle: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textAlign: "center",
     lineHeight: 22,
   },
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   permBtnText: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 1.5,
   },
   backLinkBtn: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   backLinkText: {
     color: Colors.textMuted,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   webCameraFallback: {
     backgroundColor: "#081520",
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   webFallbackText: {
     color: Colors.textMuted,
     fontSize: 14,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
   },
   overlay: {
     justifyContent: "space-between",
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   hudProgressText: {
     color: "#FFFFFF",
     fontSize: 10,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 1.5,
   },
   timerPill: {
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   timerText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   timerTextWarning: {
     color: Colors.secondary,
@@ -553,20 +553,20 @@ const styles = StyleSheet.create({
   missionBadgeTitle: {
     color: Colors.secondary,
     fontSize: 10,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 2.5,
   },
   missionTitle: {
     color: Colors.text,
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     marginBottom: 6,
     letterSpacing: 0.5,
   },
   missionDesc: {
     color: Colors.textSecondary,
     fontSize: 14,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     lineHeight: 21,
   },
   bottomArea: {
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   allDoneText: {
     color: Colors.secondary,
     fontSize: 18,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.5,
   },
   missionStripWrapper: {
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
   missionStripLabel: {
     color: "rgba(255,255,255,0.6)",
     fontSize: 10,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 2,
     paddingHorizontal: 16,
   },
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   missionCardTitle: {
     color: Colors.text,
     fontSize: 12,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     letterSpacing: 0.3,
     lineHeight: 17,
@@ -662,17 +662,17 @@ const styles = StyleSheet.create({
   },
   difficultyChipText: {
     fontSize: 9,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.8,
   },
   missionCardTapLabel: {
     color: Colors.textSecondary,
     fontSize: 10,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.5,
   },
   missionCardTapLabelDone: {
     color: Colors.accent,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
 });

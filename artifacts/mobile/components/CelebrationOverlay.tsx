@@ -195,13 +195,13 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.secondary,
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     marginTop: 12,
   },
   subtitle: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     marginTop: 6,
     textAlign: "center",
   },

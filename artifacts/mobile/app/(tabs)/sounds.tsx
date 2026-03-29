@@ -70,7 +70,7 @@ const homeBtnStyles = StyleSheet.create({
   homeBtnText: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
 });
@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#FFFFFF",
     fontSize: 32,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
   headerSub: {
     color: "#FFD93D",
     fontSize: 14,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 1,
     marginTop: 4,
   },
@@ -237,14 +237,14 @@ const styles = StyleSheet.create({
   padLabel: {
     color: "#FFFFFF",
     fontSize: 11,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
   },
   padSublabel: {
     color: "rgba(255,255,255,0.7)",
     fontSize: 9,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textAlign: "center",
   },
 });

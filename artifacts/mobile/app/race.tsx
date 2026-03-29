@@ -155,7 +155,7 @@ const gasStyles = StyleSheet.create({
   fuelPctText: {
     color: "#FFFFFF",
     fontSize: 28,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
@@ -172,7 +172,7 @@ const gasStyles = StyleSheet.create({
   hint: {
     color: "#CCCCCC",
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     letterSpacing: 1,
   },
@@ -283,13 +283,13 @@ const pitStyles = StyleSheet.create({
   title: {
     color: "#FFFFFF",
     fontSize: 26,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
   doneText: {
     color: "#00CC44",
     fontSize: 24,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 2,
     textAlign: "center",
   },
@@ -300,7 +300,7 @@ const pitStyles = StyleSheet.create({
   closeBtnText: {
     color: "#888",
     fontSize: 14,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 2,
   },
 });
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   titleText: {
     color: "#FFFFFF",
     fontSize: 28,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 4,
   },
   trackLines: {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   goBurstText: {
     color: "#FFFFFF",
     fontSize: 52,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 4,
     textAlign: "center",
   },
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   startBtnText: {
     color: "#000000",
     fontSize: 24,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
   pitBtn: {
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
   pitBtnText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 2,
   },
   btnPressed: {

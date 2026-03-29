@@ -103,12 +103,12 @@ const pinStyles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 26,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   subtitle: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 8,
@@ -121,7 +121,7 @@ const pinStyles = StyleSheet.create({
     paddingHorizontal: 20,
     color: Colors.text,
     fontSize: 24,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     borderWidth: 2,
     borderColor: Colors.border,
@@ -133,7 +133,7 @@ const pinStyles = StyleSheet.create({
   errorText: {
     color: Colors.danger,
     fontSize: 14,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   unlockBtn: {
     width: "70%",
@@ -146,7 +146,7 @@ const pinStyles = StyleSheet.create({
   unlockBtnText: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   cancelBtn: {
     paddingVertical: 8,
@@ -154,7 +154,7 @@ const pinStyles = StyleSheet.create({
   cancelBtnText: {
     color: Colors.textMuted,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
 });
 
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.secondary,
     fontSize: 13,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     lineHeight: 18,
   },
   header: {
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: Colors.text,
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   scroll: {
     paddingHorizontal: 20,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: Colors.textSecondary,
     fontSize: 13,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textTransform: "uppercase",
     letterSpacing: 2,
     marginBottom: 12,
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   durationText: {
     color: Colors.textSecondary,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   durationTextActive: {
     color: Colors.primary,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   difficultyLabel: {
     color: Colors.textSecondary,
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     marginBottom: 2,
   },
   difficultyLabelActive: {
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   difficultyDesc: {
     color: Colors.textMuted,
     fontSize: 13,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
   },
   missionToggleRow: {
     flexDirection: "row",
@@ -595,12 +595,12 @@ const styles = StyleSheet.create({
   missionToggleTitle: {
     color: Colors.text,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   missionToggleDiff: {
     color: Colors.textMuted,
     fontSize: 12,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textTransform: "capitalize",
     marginTop: 2,
   },
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   nameInputLabel: {
     color: Colors.textSecondary,
     fontSize: 13,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     marginBottom: 6,
   },
   nameInput: {
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     color: Colors.text,
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     borderWidth: 1.5,
     borderColor: Colors.border,
   },
@@ -644,12 +644,12 @@ const styles = StyleSheet.create({
   toggleTitle: {
     color: Colors.text,
     fontSize: 15,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   toggleDesc: {
     color: Colors.textMuted,
     fontSize: 12,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     marginTop: 2,
   },
   resetBtn: {
@@ -666,12 +666,12 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.danger,
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   resetBtnHint: {
     color: Colors.textMuted,
     fontSize: 12,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     marginTop: 8,
     paddingHorizontal: 4,
   },
@@ -689,12 +689,12 @@ const styles = StyleSheet.create({
   aboutAppName: {
     color: Colors.text,
     fontSize: 16,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   aboutVersion: {
     color: Colors.textMuted,
     fontSize: 13,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
   },
   aboutDivider: {
     height: 1,
@@ -704,11 +704,11 @@ const styles = StyleSheet.create({
   aboutTip: {
     color: Colors.textSecondary,
     fontSize: 13,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     lineHeight: 20,
   },
   aboutTipLabel: {
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     color: Colors.text,
   },
   changePinBtn: {
@@ -725,7 +725,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.text,
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   modalBackdrop: {
     flex: 1,
@@ -746,13 +746,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: Colors.text,
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
   },
   modalSubtitle: {
     color: Colors.textSecondary,
     fontSize: 14,
-    fontFamily: "Baloo2_400Regular",
+    fontFamily: "BalsamiqSans_400Regular",
     textAlign: "center",
     marginBottom: 4,
   },
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     color: Colors.text,
     fontSize: 20,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
     borderWidth: 1.5,
     borderColor: Colors.border,
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
   pinErrorText: {
     color: Colors.danger,
     fontSize: 13,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
     textAlign: "center",
   },
   modalBtns: {
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   modalCancelText: {
     color: Colors.textSecondary,
     fontSize: 16,
-    fontFamily: "Baloo2_600SemiBold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
   modalSaveBtn: {
     flex: 1,
@@ -803,6 +803,6 @@ const styles = StyleSheet.create({
   modalSaveText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
   },
 });

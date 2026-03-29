@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   appTitle: {
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     fontSize: 36,
     lineHeight: 42,
     color: "#fff",
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   titleSub: {
     fontSize: 13,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     color: "rgba(255,255,255,0.5)",
     letterSpacing: 4,
     textTransform: "uppercase",
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
   },
   cardLabel: {
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     fontSize: 20,
     color: "#fff",
     letterSpacing: 0.5,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   lapText: {
     fontSize: 12,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     color: "rgba(255,255,255,0.45)",
     letterSpacing: 3,
     textTransform: "uppercase",

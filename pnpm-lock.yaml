@@ -218,6 +218,9 @@ importers:
       '@expo-google-fonts/baloo-2':
         specifier: ^0.4.2
         version: 0.4.2
+      '@expo-google-fonts/balsamiq-sans':
+        specifier: ^0.4.1
+        version: 0.4.1
       '@expo-google-fonts/nunito':
         specifier: ^0.4.2
         version: 0.4.2
@@ -1153,6 +1156,9 @@ packages:
 
   '@expo-google-fonts/baloo-2@0.4.2':
     resolution: {integrity: sha512-uvrw1I+sP72PY8xROJQ6CMiGHu9+WJCdi72Q+OiWpQ3sKsIRyIEXimDfgUnkk2vpWVej0JX9fLc87iDmjKE86A==}
+
+  '@expo-google-fonts/balsamiq-sans@0.4.1':
+    resolution: {integrity: sha512-5xrYh+YtoFTiF3LHnkldx9RhNlBF8CrTRnnBeXDXJ4lnFN8wUPKGgT4JQzC1O4vSiVVgWeKrKSlQgmgtnM+SEA==}
 
   '@expo-google-fonts/inter@0.4.2':
     resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
@@ -6369,6 +6375,8 @@ snapshots:
     optional: true
 
   '@expo-google-fonts/baloo-2@0.4.2': {}
+
+  '@expo-google-fonts/balsamiq-sans@0.4.1': {}
 
   '@expo-google-fonts/inter@0.4.2': {}
 

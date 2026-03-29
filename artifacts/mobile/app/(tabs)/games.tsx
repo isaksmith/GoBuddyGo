@@ -51,7 +51,7 @@ function GoldCoinIcon({ size = 40 }: { size?: number }) {
         <Text
           style={{
             color: "#7A5000",
-            fontFamily: "Baloo2_700Bold",
+            fontFamily: "BalsamiqSans_700Bold",
             fontSize: size * 0.36,
           }}
         >
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: Colors.text,
     fontSize: 32,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
   scroll: {
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   sectionBadgeText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 1.5,
   },
   miniGrid: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   miniLabel: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.5,
     textAlign: "center",
   },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   homeBtnText: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Baloo2_700Bold",
+    fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 3,
   },
 });
