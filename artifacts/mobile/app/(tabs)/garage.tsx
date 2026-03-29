@@ -117,28 +117,26 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }:
   );
 }
 
-function DesignCard({ design, onPress, onDelete, onRename, cardColor }: {
+function DesignCard({ design, onPress, cardColor }: {
   design: CarDesign;
   onPress: () => void;
-  onDelete: () => void;
-  onRename: () => void;
   cardColor?: string;
 }) {
+  const vt = VEHICLE_TYPES.find((v) => v.id === design.vehicleType) ?? VEHICLE_TYPES[0];
+  const modelUrl = design.customVehicleModelUrl ?? vt.modelUrl;
   return (
     <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
-      <View style={[cardStyles.imageArea, { justifyContent: "center", alignItems: "center" }]}>
-        <DesignPreview design={design} size={70} />
+      <View style={cardStyles.imageArea}>
+        <View style={cardStyles.model3dThumb} pointerEvents="none">
+          <ModelViewer
+            html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${modelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D design preview"></model-viewer></body></html>`}
+            style={cardStyles.model3dWebView}
+            scrollEnabled={false}
+          />
+        </View>
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{design.name}</Text>
-        <View style={cardStyles.actions}>
-          <Pressable onPress={onRename} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="pencil" size={14} color="rgba(255,255,255,0.9)" />
-          </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8} style={cardStyles.actionBtn}>
-            <Ionicons name="trash-outline" size={14} color="rgba(255,255,255,0.9)" />
-          </Pressable>
-        </View>
       </View>
     </Pressable>
   );
@@ -298,7 +296,7 @@ type Tab = "cars" | "designs";
 
 export default function GarageScreen() {
   const insets = useSafeAreaInsets();
-  const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, deleteDesign, updateDesign } = useApp();
+  const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>("cars");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameType, setRenameType] = useState<Tab>("cars");
@@ -434,20 +432,6 @@ export default function GarageScreen() {
     ]);
   };
 
-  const handleDeleteDesign = (design: CarDesign) => {
-    Alert.alert("Delete Design", `Remove "${design.name}"? This cannot be undone.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteDesign(design.id);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        },
-      },
-    ]);
-  };
-
   const startRename = (id: string, type: Tab, currentName: string) => {
     setRenameId(id);
     setRenameType(type);
@@ -558,8 +542,6 @@ export default function GarageScreen() {
                     key={design.id}
                     design={design}
                     onPress={() => handleOpenDesign(design)}
-                    onDelete={() => handleDeleteDesign(design)}
-                    onRename={() => startRename(design.id, "designs", design.name)}
                     cardColor={DESIGN_CARD_COLORS[idx % DESIGN_CARD_COLORS.length]}
                   />
                 ))}
@@ -842,6 +824,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: "flex-end",
+    zIndex: 101,
   },
   renameBackdrop: {
     position: "absolute",

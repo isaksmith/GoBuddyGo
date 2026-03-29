@@ -10,6 +10,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -205,7 +206,7 @@ const previewStyles = StyleSheet.create({
 export default function DesignBuilderScreen() {
   const insets = useSafeAreaInsets();
   const { designId } = useLocalSearchParams<{ designId?: string }>();
-  const { designs, addDesign, updateDesign } = useApp();
+  const { designs, addDesign, updateDesign, deleteDesign } = useApp();
 
   const existingDesign = designId ? designs.find((d) => d.id === designId) : null;
 
@@ -234,6 +235,7 @@ export default function DesignBuilderScreen() {
   const [name, setName] = useState(existingDesign?.name ?? "");
   const [activeColorPicker, setActiveColorPicker] = useState<"primary" | "accent" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [scannedVehicles, setScannedVehicles] = useState<ScannedVehicle[]>(() =>
     isRestoredCustom
@@ -395,6 +397,18 @@ export default function DesignBuilderScreen() {
     });
     animatePreview();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!designId) return;
+    setShowDeleteConfirm(false);
+    await deleteDesign(designId);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.back();
   };
 
   const handleSave = async () => {
@@ -677,6 +691,13 @@ export default function DesignBuilderScreen() {
           />
           <Text style={styles.nameHint}>Leave blank to auto-name</Text>
         </View>
+
+        {isEditing && (
+          <Pressable onPress={handleDelete} style={styles.deleteFloatingBtn} disabled={saving}>
+            <Ionicons name="trash-outline" size={18} color="#FF3B30" />
+            <Text style={styles.deleteBtnText}>DELETE DESIGN</Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
@@ -696,6 +717,34 @@ export default function DesignBuilderScreen() {
           </Pressable>
         </Animated.View>
       </View>
+      <Modal
+        visible={showDeleteConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteConfirm(false)}
+      >
+        <View style={styles.confirmOverlay}>
+          <Pressable style={styles.confirmBackdrop} onPress={() => setShowDeleteConfirm(false)} />
+          <View style={styles.confirmSheet}>
+            <View style={styles.confirmIconWrap}>
+              <Ionicons name="trash-outline" size={32} color="#FF3B30" />
+            </View>
+            <Text style={styles.confirmTitle}>DELETE DESIGN?</Text>
+            <Text style={styles.confirmBody}>
+              "{existingDesign?.name ?? "This design"}" will be permanently removed. This cannot be undone.
+            </Text>
+            <View style={styles.confirmActions}>
+              <Pressable onPress={() => setShowDeleteConfirm(false)} style={styles.confirmCancelBtn}>
+                <Text style={styles.confirmCancelText}>CANCEL</Text>
+              </Pressable>
+              <Pressable onPress={confirmDelete} style={styles.confirmDeleteBtn}>
+                <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.confirmDeleteText}>DELETE</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
     </AppBackground>
   );
@@ -964,5 +1013,105 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "Nunito_700Bold",
     letterSpacing: 1.5,
+  },
+  confirmOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  confirmBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.72)",
+  },
+  confirmSheet: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+  },
+  confirmIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FF3B3018",
+    borderWidth: 2,
+    borderColor: "#FF3B3040",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  confirmTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 2,
+  },
+  confirmBody: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontFamily: "Nunito_400Regular",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  confirmActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+    width: "100%",
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 50,
+    backgroundColor: Colors.backgroundDeep,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  confirmCancelText: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 50,
+    backgroundColor: "#FF3B30",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+  },
+  confirmDeleteText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 1,
+  },
+  deleteFloatingBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: "#FF3B3055",
+    backgroundColor: "#FF3B3011",
+    marginBottom: 8,
+  },
+  deleteBtnText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    letterSpacing: 0.8,
   },
 });
