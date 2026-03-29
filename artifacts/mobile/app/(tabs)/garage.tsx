@@ -1,7 +1,6 @@
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -19,7 +18,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { WebView } from "react-native-webview";
+import ModelViewer from "@/components/ModelViewer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { AppBackground } from "@/components/AppBackground";
@@ -77,14 +76,9 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }:
       <View style={cardStyles.imageArea}>
         {has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
-            <WebView
-              source={{ html: `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>` }}
+            <ModelViewer
+              html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>`}
               style={cardStyles.model3dWebView}
-              originWhitelist={["*"]}
-              javaScriptEnabled
-              domStorageEnabled
-              allowFileAccess
-              mixedContentMode="always"
               scrollEnabled={false}
             />
           </View>
@@ -414,65 +408,6 @@ export default function GarageScreen() {
     ]);
   };
 
-  const handleImportGlb = useCallback(async () => {
-    if (Platform.OS === "web") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".glb";
-      input.onchange = async () => {
-        try {
-          const file = input.files?.[0];
-          if (!file) return;
-          const dataUri = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          const name = file.name.replace(/\.glb$/i, "") || `Import ${savedCars.length + 1}`;
-          const car = await addSavedCar("", name);
-          await updateSavedCar(car.id, {
-            model3dStatus: "succeeded",
-            model3dUrl: dataUri,
-            model3dTaskId: null,
-          });
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (e) {
-          Alert.alert("Import failed", e instanceof Error ? e.message : "Could not import GLB file.");
-        }
-      };
-      input.click();
-      return;
-    }
-
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["model/gltf-binary", "application/octet-stream"],
-        copyToCacheDirectory: true,
-      });
-      if (result.canceled || !result.assets?.[0]) return;
-      const asset = result.assets[0];
-      const fileName = asset.name ?? "";
-      if (!fileName.toLowerCase().endsWith(".glb")) {
-        Alert.alert("Invalid file", "Please select a .glb file.");
-        return;
-      }
-      const uri = asset.uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-      const dataUri = `data:model/gltf-binary;base64,${base64}`;
-      const rawName = fileName.replace(/\.glb$/i, "") || `Import ${savedCars.length + 1}`;
-      const car = await addSavedCar("", rawName);
-      await updateSavedCar(car.id, {
-        model3dStatus: "succeeded",
-        model3dUrl: dataUri,
-        model3dTaskId: null,
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {
-      Alert.alert("Import failed", e instanceof Error ? e.message : "Could not import GLB file.");
-    }
-  }, [savedCars.length, addSavedCar, updateSavedCar]);
-
   const handleDesignNew = () => {
     router.push("/design-builder");
   };
@@ -590,10 +525,6 @@ export default function GarageScreen() {
               <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
             </ScrollView>
             <Text style={styles.scrollHint}>← Swipe to see more cars</Text>
-            <Pressable onPress={handleImportGlb} style={styles.importGlbBtn}>
-              <Ionicons name="construct-outline" size={14} color="#A0C4FF" />
-              <Text style={styles.importGlbText}>⚙️ Import GLB</Text>
-            </Pressable>
           </View>
         )}
 
@@ -824,26 +755,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginTop: 12,
     textAlign: "center",
-  },
-  importGlbBtn: {
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 10,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 50,
-    borderWidth: 1.5,
-    borderColor: "#A0C4FF55",
-    borderStyle: "dashed",
-    backgroundColor: "rgba(160,196,255,0.06)",
-  },
-  importGlbText: {
-    color: "#A0C4FF",
-    fontSize: 11,
-    fontFamily: "Nunito_700Bold",
-    letterSpacing: 0.8,
   },
   emptyState: {
     alignItems: "center",

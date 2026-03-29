@@ -55,7 +55,7 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
+- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, static assets at `/api/assets` (from `public/assets/`), routes at `/api`
 - Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
 - Image-to-3D: `src/routes/image-to-3d.ts` exposes `POST /api/image-to-3d` and `GET /api/image-to-3d/:taskId` — proxies to Meshy.ai API using `MESHY_API_KEY` secret
 - Depends on: `@workspace/db`, `@workspace/api-zod`
@@ -104,9 +104,10 @@ Expo React Native mobile app — **GoBabyGo Buddy-Link AR**. A gamified companio
 - Design: Deep navy (#0D1B2A) + orange accent (#FF6B2B) + amber secondary (#FFD166)
 - Navigation: 4 bottom tabs (Home/Games/Garage/Sounds) + stack routes /ar, /summary, /parent-mode, /coin-dash, /car-detail, /design-builder
 - Screens: Home, Games, Garage, Sounds, AR Drive (Coin Dash), Car Detail, Design Builder, Session Summary, Parent Mode (PIN: 1234)
-- Components: DefaultCarSvg (configurable SVG car), AROverlay, MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning
-- Context: AppContext with savedCars (pre-seeded with default "Buddy Car"), carDesigns, session management, badge generation, AsyncStorage persistence
-- Garage: Tabbed (SAVED CARS / MY DESIGNS), default "Buddy Car" always present (non-deletable), used as vehicle in AR games via savedCars[0]
+- Components: DefaultCarSvg (configurable SVG car), AROverlay, MissionCard, BadgeCard, CelebrationOverlay, ProximityWarning, ModelViewer (cross-platform 3D model viewer — iframe on web, WebView on native)
+- Context: AppContext with savedCars (pre-seeded with default "Buddy Car" with 3D GLB model), carDesigns, session management, badge generation, AsyncStorage persistence
+- Garage: Tabbed (SAVED CARS / MY DESIGNS), default "Buddy Car" always present (non-deletable, shows 3D McLaren model), used as vehicle in AR games via savedCars[0]
+- 3D Models: Buddy Car GLB served from API server at `/api/assets/buddy-car.glb` (85MB); other cars use Meshy AI-generated GLBs or user-imported GLB files
 - Animation: All Animated API calls use `useNativeDriver: Platform.OS !== 'web'` for web compatibility
 - `pnpm --filter @workspace/mobile run dev` — start Expo dev server
 

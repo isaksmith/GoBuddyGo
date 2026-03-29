@@ -74,11 +74,35 @@ export interface SavedCar {
   isDefault?: boolean;
 }
 
+export function getBuddyCarModelUrl(): string {
+  const { Platform } = require("react-native");
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}/api/assets/buddy-car.glb`;
+  }
+  const { getApiBaseUrl } = require("@/utils/apiUrl");
+  return `${getApiBaseUrl()}/assets/buddy-car.glb`;
+}
+
+export function getDefaultCar(): SavedCar {
+  return {
+    id: "default-car",
+    name: "Buddy Car",
+    photoUri: "",
+    stickers: [],
+    model3dStatus: "succeeded" as Model3dStatus,
+    model3dUrl: getBuddyCarModelUrl(),
+    createdAt: 0,
+    isDefault: true,
+  };
+}
+
 export const DEFAULT_CAR: SavedCar = {
   id: "default-car",
   name: "Buddy Car",
   photoUri: "",
   stickers: [],
+  model3dStatus: "succeeded",
+  model3dUrl: null,
   createdAt: 0,
   isDefault: true,
 };
@@ -433,8 +457,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!initialCars.some((c) => c.isDefault)) {
-          initialCars = [DEFAULT_CAR, ...initialCars];
+          initialCars = [getDefaultCar(), ...initialCars];
           await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
+        } else {
+          const buddyUrl = getBuddyCarModelUrl();
+          const needsUpdate = initialCars.some((c) => c.isDefault && !c.model3dUrl);
+          if (needsUpdate) {
+            initialCars = initialCars.map((c) =>
+              c.isDefault ? { ...c, model3dStatus: "succeeded" as Model3dStatus, model3dUrl: buddyUrl } : c
+            );
+            await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
+          }
         }
         setSavedCars(initialCars);
         if (rawDesigns) setDesigns(JSON.parse(rawDesigns));
