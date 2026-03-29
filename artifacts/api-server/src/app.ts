@@ -1,4 +1,5 @@
 import fs from "fs";
+import http from "http";
 import path from "path";
 import express, { type Express } from "express";
 import cors from "cors";
@@ -7,6 +8,37 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+const EXPO_DEV_PORT = 18115;
+
+app.use((req, res, next) => {
+  const expoPlatform = req.headers["expo-platform"];
+  if (expoPlatform && process.env.NODE_ENV !== "production") {
+    const proxyReq = http.request(
+      {
+        hostname: "localhost",
+        port: EXPO_DEV_PORT,
+        path: req.originalUrl,
+        method: req.method,
+        headers: req.headers,
+      },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+        proxyRes.pipe(res);
+      },
+    );
+    proxyReq.on("error", () => {
+      next();
+    });
+    if (req.method === "POST" || req.method === "PUT") {
+      req.pipe(proxyReq);
+    } else {
+      proxyReq.end();
+    }
+    return;
+  }
+  next();
+});
 
 app.use(
   pinoHttp({
