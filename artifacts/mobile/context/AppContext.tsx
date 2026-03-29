@@ -101,6 +101,15 @@ export function getMiniCoopModelUrl(): string {
   return `${getApiBaseUrl()}/assets/mini-coop.glb`;
 }
 
+export function getCruiserModelUrl(): string {
+  const { Platform } = require("react-native");
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}/api/assets/cruiser.glb`;
+  }
+  const { getApiBaseUrl } = require("@/utils/apiUrl");
+  return `${getApiBaseUrl()}/assets/cruiser.glb`;
+}
+
 export function getDefaultCar(): SavedCar {
   return {
     id: "default-car",
@@ -175,6 +184,7 @@ export const STICKER_CATALOG: StickerDefinition[] = [
 export const VEHICLE_TYPES = [
   { id: "jeep", label: "Jeep", emoji: "🚙", modelUrl: getJeepModelUrl(), defaultPrimary: "#E91E8C", defaultAccent: "#1C1C1E" },
   { id: "mini-coop", label: "Mini Coop", emoji: "🚗", modelUrl: getMiniCoopModelUrl(), defaultPrimary: "#3A86FF", defaultAccent: "#FFFFFF" },
+  { id: "cruiser", label: "CRUISER", emoji: "🛻", modelUrl: getCruiserModelUrl(), defaultPrimary: "#4CAF50", defaultAccent: "#1C1C1E" },
 ];
 
 export const DESIGN_COLORS = [
