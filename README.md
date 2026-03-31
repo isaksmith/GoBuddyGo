@@ -1,6 +1,6 @@
-# GoBabyGo Buddy-Link AR
+# GoBuddyGo
 
-GoBabyGo Buddy-Link AR is a mission-driven prototype that supports the GoBabyGo vision: helping children with mobility challenges gain independence, joy, and participation through adapted ride-on cars.
+GoBuddyGo is a mission-driven prototype that supports the GoBabyGo vision: helping children with mobility challenges gain independence, joy, and participation through adapted ride-on cars.
 
 This project focuses on the sibling experience. It turns a sibling from a passive observer into an active co-pilot with game mechanics, AR interactions, and safety-aware prompts while the driver stays focused on their physical controls.
 
