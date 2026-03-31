@@ -10,6 +10,7 @@ import { logger } from "./lib/logger";
 const app: Express = express();
 
 const EXPO_DEV_PORT = 18115;
+const TEMPORARILY_DISABLE_API = true;
 
 function isExpoDevRequest(req: express.Request): boolean {
   if (req.headers["expo-platform"]) return true;
@@ -78,7 +79,16 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
 app.use("/api/assets", express.static(path.join(__dirname, "../public/assets")));
-app.use("/api", router);
+if (TEMPORARILY_DISABLE_API) {
+  app.use("/api", (_req, res) => {
+    res.status(503).json({
+      error: "API temporarily disabled",
+      message: "The API is currently unavailable while access is restricted.",
+    });
+  });
+} else {
+  app.use("/api", router);
+}
 
 const webBuildDir = path.join(__dirname, "../../mobile/dist");
 if (fs.existsSync(webBuildDir)) {
