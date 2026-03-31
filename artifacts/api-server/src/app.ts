@@ -10,7 +10,7 @@ import { logger } from "./lib/logger";
 const app: Express = express();
 
 const EXPO_DEV_PORT = 18115;
-const TEMPORARILY_DISABLE_API = true;
+const TEMPORARILY_DISABLE_API = process.env.DISABLE_API?.toLowerCase() === "true";
 
 function isExpoDevRequest(req: express.Request): boolean {
   if (req.headers["expo-platform"]) return true;
