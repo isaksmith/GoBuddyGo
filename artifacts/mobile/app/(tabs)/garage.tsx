@@ -311,7 +311,7 @@ export default function GarageScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
-  const homeBtnBottom = insets.bottom + 82;
+  const homeBtnBottom = insets.bottom + 24;
 
   const switchTab = (tab: Tab) => {
     setActiveTab(tab);

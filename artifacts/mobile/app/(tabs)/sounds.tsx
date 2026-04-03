@@ -161,7 +161,7 @@ export default function SoundsScreen() {
   const { settings } = useApp();
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const homeBtnBottom = insets.bottom + 82;
+  const homeBtnBottom = insets.bottom + 24;
   const soundsEnabled = settings.soundsEnabled ?? true;
 
   const COLS = width > 600 ? 4 : 3;

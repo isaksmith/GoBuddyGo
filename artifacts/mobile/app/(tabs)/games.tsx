@@ -108,7 +108,7 @@ export default function GamesScreen() {
   const { settings, incrementGamesPlayed } = useApp();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const homeBtnBottom = insets.bottom + 82;
+  const homeBtnBottom = insets.bottom + 24;
 
   const handlePlay = useCallback((gameId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

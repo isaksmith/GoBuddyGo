@@ -101,7 +101,7 @@ export default function BadgesScreen() {
   const { sessionHistory, gamesPlayed } = useApp();
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const homeBtnBottom = insets.bottom + 82;
+  const homeBtnBottom = insets.bottom + 24;
   const numCols = width > 600 ? 3 : 2;
   const hPad = width > 600 ? 20 : 12;
 
