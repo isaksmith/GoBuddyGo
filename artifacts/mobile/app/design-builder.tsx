@@ -50,6 +50,16 @@ const PICKER_COLORS = [
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const LARGE_PREVIEW_WIDTH = SCREEN_WIDTH - 32;
 const LARGE_PREVIEW_HEIGHT = Math.round(LARGE_PREVIEW_WIDTH * 0.62);
+const FAST_POLL_MS = 1800;
+const NORMAL_POLL_MS = 3000;
+const SLOW_POLL_MS = 4500;
+const FAST_POLL_ATTEMPTS = 8;
+
+function getNextPollDelay(attempt: number): number {
+  if (attempt < FAST_POLL_ATTEMPTS) return FAST_POLL_MS;
+  if (attempt < FAST_POLL_ATTEMPTS + 12) return NORMAL_POLL_MS;
+  return SLOW_POLL_MS;
+}
 
 function VehicleModelViewer({ modelUrl, size, interactive = false }: { modelUrl: string; size: "large" | "medium"; interactive?: boolean }) {
   const containerSize = size === "large"
@@ -244,8 +254,10 @@ export default function DesignBuilderScreen() {
   );
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const previewAnim = useRef(new Animated.Value(1)).current;
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeTaskIdRef = useRef<string | null>(null);
+  const pollAttemptRef = useRef(0);
+  const pollInFlightRef = useRef(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const isEditing = !!existingDesign;
@@ -258,18 +270,33 @@ export default function DesignBuilderScreen() {
   }, [previewAnim]);
 
   const stopPolling = useCallback(() => {
-    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
+    if (pollTimerRef.current) { clearTimeout(pollTimerRef.current); pollTimerRef.current = null; }
     activeTaskIdRef.current = null;
+    pollAttemptRef.current = 0;
+    pollInFlightRef.current = false;
   }, []);
 
   const startPolling = useCallback((taskId: string) => {
     stopPolling();
     activeTaskIdRef.current = taskId;
-    const poll = async () => {
+    pollAttemptRef.current = 0;
+
+    const scheduleNextPoll = () => {
       if (activeTaskIdRef.current !== taskId) return;
+      const delay = getNextPollDelay(pollAttemptRef.current);
+      pollTimerRef.current = setTimeout(poll, delay);
+    };
+
+    const poll = async () => {
+      if (activeTaskIdRef.current !== taskId || pollInFlightRef.current) return;
+      pollInFlightRef.current = true;
       try {
         const res = await fetch(`${getApiBaseUrl()}/image-to-3d/${taskId}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          pollAttemptRef.current += 1;
+          scheduleNextPoll();
+          return;
+        }
         const data = await res.json() as { status: "pending" | "succeeded" | "failed"; modelUrl?: string | null };
         if (activeTaskIdRef.current !== taskId) return;
         if (data.status === "succeeded") {
@@ -290,10 +317,18 @@ export default function DesignBuilderScreen() {
           stopPolling();
           setScanStatus("failed");
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else {
+          pollAttemptRef.current += 1;
+          scheduleNextPoll();
         }
-      } catch (e) { console.warn("Scan polling failed:", e); }
+      } catch (e) {
+        console.warn("Scan polling failed:", e);
+        pollAttemptRef.current += 1;
+        scheduleNextPoll();
+      } finally {
+        pollInFlightRef.current = false;
+      }
     };
-    pollTimerRef.current = setInterval(poll, 5000);
     poll();
   }, [stopPolling, animatePreview]);
 

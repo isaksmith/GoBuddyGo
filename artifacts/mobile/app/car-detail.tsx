@@ -38,6 +38,16 @@ import { getApiBaseUrl } from "@/utils/apiUrl";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PHOTO_AREA_HEIGHT = 260;
+const FAST_POLL_MS = 1800;
+const NORMAL_POLL_MS = 3000;
+const SLOW_POLL_MS = 4500;
+const FAST_POLL_ATTEMPTS = 8;
+
+function getNextPollDelay(attempt: number): number {
+  if (attempt < FAST_POLL_ATTEMPTS) return FAST_POLL_MS;
+  if (attempt < FAST_POLL_ATTEMPTS + 12) return NORMAL_POLL_MS;
+  return SLOW_POLL_MS;
+}
 
 function DraggableSticker({
   placed,
@@ -123,8 +133,10 @@ export default function CarDetailScreen() {
   const [nameInput, setNameInput] = useState(car?.name ?? "My Ride");
   const [photoAreaLayout, setPhotoAreaLayout] = useState({ width: SCREEN_WIDTH - 32, height: PHOTO_AREA_HEIGHT });
   const slideAnim = useRef(new Animated.Value(400)).current;
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeTaskIdRef = useRef<string | null>(null);
+  const pollAttemptRef = useRef(0);
+  const pollInFlightRef = useRef(false);
   const dotAnim = useRef(new Animated.Value(0)).current;
   const autoConvertTriggeredRef = useRef(false);
 
@@ -139,18 +151,33 @@ export default function CarDetailScreen() {
   }, [car?.name, editingName]);
 
   const stopPolling = useCallback(() => {
-    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
+    if (pollTimerRef.current) { clearTimeout(pollTimerRef.current); pollTimerRef.current = null; }
     activeTaskIdRef.current = null;
+    pollAttemptRef.current = 0;
+    pollInFlightRef.current = false;
   }, []);
 
   const startPolling = useCallback((taskId: string) => {
     stopPolling();
     activeTaskIdRef.current = taskId;
-    const poll = async () => {
+    pollAttemptRef.current = 0;
+
+    const scheduleNextPoll = () => {
       if (activeTaskIdRef.current !== taskId) return;
+      const delay = getNextPollDelay(pollAttemptRef.current);
+      pollTimerRef.current = setTimeout(poll, delay);
+    };
+
+    const poll = async () => {
+      if (activeTaskIdRef.current !== taskId || pollInFlightRef.current) return;
+      pollInFlightRef.current = true;
       try {
         const res = await fetch(`${getApiBaseUrl()}/image-to-3d/${taskId}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          pollAttemptRef.current += 1;
+          scheduleNextPoll();
+          return;
+        }
         const data = await res.json() as { status: "pending" | "succeeded" | "failed"; modelUrl?: string | null };
         if (activeTaskIdRef.current !== taskId) return;
         if (data.status === "succeeded") {
@@ -165,10 +192,18 @@ export default function CarDetailScreen() {
           stopPolling();
           await updateSavedCar(carId!, { model3dStatus: "failed", model3dUrl: null });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else {
+          pollAttemptRef.current += 1;
+          scheduleNextPoll();
         }
-      } catch (e) { console.warn("Polling failed:", e); }
+      } catch (e) {
+        console.warn("Polling failed:", e);
+        pollAttemptRef.current += 1;
+        scheduleNextPoll();
+      } finally {
+        pollInFlightRef.current = false;
+      }
     };
-    pollTimerRef.current = setInterval(poll, 5000);
     poll();
   }, [stopPolling, updateSavedCar, carId]);
 

@@ -123,6 +123,11 @@ export function getDefaultCar(): SavedCar {
   };
 }
 
+function prewarmDefaultModelCache(): void {
+  const buddyUrl = getBuddyCarModelUrl();
+  fetch(buddyUrl, { method: "GET" }).catch(() => {});
+}
+
 export const DEFAULT_CAR: SavedCar = {
   id: "default-car",
   name: "Buddy Car",
@@ -506,6 +511,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
         setSavedCars(initialCars);
+        prewarmDefaultModelCache();
         if (rawDesigns) setDesigns(JSON.parse(rawDesigns));
       } finally {
         setIsLoaded(true);

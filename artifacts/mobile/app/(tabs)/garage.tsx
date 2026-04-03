@@ -76,21 +76,21 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }:
   onView3d?: () => void;
   cardColor?: string;
 }) {
-  const has3d = car.model3dStatus === "succeeded" && !!car.model3dUrl;
+  const has3d = !car.isDefault && car.model3dStatus === "succeeded" && !!car.model3dUrl;
   return (
     <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
       <View style={cardStyles.imageArea}>
-        {has3d ? (
+        {car.isDefault ? (
+          <View style={cardStyles.defaultCarArea}>
+            <DefaultCarSvg width={140} height={90} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+          </View>
+        ) : has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
             <ModelViewer
               html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>`}
               style={cardStyles.model3dWebView}
               scrollEnabled={false}
             />
-          </View>
-        ) : car.isDefault ? (
-          <View style={cardStyles.defaultCarArea}>
-            <DefaultCarSvg width={140} height={90} bodyColor="#4F8EF7" accentColor="#FFD93D" />
           </View>
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />

@@ -34,6 +34,7 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
         originWhitelist={["*"]}
         javaScriptEnabled
         domStorageEnabled
+        cacheEnabled
         allowFileAccess
         mixedContentMode="always"
         scrollEnabled={scrollEnabled}
