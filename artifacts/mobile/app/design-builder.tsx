@@ -54,6 +54,7 @@ const FAST_POLL_MS = 1800;
 const NORMAL_POLL_MS = 3000;
 const SLOW_POLL_MS = 4500;
 const FAST_POLL_ATTEMPTS = 8;
+const MAX_POLL_ATTEMPTS = 40; // ~3 min ceiling before giving up
 
 function getNextPollDelay(attempt: number): number {
   if (attempt < FAST_POLL_ATTEMPTS) return FAST_POLL_MS;
@@ -294,7 +295,13 @@ export default function DesignBuilderScreen() {
         const res = await fetch(`${getApiBaseUrl()}/image-to-3d/${taskId}`);
         if (!res.ok) {
           pollAttemptRef.current += 1;
-          scheduleNextPoll();
+          if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+            stopPolling();
+            setScanStatus("failed");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } else {
+            scheduleNextPoll();
+          }
           return;
         }
         const data = await res.json() as { status: "pending" | "succeeded" | "failed"; modelUrl?: string | null };
@@ -319,12 +326,24 @@ export default function DesignBuilderScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
           pollAttemptRef.current += 1;
-          scheduleNextPoll();
+          if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+            stopPolling();
+            setScanStatus("failed");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } else {
+            scheduleNextPoll();
+          }
         }
       } catch (e) {
         console.warn("Scan polling failed:", e);
         pollAttemptRef.current += 1;
-        scheduleNextPoll();
+        if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+          stopPolling();
+          setScanStatus("failed");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else {
+          scheduleNextPoll();
+        }
       } finally {
         pollInFlightRef.current = false;
       }

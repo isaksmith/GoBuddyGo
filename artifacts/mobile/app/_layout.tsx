@@ -3,6 +3,8 @@ import {
   BalsamiqSans_700Bold,
   useFonts,
 } from "@expo-google-fonts/balsamiq-sans";
+import * as Font from "expo-font";
+import { Ionicons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -43,6 +45,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     BalsamiqSans_400Regular,
     BalsamiqSans_700Bold,
+    ...Ionicons.font,
   });
 
   useEffect(() => {

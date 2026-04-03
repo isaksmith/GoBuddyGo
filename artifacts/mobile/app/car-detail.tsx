@@ -32,6 +32,7 @@ import {
   StickerDefinition,
   STICKER_CATALOG,
   makeStickerUid,
+  getStickerImage,
   useApp,
 } from "@/context/AppContext";
 import { getApiBaseUrl } from "@/utils/apiUrl";
@@ -42,6 +43,7 @@ const FAST_POLL_MS = 1800;
 const NORMAL_POLL_MS = 3000;
 const SLOW_POLL_MS = 4500;
 const FAST_POLL_ATTEMPTS = 8;
+const MAX_POLL_ATTEMPTS = 40; // ~3 min ceiling before giving up
 
 function getNextPollDelay(attempt: number): number {
   if (attempt < FAST_POLL_ATTEMPTS) return FAST_POLL_MS;
@@ -97,8 +99,8 @@ function DraggableSticker({
   if (!sticker) return null;
   return (
     <Animated.View style={[styles.stickerOnVehicle, { transform: pan.getTranslateTransform() }]} {...panResponder.panHandlers}>
-      {sticker.image ? (
-        <Image source={sticker.image} style={styles.stickerOnVehicleImage} />
+      {sticker.imageKey ? (
+        <Image source={getStickerImage(sticker.imageKey)} style={styles.stickerOnVehicleImage} />
       ) : (
         <Text style={styles.stickerOnVehicleEmoji}>{sticker.emoji}</Text>
       )}
@@ -175,7 +177,13 @@ export default function CarDetailScreen() {
         const res = await fetch(`${getApiBaseUrl()}/image-to-3d/${taskId}`);
         if (!res.ok) {
           pollAttemptRef.current += 1;
-          scheduleNextPoll();
+          if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+            stopPolling();
+            await updateSavedCar(carId!, { model3dStatus: "failed", model3dUrl: null });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } else {
+            scheduleNextPoll();
+          }
           return;
         }
         const data = await res.json() as { status: "pending" | "succeeded" | "failed"; modelUrl?: string | null };
@@ -194,12 +202,24 @@ export default function CarDetailScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
           pollAttemptRef.current += 1;
-          scheduleNextPoll();
+          if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+            stopPolling();
+            await updateSavedCar(carId!, { model3dStatus: "failed", model3dUrl: null });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } else {
+            scheduleNextPoll();
+          }
         }
       } catch (e) {
         console.warn("Polling failed:", e);
         pollAttemptRef.current += 1;
-        scheduleNextPoll();
+        if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
+          stopPolling();
+          await updateSavedCar(carId!, { model3dStatus: "failed", model3dUrl: null });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else {
+          scheduleNextPoll();
+        }
       } finally {
         pollInFlightRef.current = false;
       }
@@ -632,8 +652,8 @@ export default function CarDetailScreen() {
                       unlocked ? { borderColor: sticker.color + "66", backgroundColor: sticker.color + "15" } : { borderColor: Colors.border, opacity: 0.5 },
                     ]}
                   >
-                    {sticker.image ? (
-                      <Image source={sticker.image} style={[styles.catalogStickerImage, !unlocked && { opacity: 0.3 }]} />
+                    {sticker.imageKey ? (
+                      <Image source={getStickerImage(sticker.imageKey)} style={[styles.catalogStickerImage, !unlocked && { opacity: 0.3 }]} />
                     ) : (
                       <Text style={[styles.catalogEmoji, !unlocked && { opacity: 0.3 }]}>{sticker.emoji}</Text>
                     )}
