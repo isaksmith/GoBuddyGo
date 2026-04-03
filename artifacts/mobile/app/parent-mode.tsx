@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -50,43 +51,54 @@ function PinEntry({
   };
 
   return (
-    <View style={pinStyles.container}>
-      <View style={pinStyles.lockCircle}>
-        <Ionicons name="lock-closed" size={40} color={Colors.primary} />
+    <KeyboardAvoidingView
+      style={pinStyles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+    >
+      <View style={pinStyles.pinContent}>
+        <View style={pinStyles.lockCircle}>
+          <Ionicons name="lock-closed" size={40} color={Colors.primary} />
+        </View>
+        <Text style={pinStyles.title}>Parent Mode</Text>
+        <Text style={pinStyles.subtitle}>Enter your PIN to access settings</Text>
+
+        <TextInput
+          style={[pinStyles.pinInput, error && pinStyles.pinInputError]}
+          value={entered}
+          onChangeText={(v) => setEntered(v.replace(/\D/g, "").slice(0, 6))}
+          keyboardType="number-pad"
+          secureTextEntry
+          placeholder="••••"
+          placeholderTextColor={Colors.textMuted}
+          maxLength={6}
+          testID="pin-input"
+        />
+        {error && <Text style={pinStyles.errorText}>Incorrect PIN</Text>}
+
+        <Pressable onPress={handleSubmit} style={pinStyles.unlockBtn} testID="pin-unlock-btn">
+          <Text style={pinStyles.unlockBtnText}>Unlock</Text>
+        </Pressable>
+
+        <Pressable onPress={() => router.back()} style={pinStyles.cancelBtn}>
+          <Text style={pinStyles.cancelBtnText}>Cancel</Text>
+        </Pressable>
       </View>
-      <Text style={pinStyles.title}>Parent Mode</Text>
-      <Text style={pinStyles.subtitle}>Enter your PIN to access settings</Text>
-
-      <TextInput
-        style={[pinStyles.pinInput, error && pinStyles.pinInputError]}
-        value={entered}
-        onChangeText={(v) => setEntered(v.replace(/\D/g, "").slice(0, 6))}
-        keyboardType="number-pad"
-        secureTextEntry
-        placeholder="••••"
-        placeholderTextColor={Colors.textMuted}
-        maxLength={6}
-        testID="pin-input"
-      />
-      {error && <Text style={pinStyles.errorText}>Incorrect PIN</Text>}
-
-      <Pressable onPress={handleSubmit} style={pinStyles.unlockBtn} testID="pin-unlock-btn">
-        <Text style={pinStyles.unlockBtnText}>Unlock</Text>
-      </Pressable>
-
-      <Pressable onPress={() => router.back()} style={pinStyles.cancelBtn}>
-        <Text style={pinStyles.cancelBtnText}>Cancel</Text>
-      </Pressable>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const pinStyles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
+  },
+  pinContent: {
+    width: "100%",
+    alignItems: "center",
     gap: 14,
   },
   lockCircle: {
@@ -249,6 +261,7 @@ export default function ParentModeScreen() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40, paddingHorizontal: hPad, alignSelf: "center", width: contentMaxWidth }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         style={{ width: "100%" }}
       >
         {usingDefaultPin && (
@@ -417,7 +430,11 @@ export default function ParentModeScreen() {
         animationType="slide"
         onRequestClose={() => setChangePinVisible(false)}
       >
-        <View style={styles.modalBackdrop}>
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+        >
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Change Parent PIN</Text>
             <Text style={styles.modalSubtitle}>Enter a new 4–6 digit PIN</Text>
@@ -459,7 +476,7 @@ export default function ParentModeScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
     </AppBackground>
