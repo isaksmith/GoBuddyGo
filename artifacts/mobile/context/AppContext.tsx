@@ -162,6 +162,33 @@ function getDefaultCars(): SavedCar[] {
   ];
 }
 
+function getDefaultModelUrlForCar(car: SavedCar): string {
+  const id = (car.id ?? "").toLowerCase();
+  const name = (car.name ?? "").toLowerCase();
+  const currentUrl = (car.model3dUrl ?? "").toLowerCase();
+
+  if (id.includes("jeep") || name.includes("jeep") || currentUrl.includes("/jeep.glb")) {
+    return getJeepModelUrl();
+  }
+  if (
+    id.includes("mini") ||
+    name.includes("mini") ||
+    currentUrl.includes("/mini-coop.glb")
+  ) {
+    return getMiniCoopModelUrl();
+  }
+  if (
+    id.includes("cruiser") ||
+    id.includes("crusier") ||
+    name.includes("cruiser") ||
+    name.includes("crusier") ||
+    currentUrl.includes("/cruiser.glb")
+  ) {
+    return getCruiserModelUrl();
+  }
+  return getBuddyCarModelUrl();
+}
+
 export function getDefaultCar(): SavedCar {
   return getDefaultCars()[0];
 }

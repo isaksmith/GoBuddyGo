@@ -18,7 +18,7 @@ function runOptimize(inputPath, outputPath) {
     inputPath,
     outputPath,
     "--compress",
-    "false",
+    "draco",
     "--texture-compress",
     "auto",
     "--texture-size",
