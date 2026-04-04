@@ -117,22 +117,61 @@ export function getVehicleModelUrl(vehicleId: string): string {
   return getJeepModelUrl();
 }
 
+function getDefaultCars(): SavedCar[] {
+  return [
+    {
+      id: "default-car",
+      name: "Buddy Car",
+      photoUri: "",
+      stickers: [],
+      model3dStatus: "succeeded",
+      model3dUrl: getBuddyCarModelUrl(),
+      createdAt: 0,
+      isDefault: true,
+    },
+    {
+      id: "default-jeep",
+      name: "Jeep",
+      photoUri: "",
+      stickers: [],
+      model3dStatus: "succeeded",
+      model3dUrl: getJeepModelUrl(),
+      createdAt: 1,
+      isDefault: true,
+    },
+    {
+      id: "default-mini-coop",
+      name: "Mini Cooper",
+      photoUri: "",
+      stickers: [],
+      model3dStatus: "succeeded",
+      model3dUrl: getMiniCoopModelUrl(),
+      createdAt: 2,
+      isDefault: true,
+    },
+    {
+      id: "default-cruiser",
+      name: "Crusier",
+      photoUri: "",
+      stickers: [],
+      model3dStatus: "succeeded",
+      model3dUrl: getCruiserModelUrl(),
+      createdAt: 3,
+      isDefault: true,
+    },
+  ];
+}
+
 export function getDefaultCar(): SavedCar {
-  return {
-    id: "default-car",
-    name: "Buddy Car",
-    photoUri: "",
-    stickers: [],
-    model3dStatus: "succeeded" as Model3dStatus,
-    model3dUrl: getBuddyCarModelUrl(),
-    createdAt: 0,
-    isDefault: true,
-  };
+  return getDefaultCars()[0];
 }
 
 function prewarmDefaultModelCache(): void {
-  const buddyUrl = getBuddyCarModelUrl();
-  fetch(buddyUrl, { method: "GET" }).catch(() => {});
+  for (const car of getDefaultCars()) {
+    if (car.model3dUrl) {
+      fetch(car.model3dUrl, { method: "GET" }).catch(() => {});
+    }
+  }
 }
 
 export const DEFAULT_CAR: SavedCar = {
@@ -195,8 +234,8 @@ export const STICKER_CATALOG: StickerDefinition[] = [
 
 export const VEHICLE_TYPES = [
   { id: "jeep", label: "Jeep", emoji: "🚙", modelUrl: getJeepModelUrl(), defaultPrimary: "#E91E8C", defaultAccent: "#1C1C1E" },
-  { id: "mini-coop", label: "Mini Coop", emoji: "🚗", modelUrl: getMiniCoopModelUrl(), defaultPrimary: "#3A86FF", defaultAccent: "#FFFFFF" },
-  { id: "cruiser", label: "CRUISER", emoji: "🛻", modelUrl: getCruiserModelUrl(), defaultPrimary: "#4CAF50", defaultAccent: "#1C1C1E" },
+  { id: "mini-coop", label: "Mini Cooper", emoji: "🚗", modelUrl: getMiniCoopModelUrl(), defaultPrimary: "#3A86FF", defaultAccent: "#FFFFFF" },
+  { id: "cruiser", label: "Crusier", emoji: "🛻", modelUrl: getCruiserModelUrl(), defaultPrimary: "#4CAF50", defaultAccent: "#1C1C1E" },
 ];
 
 export const DESIGN_COLORS = [
@@ -459,9 +498,18 @@ function normalizeLoadedDesign(raw: unknown): CarDesign | null {
     ? data.accessories.filter((item): item is string => typeof item === "string")
     : [];
 
+  const rawName = typeof data.name === "string" ? data.name.trim() : "";
+  const vehicleLabel = vehicleType === "custom"
+    ? "Custom Car"
+    : (VEHICLE_TYPES.find((v) => v.id === vehicleType)?.label ?? "Design");
+  const isGenericGeneratedName = /^design\s+[a-z0-9_-]+$/i.test(rawName);
+  const resolvedName = rawName && !isGenericGeneratedName
+    ? rawName
+    : vehicleLabel;
+
   return {
     id,
-    name: typeof data.name === "string" && data.name.trim() ? data.name : `Design ${id.slice(0, 6)}`,
+    name: resolvedName,
     vehicleType,
     primaryColor: typeof data.primaryColor === "string" ? data.primaryColor : VEHICLE_TYPES[0].defaultPrimary,
     accentColor: typeof data.accentColor === "string" ? data.accentColor : VEHICLE_TYPES[0].defaultAccent,
@@ -541,18 +589,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        if (!initialCars.some((c) => c.isDefault)) {
-          initialCars = [getDefaultCar(), ...initialCars];
-          await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
-        } else {
-          const buddyUrl = getBuddyCarModelUrl();
-          const needsUpdate = initialCars.some(
-            (c) => c.isDefault && (c.model3dUrl !== buddyUrl || c.model3dStatus !== "succeeded")
-          );
-          if (needsUpdate) {
-            initialCars = initialCars.map((c) =>
-              c.isDefault ? { ...c, model3dStatus: "succeeded" as Model3dStatus, model3dUrl: buddyUrl } : c
-            );
+        {
+          const defaultCars = getDefaultCars();
+          const nonDefaultCars = initialCars.filter((c) => !c.isDefault);
+          const existingDefaultsById = new Map(initialCars.filter((c) => c.isDefault).map((c) => [c.id, c]));
+
+          const normalizedDefaults = defaultCars.map((def) => {
+            const existing = existingDefaultsById.get(def.id);
+            if (!existing) return def;
+            return {
+              ...existing,
+              name: def.name,
+              photoUri: "",
+              isDefault: true,
+              model3dStatus: "succeeded" as Model3dStatus,
+              model3dUrl: def.model3dUrl,
+            };
+          });
+
+          const mergedCars = [...normalizedDefaults, ...nonDefaultCars];
+          if (JSON.stringify(mergedCars) !== JSON.stringify(initialCars)) {
+            initialCars = mergedCars;
             await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
           }
         }
@@ -618,14 +675,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [persistCars]);
 
   const deleteSavedCar = useCallback(async (id: string) => {
-    if (id === DEFAULT_CAR.id) return;
+    if (savedCars.some((c) => c.id === id && c.isDefault)) return;
     let next: SavedCar[] = [];
     setSavedCars((prev) => {
       next = prev.filter((c) => c.id !== id);
       return next;
     });
     await persistCars(next);
-  }, [persistCars]);
+  }, [persistCars, savedCars]);
 
   const addDesign = useCallback(async (data: Omit<CarDesign, "id" | "createdAt">): Promise<CarDesign> => {
     const design: CarDesign = { ...data, id: makeId(), createdAt: Date.now() };
