@@ -25,6 +25,7 @@ import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
 import {
   CarDesign,
+  getVehicleModelUrl,
   SavedCar,
   VEHICLE_TYPES,
   DESIGN_ACCESSORIES,
@@ -129,17 +130,24 @@ function DesignCard({ design, onPress, cardColor }: {
   cardColor?: string;
 }) {
   const vt = VEHICLE_TYPES.find((v) => v.id === design.vehicleType) ?? VEHICLE_TYPES[0];
-  const modelUrl = design.customVehicleModelUrl ?? vt.modelUrl;
+  const modelUrl = design.customVehicleModelUrl ?? getVehicleModelUrl(vt.id);
+  const canRenderModel = typeof modelUrl === "string" && /^https?:\/\//.test(modelUrl);
   return (
     <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
       <View style={cardStyles.imageArea}>
-        <View style={cardStyles.model3dThumb} pointerEvents="none">
-          <ModelViewer
-            html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${modelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D design preview"></model-viewer></body></html>`}
-            style={cardStyles.model3dWebView}
-            scrollEnabled={false}
-          />
-        </View>
+        {canRenderModel ? (
+          <View style={cardStyles.model3dThumb} pointerEvents="none">
+            <ModelViewer
+              html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${modelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D design preview"></model-viewer></body></html>`}
+              style={cardStyles.model3dWebView}
+              scrollEnabled={false}
+            />
+          </View>
+        ) : (
+          <View style={cardStyles.designFallbackArea}>
+            <DesignPreview design={design} size={56} />
+          </View>
+        )}
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{design.name}</Text>
@@ -190,6 +198,12 @@ const cardStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(79,142,247,0.08)",
+  },
+  designFallbackArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(9,25,42,0.55)",
   },
   model3dThumb: {
     flex: 1,

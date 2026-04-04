@@ -1,5 +1,6 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import * as Linking from "expo-linking";
 
 const API_PORT = 3001;
 
@@ -10,6 +11,13 @@ function trimTrailingSlash(url: string): string {
 function extractHost(value: unknown): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
   const withoutProtocol = value.replace(/^https?:\/\//, "");
+  const hostWithPort = withoutProtocol.split("/")[0] ?? "";
+  const host = hostWithPort.split(":")[0] ?? "";
+  return host || null;
+}
+
+function extractHostFromExpoLink(url: string): string | null {
+  const withoutProtocol = url.replace(/^\w+:\/\//, "");
   const hostWithPort = withoutProtocol.split("/")[0] ?? "";
   const host = hostWithPort.split(":")[0] ?? "";
   return host || null;
@@ -32,6 +40,16 @@ function getExpoRuntimeHost(): string | null {
     if (host && host !== "localhost" && host !== "127.0.0.1") {
       return host;
     }
+  }
+
+  try {
+    const expoUrl = Linking.createURL("/");
+    const host = extractHostFromExpoLink(expoUrl);
+    if (host && host !== "localhost" && host !== "127.0.0.1") {
+      return host;
+    }
+  } catch {
+    // Ignore and fall through to localhost fallback.
   }
 
   return null;

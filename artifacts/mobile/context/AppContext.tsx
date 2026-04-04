@@ -110,6 +110,13 @@ export function getCruiserModelUrl(): string {
   return `${getApiBaseUrl()}/assets/cruiser.glb`;
 }
 
+export function getVehicleModelUrl(vehicleId: string): string {
+  if (vehicleId === "jeep") return getJeepModelUrl();
+  if (vehicleId === "mini-coop") return getMiniCoopModelUrl();
+  if (vehicleId === "cruiser") return getCruiserModelUrl();
+  return getJeepModelUrl();
+}
+
 export function getDefaultCar(): SavedCar {
   return {
     id: "default-car",
@@ -427,6 +434,43 @@ function generateBadges(
   return badges;
 }
 
+function normalizeLoadedDesign(raw: unknown): CarDesign | null {
+  if (!raw || typeof raw !== "object") return null;
+  const data = raw as Record<string, unknown>;
+
+  const id = typeof data.id === "string" ? data.id : null;
+  if (!id) return null;
+
+  const hasKnownVehicle = typeof data.vehicleType === "string" && VEHICLE_TYPES.some((v) => v.id === data.vehicleType);
+  const legacyCustomUrl =
+    typeof data.customVehicleModelUrl === "string" ? data.customVehicleModelUrl :
+    typeof data.modelUrl === "string" ? data.modelUrl :
+    typeof data.customModelUrl === "string" ? data.customModelUrl :
+    null;
+
+  const vehicleType =
+    hasKnownVehicle
+      ? (data.vehicleType as string)
+      : legacyCustomUrl
+      ? "custom"
+      : VEHICLE_TYPES[0].id;
+
+  const accessories = Array.isArray(data.accessories)
+    ? data.accessories.filter((item): item is string => typeof item === "string")
+    : [];
+
+  return {
+    id,
+    name: typeof data.name === "string" && data.name.trim() ? data.name : `Design ${id.slice(0, 6)}`,
+    vehicleType,
+    primaryColor: typeof data.primaryColor === "string" ? data.primaryColor : VEHICLE_TYPES[0].defaultPrimary,
+    accentColor: typeof data.accentColor === "string" ? data.accentColor : VEHICLE_TYPES[0].defaultAccent,
+    accessories,
+    createdAt: typeof data.createdAt === "number" ? data.createdAt : Date.now(),
+    customVehicleModelUrl: legacyCustomUrl,
+  };
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [sessionHistory, setSessionHistory] = useState<SessionRecord[]>([]);
@@ -502,7 +546,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
         } else {
           const buddyUrl = getBuddyCarModelUrl();
-          const needsUpdate = initialCars.some((c) => c.isDefault && !c.model3dUrl);
+          const needsUpdate = initialCars.some(
+            (c) => c.isDefault && (c.model3dUrl !== buddyUrl || c.model3dStatus !== "succeeded")
+          );
           if (needsUpdate) {
             initialCars = initialCars.map((c) =>
               c.isDefault ? { ...c, model3dStatus: "succeeded" as Model3dStatus, model3dUrl: buddyUrl } : c
@@ -512,7 +558,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         setSavedCars(initialCars);
         prewarmDefaultModelCache();
-        if (rawDesigns) setDesigns(JSON.parse(rawDesigns));
+        if (rawDesigns) {
+          const parsedDesigns = JSON.parse(rawDesigns) as unknown[];
+          const normalizedDesigns = Array.isArray(parsedDesigns)
+            ? parsedDesigns.map(normalizeLoadedDesign).filter((d): d is CarDesign => d !== null)
+            : [];
+          setDesigns(normalizedDesigns);
+          if (normalizedDesigns.length !== parsedDesigns.length || JSON.stringify(normalizedDesigns) !== JSON.stringify(parsedDesigns)) {
+            await AsyncStorage.setItem(STORAGE_KEYS.designs, JSON.stringify(normalizedDesigns));
+          }
+        }
       } finally {
         setIsLoaded(true);
       }

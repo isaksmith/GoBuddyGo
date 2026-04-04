@@ -28,6 +28,7 @@ import {
   VEHICLE_TYPES,
   DESIGN_COLORS,
   DESIGN_ACCESSORIES,
+  getVehicleModelUrl,
   useApp,
 } from "@/context/AppContext";
 
@@ -99,7 +100,7 @@ function DesignPreview({
   const borderRadius = size === "large" ? 28 : 14;
 
   const isScannedType = vehicleType.startsWith("scanned-");
-  const effectiveModelUrl = isScannedType ? customModelUrl : vt.modelUrl;
+  const effectiveModelUrl = isScannedType ? customModelUrl : getVehicleModelUrl(vt.id);
 
   if (isScannedType && !effectiveModelUrl) {
     return (
