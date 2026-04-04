@@ -1,5 +1,5 @@
-import React from "react";
-import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Platform, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface ModelViewerProps {
   html: string;
@@ -8,21 +8,115 @@ interface ModelViewerProps {
 }
 
 export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerProps) {
+  const [progress, setProgress] = useState(0);
+  const [showLoader, setShowLoader] = useState(true);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const [loadingNotice, setLoadingNotice] = useState<string | null>(null);
+
+  const loadingPercent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+
+  const instrumentedHTML = useMemo(() => {
+    const injection = `
+<script>
+(function () {
+  var didComplete = false;
+
+  function post(type, payload) {
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: type, payload: payload }));
+    }
+  }
+
+  function bindModelViewer() {
+    var mv = document.querySelector('model-viewer');
+    if (!mv) {
+      post('mv-error', { message: 'model-viewer element not found' });
+      return;
+    }
+
+    post('mv-init', { src: mv.getAttribute('src') || '' });
+
+    mv.addEventListener('progress', function (e) {
+      var p = e && e.detail && typeof e.detail.totalProgress === 'number' ? e.detail.totalProgress : 0;
+      post('mv-progress', { progress: p });
+    });
+
+    mv.addEventListener('load', function () {
+      didComplete = true;
+      post('mv-ready', { progress: 1 });
+    });
+
+    mv.addEventListener('error', function (e) {
+      didComplete = true;
+      var message = 'model-viewer emitted an error event';
+      if (e && e.detail && e.detail.type) {
+        message = String(e.detail.type);
+      }
+      post('mv-error', { message: message, src: mv.getAttribute('src') || '' });
+    });
+
+    setTimeout(function () {
+      if (!didComplete) {
+        post('mv-slow', { message: 'Large model still loading...', src: mv.getAttribute('src') || '' });
+      }
+    }, 30000);
+  }
+
+  window.addEventListener('error', function (e) {
+    var message = e && e.message ? e.message : 'window error';
+    post('mv-error', { message: message });
+  });
+
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e && e.reason ? String(e.reason) : 'unhandled rejection';
+    post('mv-error', { message: reason });
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindModelViewer);
+  } else {
+    bindModelViewer();
+  }
+})();
+</script>`;
+
+    return html.replace('</body>', `${injection}</body>`);
+  }, [html]);
+
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]}>
         <iframe
-          srcDoc={html}
+          srcDoc={instrumentedHTML}
           style={iframeStyle}
           sandbox="allow-scripts allow-same-origin"
           scrolling={scrollEnabled === false ? "no" : "auto"}
+          onLoad={() => {
+            setProgress(1);
+            setShowLoader(false);
+            setLoadingNotice(null);
+          }}
         />
+        {errorText && (
+          <View style={styles.errorOverlay}>
+            <Text style={styles.errorTitle}>3D Render Error</Text>
+            <Text style={styles.errorBody}>{errorText}</Text>
+          </View>
+        )}
+        {showLoader && (
+          <View style={styles.loadingOverlay}>
+            <Text style={styles.loadingText}>Loading 3D... {loadingPercent}%</Text>
+            <View style={styles.loadingTrack}>
+              <View style={[styles.loadingFill, { width: `${loadingPercent}%` }]} />
+            </View>
+          </View>
+        )}
       </View>
     );
   }
 
   const { WebView } = require("react-native-webview");
-  const injectedHTML = html.replace(
+  const injectedHTML = instrumentedHTML.replace(
     '<body>',
     '<body style="background-color: transparent !important;">'
   );
@@ -39,7 +133,77 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
         mixedContentMode="always"
         scrollEnabled={scrollEnabled}
         backgroundColor="transparent"
+        onLoadStart={() => {
+          setProgress(0.05);
+          setShowLoader(true);
+          setErrorText(null);
+          setLoadingNotice(null);
+        }}
+        onLoadProgress={(event: { nativeEvent: { progress: number } }) => {
+          const p = event.nativeEvent.progress;
+          if (typeof p === "number") {
+            setProgress((prev) => Math.max(prev, Math.min(0.9, p)));
+          }
+        }}
+        onLoadEnd={() => {
+          setProgress((prev) => Math.max(prev, 0.9));
+        }}
+        onMessage={(event: { nativeEvent: { data: string } }) => {
+          try {
+            const data = JSON.parse(event.nativeEvent.data) as {
+              type?: string;
+              payload?: { progress?: number; message?: string; src?: string };
+            };
+            if (data.type === "mv-progress") {
+              const next = typeof data.payload?.progress === "number" ? data.payload.progress : 0;
+              setProgress(Math.max(0, Math.min(1, next)));
+            }
+            if (data.type === "mv-ready") {
+              setProgress(1);
+              setShowLoader(false);
+              setLoadingNotice(null);
+            }
+            if (data.type === "mv-slow") {
+              setLoadingNotice(data.payload?.message ?? "Still loading model...");
+            }
+            if (data.type === "mv-error") {
+              const message = data.payload?.message ?? "Unknown model-viewer error";
+              const src = data.payload?.src ? `\nSource: ${data.payload.src}` : "";
+              setErrorText(`${message}${src}`);
+              setShowLoader(false);
+            }
+          } catch {
+            // Ignore malformed bridge messages from injected HTML.
+          }
+        }}
+        onError={(event: { nativeEvent: { description?: string } }) => {
+          const message = event.nativeEvent.description ?? "WebView failed to load";
+          setErrorText(message);
+          setShowLoader(false);
+          setLoadingNotice(null);
+        }}
+        onHttpError={(event: { nativeEvent: { statusCode: number; description?: string } }) => {
+          const message = `WebView HTTP ${event.nativeEvent.statusCode}${event.nativeEvent.description ? `: ${event.nativeEvent.description}` : ""}`;
+          setErrorText(message);
+          setShowLoader(false);
+          setLoadingNotice(null);
+        }}
       />
+      {errorText && (
+        <View style={styles.errorOverlay} pointerEvents="none">
+          <Text style={styles.errorTitle}>3D Render Error</Text>
+          <Text style={styles.errorBody}>{errorText}</Text>
+        </View>
+      )}
+      {showLoader && (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <Text style={styles.loadingText}>Loading 3D... {loadingPercent}%</Text>
+          {loadingNotice && <Text style={styles.loadingSubText}>{loadingNotice}</Text>}
+          <View style={styles.loadingTrack}>
+            <View style={[styles.loadingFill, { width: `${loadingPercent}%` }]} />
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -50,6 +214,63 @@ const styles = StyleSheet.create({
   },
   webviewContainer: {
     backgroundColor: "transparent",
+    position: "relative",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    backgroundColor: "rgba(9,25,42,0.82)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  loadingText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  loadingSubText: {
+    color: "#B8D7E8",
+    fontSize: 11,
+  },
+  loadingTrack: {
+    width: "100%",
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.24)",
+    overflow: "hidden",
+  },
+  loadingFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#3ECF8E",
+  },
+  errorOverlay: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    top: 12,
+    backgroundColor: "rgba(115, 26, 43, 0.9)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,119,141,0.8)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  errorTitle: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  errorBody: {
+    color: "#FFDDE3",
+    fontSize: 11,
   },
 });
 

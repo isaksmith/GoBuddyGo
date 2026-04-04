@@ -112,7 +112,8 @@ function InlineModelViewer({ modelUrl }: { modelUrl: string }) {
   const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script>
+<script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"></script>
 <style>* { margin:0;padding:0;box-sizing:border-box; } html,body{width:100%;height:100%;background:#09192A;overflow:hidden;}
 model-viewer{width:100%;height:100%;background-color:#09192A;}</style></head>
 <body><model-viewer src="${modelUrl}" camera-controls auto-rotate auto-rotate-delay="0"
