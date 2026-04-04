@@ -14,6 +14,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DefaultModelsWarmup } from "@/components/DefaultModelsWarmup";
 import { AppProvider } from "@/context/AppContext";
 import { Colors } from "@/constants/colors";
 
@@ -24,9 +25,11 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   return (
     <Stack
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: Colors.background },
+        freezeOnBlur: true,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -63,6 +66,7 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <AppProvider>
+                <DefaultModelsWarmup />
                 <RootLayoutNav />
               </AppProvider>
             </KeyboardProvider>

@@ -5,11 +5,13 @@ import { Colors } from "@/constants/colors";
 export default function TabLayout() {
   return (
     <Tabs
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
         tabBarStyle: { display: "none" },
         tabBarActiveTintColor: Colors.tabBarActive,
         tabBarInactiveTintColor: Colors.tabBarInactive,
+        freezeOnBlur: true,
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />

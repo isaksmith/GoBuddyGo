@@ -77,37 +77,37 @@ export interface SavedCar {
 export function getBuddyCarModelUrl(): string {
   const { Platform } = require("react-native");
   if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.origin}/api/assets/buddy-car.glb`;
+    return `${window.location.origin}/api/assets/model/buddy-car.glb`;
   }
   const { getApiBaseUrl } = require("@/utils/apiUrl");
-  return `${getApiBaseUrl()}/assets/buddy-car.glb`;
+  return `${getApiBaseUrl()}/assets/model/buddy-car.glb`;
 }
 
 export function getJeepModelUrl(): string {
   const { Platform } = require("react-native");
   if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.origin}/api/assets/jeep.glb`;
+    return `${window.location.origin}/api/assets/model/jeep.glb`;
   }
   const { getApiBaseUrl } = require("@/utils/apiUrl");
-  return `${getApiBaseUrl()}/assets/jeep.glb`;
+  return `${getApiBaseUrl()}/assets/model/jeep.glb`;
 }
 
 export function getMiniCoopModelUrl(): string {
   const { Platform } = require("react-native");
   if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.origin}/api/assets/mini-coop.glb`;
+    return `${window.location.origin}/api/assets/model/mini-coop.glb`;
   }
   const { getApiBaseUrl } = require("@/utils/apiUrl");
-  return `${getApiBaseUrl()}/assets/mini-coop.glb`;
+  return `${getApiBaseUrl()}/assets/model/mini-coop.glb`;
 }
 
 export function getCruiserModelUrl(): string {
   const { Platform } = require("react-native");
   if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.origin}/api/assets/cruiser.glb`;
+    return `${window.location.origin}/api/assets/model/cruiser.glb`;
   }
   const { getApiBaseUrl } = require("@/utils/apiUrl");
-  return `${getApiBaseUrl()}/assets/cruiser.glb`;
+  return `${getApiBaseUrl()}/assets/model/cruiser.glb`;
 }
 
 export function getVehicleModelUrl(vehicleId: string): string {

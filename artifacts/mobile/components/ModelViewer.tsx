@@ -1,15 +1,27 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Platform, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface ModelViewerProps {
   html: string;
   style?: StyleProp<ViewStyle>;
   scrollEnabled?: boolean;
+  cacheKey?: string;
 }
 
-export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerProps) {
-  const [progress, setProgress] = useState(0);
-  const [showLoader, setShowLoader] = useState(true);
+const loadedModelCache = new Set<string>();
+
+function extractModelSrcFromHtml(html: string): string | null {
+  const match = html.match(/<model-viewer[^>]*\ssrc=\"([^\"]+)\"/i);
+  return match?.[1] ?? null;
+}
+
+export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: ModelViewerProps) {
+  const derivedSrc = useMemo(() => extractModelSrcFromHtml(html), [html]);
+  const resolvedCacheKey = cacheKey ?? derivedSrc ?? "";
+  const initiallyCached = resolvedCacheKey ? loadedModelCache.has(resolvedCacheKey) : false;
+
+  const [progress, setProgress] = useState(initiallyCached ? 1 : 0);
+  const [showLoader, setShowLoader] = useState(!initiallyCached);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [loadingNotice, setLoadingNotice] = useState<string | null>(null);
 
@@ -83,6 +95,20 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
     return html.replace('</body>', `${injection}</body>`);
   }, [html]);
 
+  useEffect(() => {
+    if (resolvedCacheKey && loadedModelCache.has(resolvedCacheKey)) {
+      setProgress(1);
+      setShowLoader(false);
+      setErrorText(null);
+      setLoadingNotice(null);
+      return;
+    }
+    setProgress(0);
+    setShowLoader(true);
+    setErrorText(null);
+    setLoadingNotice(null);
+  }, [resolvedCacheKey]);
+
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]}>
@@ -134,6 +160,13 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
         scrollEnabled={scrollEnabled}
         backgroundColor="transparent"
         onLoadStart={() => {
+          if (resolvedCacheKey && loadedModelCache.has(resolvedCacheKey)) {
+            setProgress(1);
+            setShowLoader(false);
+            setErrorText(null);
+            setLoadingNotice(null);
+            return;
+          }
           setProgress(0.05);
           setShowLoader(true);
           setErrorText(null);
@@ -159,6 +192,9 @@ export default function ModelViewer({ html, style, scrollEnabled }: ModelViewerP
               setProgress(Math.max(0, Math.min(1, next)));
             }
             if (data.type === "mv-ready") {
+              if (resolvedCacheKey) {
+                loadedModelCache.add(resolvedCacheKey);
+              }
               setProgress(1);
               setShowLoader(false);
               setLoadingNotice(null);

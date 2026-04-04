@@ -78,7 +78,30 @@ app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
-app.use("/api/assets", express.static(path.join(__dirname, "../public/assets")));
+const assetsDir = path.join(__dirname, "../public/assets");
+
+app.get("/api/assets/model/:name", (req, res) => {
+  const { name } = req.params;
+  if (!/^[a-zA-Z0-9_-]+\.glb$/.test(name)) {
+    res.status(400).json({ error: "Invalid asset name" });
+    return;
+  }
+
+  const parsed = path.parse(name);
+  const optimizedPath = path.join(assetsDir, `${parsed.name}.mobile${parsed.ext}`);
+  const originalPath = path.join(assetsDir, name);
+  const selectedPath = fs.existsSync(optimizedPath) ? optimizedPath : originalPath;
+
+  if (!fs.existsSync(selectedPath)) {
+    res.status(404).json({ error: "Asset not found" });
+    return;
+  }
+
+  res.type("model/gltf-binary");
+  res.sendFile(selectedPath);
+});
+
+app.use("/api/assets", express.static(assetsDir));
 if (TEMPORARILY_DISABLE_API) {
   app.use("/api", (_req, res) => {
     res.status(503).json({

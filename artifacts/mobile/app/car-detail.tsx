@@ -120,7 +120,7 @@ model-viewer{width:100%;height:100%;background-color:#09192A;}</style></head>
 rotation-per-second="30deg" shadow-intensity="1" environment-image="neutral" exposure="1"
 alt="3D model of your GoBabyGo vehicle"></model-viewer></body></html>`;
   return (
-    <ModelViewer html={html} style={styles.webView} />
+    <ModelViewer html={html} style={styles.webView} cacheKey={modelUrl} />
   );
 }
 

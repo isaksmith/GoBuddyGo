@@ -69,7 +69,7 @@ const dpStyles = StyleSheet.create({
   accEmoji: {},
 });
 
-function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }: {
+const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }: {
   car: SavedCar;
   onPress: () => void;
   onDelete: () => void;
@@ -84,6 +84,7 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }:
         {has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
             <ModelViewer
+              cacheKey={car.model3dUrl ?? undefined}
               html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${car.model3dUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>`}
               style={cardStyles.model3dWebView}
               scrollEnabled={false}
@@ -122,9 +123,19 @@ function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }:
       </View>
     </Pressable>
   );
-}
+}, (prev, next) => {
+  return (
+    prev.cardColor === next.cardColor &&
+    prev.car.id === next.car.id &&
+    prev.car.name === next.car.name &&
+    prev.car.photoUri === next.car.photoUri &&
+    prev.car.model3dStatus === next.car.model3dStatus &&
+    prev.car.model3dUrl === next.car.model3dUrl &&
+    prev.car.isDefault === next.car.isDefault
+  );
+});
 
-function DesignCard({ design, onPress, cardColor }: {
+const DesignCard = React.memo(function DesignCard({ design, onPress, cardColor }: {
   design: CarDesign;
   onPress: () => void;
   cardColor?: string;
@@ -138,6 +149,7 @@ function DesignCard({ design, onPress, cardColor }: {
         {canRenderModel ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
             <ModelViewer
+              cacheKey={modelUrl}
               html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${modelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D design preview"></model-viewer></body></html>`}
               style={cardStyles.model3dWebView}
               scrollEnabled={false}
@@ -154,7 +166,17 @@ function DesignCard({ design, onPress, cardColor }: {
       </View>
     </Pressable>
   );
-}
+}, (prev, next) => {
+  return (
+    prev.cardColor === next.cardColor &&
+    prev.design.id === next.design.id &&
+    prev.design.name === next.design.name &&
+    prev.design.vehicleType === next.design.vehicleType &&
+    prev.design.primaryColor === next.design.primaryColor &&
+    prev.design.accentColor === next.design.accentColor &&
+    prev.design.customVehicleModelUrl === next.design.customVehicleModelUrl
+  );
+});
 
 function CreateCard({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -318,6 +340,8 @@ export default function GarageScreen() {
   const insets = useSafeAreaInsets();
   const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>("cars");
+  const [previewCarId, setPreviewCarId] = useState<string | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameType, setRenameType] = useState<Tab>("cars");
   const [renameText, setRenameText] = useState("");
@@ -431,6 +455,11 @@ export default function GarageScreen() {
   };
 
   const handleOpenCar = (car: SavedCar) => {
+    if (car.model3dStatus === "succeeded" && car.model3dUrl) {
+      setPreviewCarId(car.id);
+      setPreviewVisible(true);
+      return;
+    }
     router.push(`/car-detail?carId=${car.id}`);
   };
 
@@ -475,6 +504,10 @@ export default function GarageScreen() {
     inputRange: [0, 1],
     outputRange: ["2%", "51%"],
   });
+
+  const previewCar = previewCarId ? savedCars.find((c) => c.id === previewCarId) ?? null : null;
+  const previewModelUrl = previewCar?.model3dUrl ?? null;
+  const previewHas3d = previewCar?.model3dStatus === "succeeded" && !!previewModelUrl;
 
   return (
     <AppBackground>
@@ -564,6 +597,43 @@ export default function GarageScreen() {
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
+
+      {previewCar && (
+        <View style={[styles.previewOverlay, !previewVisible && styles.previewOverlayHidden]} pointerEvents={previewVisible ? "auto" : "none"}>
+          <Pressable style={styles.previewBackdrop} onPress={() => setPreviewVisible(false)} />
+          <View style={[styles.previewSheet, { paddingBottom: insets.bottom + 14 }]}> 
+            <View style={styles.previewHeader}>
+              <View>
+                <Text style={styles.previewLabel}>3D QUICK VIEW</Text>
+                <Text style={styles.previewTitle}>{previewCar.name}</Text>
+              </View>
+              <Pressable onPress={() => setPreviewVisible(false)} style={styles.previewCloseBtn}>
+                <Ionicons name="close" size={22} color={Colors.text} />
+              </Pressable>
+            </View>
+
+            {previewHas3d ? (
+              <View style={styles.previewViewerWrap}>
+                <ModelViewer
+                  cacheKey={previewModelUrl}
+                  html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${previewModelUrl}" camera-orbit="225deg 65deg auto" camera-controls interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>`}
+                  style={styles.previewViewer}
+                  scrollEnabled={false}
+                />
+              </View>
+            ) : (
+              <View style={styles.previewFallback}>
+                <DefaultCarSvg width={210} height={130} bodyColor="#4F8EF7" accentColor="#FFD93D" />
+              </View>
+            )}
+
+            <Pressable onPress={() => router.push(`/car-detail?carId=${previewCar.id}`)} style={styles.previewDetailsBtn}>
+              <Text style={styles.previewDetailsText}>OPEN FULL DETAILS</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {renameId && (
         <View style={styles.renameOverlay}>
@@ -799,6 +869,99 @@ const styles = StyleSheet.create({
   fabText: {
     color: "#FFFFFF",
     fontSize: 15,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 1,
+  },
+  previewOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "flex-end",
+    zIndex: 101,
+  },
+  previewOverlayHidden: {
+    opacity: 0,
+  },
+  previewBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.65)",
+  },
+  previewSheet: {
+    backgroundColor: Colors.backgroundCard,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    gap: 12,
+    borderTopWidth: 2,
+    borderColor: Colors.border,
+  },
+  previewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  previewLabel: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 1.3,
+  },
+  previewTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: "BalsamiqSans_700Bold",
+    marginTop: 2,
+  },
+  previewCloseBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.backgroundDeep,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  previewViewerWrap: {
+    height: 260,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#09192A",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  previewViewer: {
+    flex: 1,
+    backgroundColor: "#09192A",
+  },
+  previewFallback: {
+    height: 220,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(79,142,247,0.08)",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  previewDetailsBtn: {
+    borderRadius: 50,
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  previewDetailsText: {
+    color: "#FFFFFF",
+    fontSize: 13,
     fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 1,
   },
