@@ -46,6 +46,31 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
       return;
     }
 
+    function enforceTransparentLayers() {
+      try {
+        mv.style.background = 'transparent';
+        mv.style.backgroundColor = 'transparent';
+        mv.style.setProperty('--poster-color', 'transparent');
+        var root = mv.shadowRoot;
+        if (!root) {
+          return;
+        }
+        var styleEl = root.getElementById('mv-transparent-style');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'mv-transparent-style';
+          styleEl.textContent = ':host{background:transparent !important;} .container, .slot.poster, canvas{background:transparent !important;}';
+          root.appendChild(styleEl);
+        }
+      } catch (err) {
+        // Best-effort transparency patch; ignore browser-specific access issues.
+      }
+    }
+
+    enforceTransparentLayers();
+    setTimeout(enforceTransparentLayers, 200);
+    setTimeout(enforceTransparentLayers, 800);
+
     post('mv-init', { src: mv.getAttribute('src') || '' });
 
     mv.addEventListener('progress', function (e) {
@@ -54,6 +79,7 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
     });
 
     mv.addEventListener('load', function () {
+      enforceTransparentLayers();
       didComplete = true;
       post('mv-ready', { progress: 1 });
     });
@@ -131,7 +157,7 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
       <View style={[styles.fill, style]}>
         <iframe
           srcDoc={instrumentedHTML}
-          style={iframeStyle}
+          style={showLoader ? hiddenIframeStyle : iframeStyle}
           sandbox="allow-scripts allow-same-origin"
           scrolling={scrollEnabled === false ? "no" : "auto"}
           onLoad={() => {
@@ -159,6 +185,20 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
   }
 
   const { WebView } = require("react-native-webview");
+  const preContentTransparencyScript = `
+    (function() {
+      try {
+        document.documentElement.style.background = 'transparent';
+        document.documentElement.style.backgroundColor = 'transparent';
+        document.body && (document.body.style.background = 'transparent');
+        document.body && (document.body.style.backgroundColor = 'transparent');
+        var style = document.createElement('style');
+        style.textContent = 'html,body{background:transparent !important;background-color:transparent !important;}';
+        (document.head || document.documentElement).appendChild(style);
+      } catch (e) {}
+      true;
+    })();
+  `;
   const injectedHTML = instrumentedHTML.replace(
     '<body>',
     '<body style="background-color: transparent !important;">'
@@ -167,14 +207,18 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
     <View style={[styles.webviewContainer, style]}>
       <WebView
         source={{ html: injectedHTML }}
-        style={styles.fill}
+        style={[styles.fill, showLoader && styles.hiddenWebview]}
+        containerStyle={styles.webviewTransparentContainer}
         originWhitelist={["*"]}
         javaScriptEnabled
+        injectedJavaScriptBeforeContentLoaded={preContentTransparencyScript}
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly
         domStorageEnabled
         cacheEnabled
         allowFileAccess
         mixedContentMode="always"
         scrollEnabled={scrollEnabled}
+        opaque={false}
         backgroundColor="transparent"
         onLoadStart={() => {
           if (resolvedCacheKey && loadedModelCache.has(resolvedCacheKey)) {
@@ -264,10 +308,14 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   webviewContainer: {
     backgroundColor: "transparent",
     position: "relative",
+  },
+  webviewTransparentContainer: {
+    backgroundColor: "transparent",
   },
   loadingOverlay: {
     position: "absolute",
@@ -325,6 +373,9 @@ const styles = StyleSheet.create({
     color: "#FFDDE3",
     fontSize: 11,
   },
+  hiddenWebview: {
+    opacity: 0,
+  },
 });
 
 const iframeStyle: React.CSSProperties = {
@@ -332,4 +383,9 @@ const iframeStyle: React.CSSProperties = {
   width: "100%",
   height: "100%",
   display: "block",
+};
+
+const hiddenIframeStyle: React.CSSProperties = {
+  ...iframeStyle,
+  opacity: 0,
 };
