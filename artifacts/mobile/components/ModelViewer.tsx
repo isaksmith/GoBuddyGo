@@ -109,6 +109,23 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
     setLoadingNotice(null);
   }, [resolvedCacheKey]);
 
+  useEffect(() => {
+    if (Platform.OS !== "web" || !showLoader) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 0.92) {
+          return prev;
+        }
+        return Math.min(0.92, prev + 0.04);
+      });
+    }, 120);
+
+    return () => clearInterval(timer);
+  }, [showLoader]);
+
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]}>
