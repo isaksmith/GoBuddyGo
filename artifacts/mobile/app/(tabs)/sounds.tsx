@@ -81,15 +81,15 @@ const SOUND_SOURCES = {
   vroom:   require("../../assets/sounds/vroom-engine.mp3"),
   beep:    require("../../assets/sounds/car-horn.mp3"),
   siren:   require("../../assets/sounds/siren.mp3"),
-  zoom:    require("../../assets/sounds/zoom.wav"),
-  screech: require("../../assets/sounds/screech.wav"),
+  zoom:    require("../../assets/sounds/zoom.mp3"),
+  screech: require("../../assets/sounds/screech.mp3"),
   rev:     require("../../assets/sounds/rev-engine.mp3"),
   crash:   require("../../assets/sounds/crash.wav"),
-  thunk:   require("../../assets/sounds/thunk.wav"),
+  thunk:   require("../../assets/sounds/whoosh.mp3"),
   win:     require("../../assets/sounds/win.wav"),
-  rumble:  require("../../assets/sounds/rumble.wav"),
-  honk:    require("../../assets/sounds/honk.wav"),
-  race:    require("../../assets/sounds/race.wav"),
+  rumble:  require("../../assets/sounds/thump.mp3"),
+  honk:    require("../../assets/sounds/honk.mp3"),
+  race:    require("../../assets/sounds/go.mp3"),
 } as const;
 
 type SoundId = keyof typeof SOUND_SOURCES;
@@ -110,12 +110,17 @@ const SOUNDS: SoundButton[] = [
   { id: "screech", emoji: "🛑",  label: "SCREECH!",  sublabel: "Hard brakes",   gradient: ["#A855F7", "#7C3AED"] },
   { id: "rev",     emoji: "🏎️",  label: "REV IT!",   sublabel: "Engine rev",    gradient: ["#3ECF8E", "#15803D"] },
   { id: "crash",   emoji: "💥",  label: "CRASH!",    sublabel: "Bumper bang",   gradient: ["#FB923C", "#C2410C"] },
-  { id: "thunk",   emoji: "🚙",  label: "THUNK!",    sublabel: "Car door",      gradient: ["#4F8EF7", "#1D4ED8"] },
-  { id: "win",     emoji: "🏆",  label: "WINNER!",   sublabel: "Victory cheer", gradient: ["#F59E0B", "#B45309"] },
-  { id: "rumble",  emoji: "🔧",  label: "RUMBLE!",   sublabel: "Rough road",    gradient: ["#C084FC", "#9333EA"] },
+  { id: "thunk",   emoji: "🚙",  label: "WHOOSH",    sublabel: "Car pass by",   gradient: ["#4F8EF7", "#1D4ED8"] },
+  { id: "rumble",  emoji: "🔧",  label: "THUMP",     sublabel: "Rough road",    gradient: ["#C084FC", "#9333EA"] },
   { id: "honk",    emoji: "🚛",  label: "HONK!",     sublabel: "Big truck",     gradient: ["#34D399", "#059669"] },
-  { id: "race",    emoji: "🏁",  label: "GO GO GO!", sublabel: "Race start",    gradient: ["#F472B6", "#BE185D"] },
+  { id: "race",    emoji: "🏁",  label: "GO",        sublabel: "Race start",    gradient: ["#F472B6", "#BE185D"] },
+  { id: "win",     emoji: "🏆",  label: "WINNER!",   sublabel: "Victory cheer", gradient: ["#F59E0B", "#B45309"] },
 ];
+
+const CAPPED_SOUNDS: Partial<Record<SoundId, number>> = {
+  siren: 3000,
+  vroom: 5000,
+};
 
 function SoundPad({ btn, soundsEnabled, cell }: { btn: SoundButton; soundsEnabled: boolean; cell: number }) {
   const textScale = useTextScale();
@@ -142,12 +147,13 @@ function SoundPad({ btn, soundsEnabled, cell }: { btn: SoundButton; soundsEnable
       player.seekTo(0);
       player.play();
 
-      if (btn.id === "siren") {
+      const capMs = CAPPED_SOUNDS[btn.id];
+      if (capMs) {
         stopTimerRef.current = setTimeout(() => {
           player.pause();
           player.seekTo(0);
           stopTimerRef.current = null;
-        }, 5000);
+        }, capMs);
       }
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
