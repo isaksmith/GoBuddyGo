@@ -3,7 +3,7 @@ import { useAudioPlayer } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -80,7 +80,7 @@ const native = Platform.OS !== "web";
 const SOUND_SOURCES = {
   vroom:   require("../../assets/sounds/vroom-engine.mp3"),
   beep:    require("../../assets/sounds/car-horn.mp3"),
-  siren:   require("../../assets/sounds/siren.wav"),
+  siren:   require("../../assets/sounds/siren.mp3"),
   zoom:    require("../../assets/sounds/zoom.wav"),
   screech: require("../../assets/sounds/screech.wav"),
   rev:     require("../../assets/sounds/rev-engine.mp3"),
@@ -120,13 +120,35 @@ const SOUNDS: SoundButton[] = [
 function SoundPad({ btn, soundsEnabled, cell }: { btn: SoundButton; soundsEnabled: boolean; cell: number }) {
   const textScale = useTextScale();
   const scale = useRef(new Animated.Value(1)).current;
+  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [flash, setFlash] = useState(false);
   const player = useAudioPlayer(SOUND_SOURCES[btn.id]);
 
+  useEffect(() => {
+    return () => {
+      if (stopTimerRef.current) {
+        clearTimeout(stopTimerRef.current);
+        stopTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handlePress = () => {
     if (soundsEnabled) {
+      if (stopTimerRef.current) {
+        clearTimeout(stopTimerRef.current);
+        stopTimerRef.current = null;
+      }
       player.seekTo(0);
       player.play();
+
+      if (btn.id === "siren") {
+        stopTimerRef.current = setTimeout(() => {
+          player.pause();
+          player.seekTo(0);
+          stopTimerRef.current = null;
+        }, 5000);
+      }
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setFlash(true);
