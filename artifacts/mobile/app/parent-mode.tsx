@@ -356,7 +356,7 @@ export default function ParentModeScreen() {
               <Ionicons name="musical-notes" size={18} color={Colors.primary} style={styles.toggleIcon} />
               <View>
                 <Text style={styles.toggleTitle}>{t("Sound Effects", language)}</Text>
-                <Text style={styles.toggleDesc}>{t("PLAY SOUNDS IN GAMES AND CELEBRATIONS", language)}</Text>
+                <Text style={styles.toggleDesc}>{t("PLAY SOUNDS IN GAMES", language)}</Text>
               </View>
             </View>
             <Switch
