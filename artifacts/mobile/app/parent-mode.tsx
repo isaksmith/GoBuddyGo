@@ -26,7 +26,12 @@ import { useTextScale } from "@/hooks/useTextScale";
 
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
-const DURATIONS = [5, 10, 15, 20, 30];
+const SOUNDTRACK_VOLUME_STEPS = [
+  { label: "25%", value: 0.25 },
+  { label: "50%", value: 0.5 },
+  { label: "75%", value: 0.75 },
+  { label: "100%", value: 1 },
+];
 
 function PinEntry({
   onUnlock,
@@ -60,7 +65,7 @@ function PinEntry({
         <View style={pinStyles.lockCircle}>
           <Ionicons name="lock-closed" size={40} color={Colors.primary} />
         </View>
-        <Text style={pinStyles.title}>Parent Mode</Text>
+        <Text style={pinStyles.title}>Settings</Text>
         <Text style={pinStyles.subtitle}>Enter your PIN to access settings</Text>
 
         <TextInput
@@ -194,6 +199,8 @@ export default function ParentModeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
   const usingDefaultPin = settings.parentPin === "0000";
+  const soundtrackMuted = settings.soundtrackMuted ?? false;
+  const soundtrackVolume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
   const contentMaxWidth = Math.min(width, 700);
   const hPad = width > 600 ? 32 : 20;
 
@@ -254,7 +261,7 @@ export default function ParentModeScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { fontSize: 22 * textScale }]}>Parent Mode</Text>
+        <Text style={[styles.headerTitle, { fontSize: 22 * textScale }]}>Settings</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -268,35 +275,10 @@ export default function ParentModeScreen() {
           <View style={styles.warningBanner}>
             <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
             <Text style={styles.warningText}>
-              You are using the default PIN (0000). Change it below to secure Parent Mode.
+              You are using the default PIN (0000). Change it below to secure Settings.
             </Text>
           </View>
         )}
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Session Duration</Text>
-          <View style={styles.durationRow}>
-            {DURATIONS.map((d) => (
-              <Pressable
-                key={d}
-                onPress={() => updateSettings({ sessionDurationMinutes: d })}
-                style={[
-                  styles.durationChip,
-                  settings.sessionDurationMinutes === d && styles.durationChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.durationText,
-                    settings.sessionDurationMinutes === d && styles.durationTextActive,
-                  ]}
-                >
-                  {d}m
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Names</Text>
@@ -347,6 +329,46 @@ export default function ParentModeScreen() {
               thumbColor="#FFFFFF"
               testID="sounds-toggle"
             />
+          </View>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Ionicons name="musical-note" size={18} color={Colors.primary} style={styles.toggleIcon} />
+              <View>
+                <Text style={styles.toggleTitle}>Background Music</Text>
+                <Text style={styles.toggleDesc}>Mute or unmute the app soundtrack</Text>
+              </View>
+            </View>
+            <Switch
+              value={!soundtrackMuted}
+              onValueChange={(v) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                updateSettings({ soundtrackMuted: !v });
+              }}
+              trackColor={{ false: Colors.border, true: Colors.primary }}
+              thumbColor="#FFFFFF"
+              testID="soundtrack-toggle"
+            />
+          </View>
+          <View style={styles.soundtrackVolumeWrap}>
+            <Text style={styles.soundtrackVolumeLabel}>Music Volume</Text>
+            <View style={styles.durationRow}>
+              {SOUNDTRACK_VOLUME_STEPS.map((step) => {
+                const isActive = Math.abs(soundtrackVolume - step.value) < 0.001;
+                return (
+                  <Pressable
+                    key={step.label}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      updateSettings({ soundtrackVolume: step.value, soundtrackMuted: step.value === 0 });
+                    }}
+                    style={[styles.durationChip, isActive && styles.durationChipActive]}
+                    testID={`soundtrack-volume-${step.label}`}
+                  >
+                    <Text style={[styles.durationText, isActive && styles.durationTextActive]}>{step.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
@@ -413,12 +435,11 @@ export default function ParentModeScreen() {
         <View style={[styles.section, styles.aboutSection]}>
           <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>About</Text>
           <View style={styles.aboutCard}>
-            <Text style={styles.aboutAppName}>GoBabyGo Buddy-Link AR</Text>
+            <Text style={styles.aboutAppName}>GoBuddyGo</Text>
             <Text style={styles.aboutVersion}>Version {APP_VERSION}</Text>
             <View style={styles.aboutDivider} />
             <Text style={styles.aboutTip}>
-              <Text style={styles.aboutTipLabel}>How to use: </Text>
-              Start a session from the home screen and hand the phone to the sibling. They'll see missions to cheer on the driver, and earn badges when they complete them. Use the AR view for an extra immersive experience. All settings here are for parents only.
+              GoBuddyGo is a gamified augmented reality app designed for the WSU GoBabyGo program. The project team developed this prototype to enhance the experience for siblings participating in GoBabyGo while prioritizing safety and accessibility. It allows the siblings of the driver to serve as pretend co-pilots through interactive games, fun rewards, and vehicle customization features.
             </Text>
           </View>
         </View>
@@ -668,6 +689,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "BalsamiqSans_400Regular",
     marginTop: 2,
+  },
+  soundtrackVolumeWrap: {
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 8,
+  },
+  soundtrackVolumeLabel: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 0.3,
   },
   resetBtn: {
     flexDirection: "row",

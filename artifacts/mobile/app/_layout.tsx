@@ -9,15 +9,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DefaultModelsWarmup } from "@/components/DefaultModelsWarmup";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
 import { Colors } from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -25,9 +24,26 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function GlobalSoundtrackControl() {
-  const insets = useSafeAreaInsets();
-  const [muted, setMuted] = useState(false);
+  const { settings } = useApp();
   const player = useAudioPlayer(require("../assets/sounds/ten-past-naptime.mp3"));
+  const muted = settings.soundtrackMuted ?? false;
+  const volume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
+
+  useEffect(() => {
+    const audioPlayer = player as unknown as {
+      setVolume?: (next: number) => void;
+      volume?: number;
+    };
+
+    if (typeof audioPlayer.setVolume === "function") {
+      audioPlayer.setVolume(volume);
+      return;
+    }
+
+    if (typeof audioPlayer.volume === "number") {
+      audioPlayer.volume = volume;
+    }
+  }, [player, volume]);
 
   useEffect(() => {
     if (muted) {
@@ -35,30 +51,9 @@ function GlobalSoundtrackControl() {
       return;
     }
     player.play();
-  }, [muted, player]);
+  }, [muted, player, volume]);
 
-  return (
-    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-      <Pressable
-        onPress={() => {
-          setMuted((prev) => !prev);
-        }}
-        style={[
-          styles.musicButton,
-          {
-            top: insets.top + 8,
-          },
-        ]}
-        testID="global-music-toggle"
-      >
-        <Ionicons
-          name={muted ? "volume-mute" : "volume-high"}
-          size={20}
-          color="#FFFFFF"
-        />
-      </Pressable>
-    </View>
-  );
+  return null;
 }
 
 function RootLayoutNav() {
@@ -116,19 +111,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  musicButton: {
-    position: "absolute",
-    left: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(5,16,28,0.62)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    zIndex: 9999,
-  },
-});

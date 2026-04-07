@@ -49,6 +49,8 @@ export interface AppSettings {
   enabledMissionIds: string[];
   parentPin: string;
   soundsEnabled: boolean;
+  soundtrackMuted: boolean;
+  soundtrackVolume: number;
   proximityAlertsEnabled: boolean;
   textSize: "small" | "medium" | "large";
 }
@@ -346,6 +348,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   enabledMissionIds: ALL_MISSIONS.map((m) => m.id),
   parentPin: "0000",
   soundsEnabled: true,
+  soundtrackMuted: false,
+  soundtrackVolume: 0.5,
   proximityAlertsEnabled: true,
   textSize: "medium",
 };
