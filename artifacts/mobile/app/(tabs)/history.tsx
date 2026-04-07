@@ -6,11 +6,11 @@ import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, V
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
-import { t } from "@/constants/i18n";
+import { SupportedLanguage, t } from "@/constants/i18n";
 import { SessionRecord, useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function SessionItem({ session, isFirst, textScale, language }: { session: SessionRecord; isFirst: boolean; textScale: number; language: "english" | "spanish" }) {
+function SessionItem({ session, isFirst, textScale, language }: { session: SessionRecord; isFirst: boolean; textScale: number; language: SupportedLanguage }) {
   const date = new Date(session.date);
   const pct =
     session.totalMissions > 0

@@ -21,7 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
-import { t } from "@/constants/i18n";
+import { SupportedLanguage, t } from "@/constants/i18n";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
@@ -43,7 +43,7 @@ function PinEntry({
   onUnlock: () => void;
   pin: string;
   usingDefaultPin: boolean;
-  language: "english" | "spanish";
+  language: SupportedLanguage;
 }) {
   const [entered, setEntered] = useState("");
   const [error, setError] = useState(false);
@@ -217,6 +217,8 @@ const TEXT_SIZES = [
 const LANGUAGE_OPTIONS = [
   { value: "english", label: "English" },
   { value: "spanish", label: "Spanish" },
+  { value: "vietnamese", label: "Vietnamese" },
+  { value: "chinese", label: "Chinese" },
 ] as const;
 
 export default function ParentModeScreen() {

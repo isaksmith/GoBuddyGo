@@ -7,12 +7,12 @@ import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, V
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
-import { t } from "@/constants/i18n";
+import { SupportedLanguage, t } from "@/constants/i18n";
 import { BADGE_REGISTRY, BADGE_UNLOCK_ORDER, DEFAULT_UNLOCKED_COUNT, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: "english" | "spanish" }) {
+function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: SupportedLanguage }) {
   return (
     <Pressable
       onPress={() => {
@@ -44,7 +44,7 @@ interface GalleryItem {
   earnedDate: number | null;
 }
 
-function BadgeGridCard({ item, textScale, language }: { item: GalleryItem; textScale: number; language: "english" | "spanish" }) {
+function BadgeGridCard({ item, textScale, language }: { item: GalleryItem; textScale: number; language: SupportedLanguage }) {
   const { meta, earnedDate } = item;
   const earned = earnedDate !== null;
   const { gradientColors, SvgComponent } = meta;

@@ -16,11 +16,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
-import { t } from "@/constants/i18n";
+import { SupportedLanguage, t } from "@/constants/i18n";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: "english" | "spanish" }) {
+function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: SupportedLanguage }) {
   return (
     <Pressable
       onPress={() => {

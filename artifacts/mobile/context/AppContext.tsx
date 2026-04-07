@@ -46,7 +46,7 @@ export interface AppSettings {
   driverName: string;
   sessionDurationMinutes: number;
   difficulty: "easy" | "medium" | "all";
-  language: "english" | "spanish";
+  language: "english" | "spanish" | "vietnamese" | "chinese";
   enabledMissionIds: string[];
   parentPin: string;
   soundsEnabled: boolean;

@@ -25,7 +25,15 @@ const queryClient = new QueryClient();
 
 function GlobalSoundtrackControl() {
   const { settings } = useApp();
-  const player = useAudioPlayer(require("../assets/sounds/ten-past-naptime.mp3"));
+  const source =
+    settings.language === "spanish"
+      ? require("../assets/sounds/coastal-playroom.mp3")
+      : settings.language === "vietnamese"
+        ? require("../assets/sounds/clockwork-afternoon.mp3")
+        : settings.language === "chinese"
+          ? require("../assets/sounds/sunlight-on-bamboo.mp3")
+      : require("../assets/sounds/ten-past-naptime.mp3");
+  const player = useAudioPlayer(source);
   const status = useAudioPlayerStatus(player);
   const muted = settings.soundtrackMuted ?? false;
   const volume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
