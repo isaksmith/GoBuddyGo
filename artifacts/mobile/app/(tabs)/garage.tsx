@@ -69,17 +69,24 @@ const dpStyles = StyleSheet.create({
   accEmoji: {},
 });
 
-const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, onRename, onView3d, cardColor }: {
+const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, onRename, isCoinDashSelected, cardColor }: {
   car: SavedCar;
   onPress: () => void;
   onDelete: () => void;
   onRename: () => void;
-  onView3d?: () => void;
+  isCoinDashSelected: boolean;
   cardColor?: string;
 }) {
   const has3d = car.model3dStatus === "succeeded" && !!car.model3dUrl;
   return (
-    <Pressable onPress={onPress} style={[cardStyles.card, cardColor ? { backgroundColor: cardColor } : undefined]}>
+    <Pressable
+      onPress={onPress}
+      style={[
+        cardStyles.card,
+        cardColor ? { backgroundColor: cardColor } : undefined,
+        isCoinDashSelected && cardStyles.cardSelected,
+      ]}
+    >
       <View style={cardStyles.imageArea}>
         {has3d ? (
           <View style={cardStyles.model3dThumb} pointerEvents="none">
@@ -97,15 +104,11 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
         )}
-        {has3d && onView3d && (
-          <Pressable
-            onPress={(e) => { e.stopPropagation?.(); onView3d(); }}
-            style={cardStyles.view3dBadge}
-            hitSlop={6}
-          >
-            <Ionicons name="cube" size={11} color="#FFFFFF" />
-            <Text style={cardStyles.view3dBadgeText}>VIEW 3D</Text>
-          </Pressable>
+        {isCoinDashSelected && (
+          <View style={cardStyles.selectedBadge}>
+            <Ionicons name="checkmark-circle" size={11} color="#FFFFFF" />
+            <Text style={cardStyles.selectedBadgeText}>SELECTED</Text>
+          </View>
         )}
       </View>
       <View style={cardStyles.footer}>
@@ -131,7 +134,8 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
     prev.car.photoUri === next.car.photoUri &&
     prev.car.model3dStatus === next.car.model3dStatus &&
     prev.car.model3dUrl === next.car.model3dUrl &&
-    prev.car.isDefault === next.car.isDefault
+    prev.car.isDefault === next.car.isDefault &&
+    prev.isCoinDashSelected === next.isCoinDashSelected
   );
 });
 
@@ -206,6 +210,14 @@ const cardStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 6,
+  },
+  cardSelected: {
+    borderWidth: 3,
+    borderColor: "#3ECF8E",
+    shadowColor: "#3ECF8E",
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    elevation: 10,
   },
   imageArea: {
     flex: 1,
@@ -305,6 +317,50 @@ const cardStyles = StyleSheet.create({
     fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.8,
   },
+  selectedBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(62,207,142,0.92)",
+    borderRadius: 50,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.65)",
+  },
+  selectedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 0.5,
+  },
+  coinDashBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 50,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+  },
+  coinDashBadgeActive: {
+    backgroundColor: "rgba(62,207,142,0.88)",
+    borderColor: "rgba(255,255,255,0.65)",
+  },
+  coinDashBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 0.5,
+  },
 });
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
@@ -338,10 +394,8 @@ type Tab = "cars" | "designs";
 
 export default function GarageScreen() {
   const insets = useSafeAreaInsets();
-  const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign } = useApp();
+  const { savedCars, selectedCoinDashCarId, setCoinDashCar, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>("cars");
-  const [previewCarId, setPreviewCarId] = useState<string | null>(null);
-  const [previewVisible, setPreviewVisible] = useState(false);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameType, setRenameType] = useState<Tab>("cars");
   const [renameText, setRenameText] = useState("");
@@ -454,15 +508,6 @@ export default function GarageScreen() {
     router.push("/design-builder");
   };
 
-  const handleOpenCar = (car: SavedCar) => {
-    if (car.model3dStatus === "succeeded" && car.model3dUrl) {
-      setPreviewCarId(car.id);
-      setPreviewVisible(true);
-      return;
-    }
-    router.push(`/car-detail?carId=${car.id}`);
-  };
-
   const handleOpenDesign = (design: CarDesign) => {
     router.push(`/design-builder?designId=${design.id}`);
   };
@@ -505,10 +550,6 @@ export default function GarageScreen() {
     outputRange: ["2%", "51%"],
   });
 
-  const previewCar = previewCarId ? savedCars.find((c) => c.id === previewCarId) ?? null : null;
-  const previewModelUrl = previewCar?.model3dUrl ?? null;
-  const previewHas3d = previewCar?.model3dStatus === "succeeded" && !!previewModelUrl;
-
   return (
     <AppBackground>
     <View style={styles.container}>
@@ -548,10 +589,13 @@ export default function GarageScreen() {
                 <SavedCarCard
                   key={car.id}
                   car={car}
-                  onPress={() => handleOpenCar(car)}
+                  onPress={() => {
+                    setCoinDashCar(car.id);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
                   onDelete={() => handleDeleteCar(car)}
                   onRename={() => startRename(car.id, "cars", car.name)}
-                  onView3d={() => handleOpenCar(car)}
+                  isCoinDashSelected={selectedCoinDashCarId === car.id}
                   cardColor={CAR_CARD_COLORS[idx % CAR_CARD_COLORS.length]}
                 />
               ))}
@@ -597,43 +641,6 @@ export default function GarageScreen() {
       </ScrollView>
 
       <HomeButton bottomOffset={homeBtnBottom} />
-
-      {previewCar && (
-        <View style={[styles.previewOverlay, !previewVisible && styles.previewOverlayHidden]} pointerEvents={previewVisible ? "auto" : "none"}>
-          <Pressable style={styles.previewBackdrop} onPress={() => setPreviewVisible(false)} />
-          <View style={[styles.previewSheet, { paddingBottom: insets.bottom + 14 }]}> 
-            <View style={styles.previewHeader}>
-              <View>
-                <Text style={styles.previewLabel}>3D QUICK VIEW</Text>
-                <Text style={styles.previewTitle}>{previewCar.name}</Text>
-              </View>
-              <Pressable onPress={() => setPreviewVisible(false)} style={styles.previewCloseBtn}>
-                <Ionicons name="close" size={22} color={Colors.text} />
-              </Pressable>
-            </View>
-
-            {previewHas3d ? (
-              <View style={styles.previewViewerWrap}>
-                <ModelViewer
-                  cacheKey={previewModelUrl}
-                  html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:#09192A;overflow:hidden}model-viewer{width:100%;height:100%;background-color:#09192A;--poster-color:#09192A;}</style></head><body><model-viewer src="${previewModelUrl}" camera-orbit="225deg 65deg auto" camera-controls interaction-prompt="none" auto-rotate="false" shadow-intensity="1" environment-image="neutral" exposure="1.2" alt="3D car preview"></model-viewer></body></html>`}
-                  style={styles.previewViewer}
-                  scrollEnabled={false}
-                />
-              </View>
-            ) : (
-              <View style={styles.previewFallback}>
-                <DefaultCarSvg width={210} height={130} bodyColor="#4F8EF7" accentColor="#FFD93D" />
-              </View>
-            )}
-
-            <Pressable onPress={() => router.push(`/car-detail?carId=${previewCar.id}`)} style={styles.previewDetailsBtn}>
-              <Text style={styles.previewDetailsText}>OPEN FULL DETAILS</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
-      )}
 
       {renameId && (
         <View style={styles.renameOverlay}>

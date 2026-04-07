@@ -25,7 +25,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { getBuddyCarModelUrl, useApp } from "@/context/AppContext";
 import ModelViewer from "@/components/ModelViewer";
-import { getApiBaseUrl } from "@/utils/apiUrl";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -143,8 +142,14 @@ function DPadButton({
 
 export default function CoinDashScreen() {
   const insets = useSafeAreaInsets();
-  const { savedCars } = useApp();
-  const activeCar = savedCars[0] ?? null;
+  const { selectedCoinDashCar } = useApp();
+  const activeCar = selectedCoinDashCar;
+  const activeCarModelUrl =
+    activeCar?.model3dStatus === "succeeded" && activeCar.model3dUrl
+      ? activeCar.model3dUrl
+      : activeCar?.isDefault && activeCar?.model3dUrl
+        ? activeCar.model3dUrl
+        : getBuddyCarModelUrl();
   const [permission, requestPermission] = useCameraPermissions();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -314,7 +319,7 @@ export default function CoinDashScreen() {
           ) : (
             <View style={styles.carModel}>
               <ModelViewer
-                html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"><\/script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;mix-blend-mode:multiply;isolation:auto;}canvas{mix-blend-mode:multiply !important;background:transparent !important;}</style></head><body><model-viewer src="${getBuddyCarModelUrl()}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Buddy Car"></model-viewer></body></html>`}
+                html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"><\/script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;mix-blend-mode:multiply;isolation:auto;}canvas{mix-blend-mode:multiply !important;background:transparent !important;}</style></head><body><model-viewer src="${activeCarModelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate="false" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Buddy Car"></model-viewer></body></html>`}
                 style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
                 scrollEnabled={false}
               />

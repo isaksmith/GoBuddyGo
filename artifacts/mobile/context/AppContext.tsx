@@ -378,6 +378,9 @@ interface AppContextValue {
   isLoaded: boolean;
   isStickerUnlocked: (sticker: StickerDefinition) => boolean;
   savedCars: SavedCar[];
+  selectedCoinDashCarId: string | null;
+  selectedCoinDashCar: SavedCar | null;
+  setCoinDashCar: (id: string) => Promise<void>;
   addSavedCar: (photoUri: string, name?: string) => Promise<SavedCar>;
   updateSavedCar: (id: string, updates: Partial<Omit<SavedCar, "id" | "createdAt">>) => Promise<void>;
   deleteSavedCar: (id: string) => Promise<void>;
@@ -398,6 +401,7 @@ const STORAGE_KEYS = {
   savedCars: "@gobabygobr_saved_cars",
   designs: "@gobabygobr_designs",
   gamesPlayed: "@gobabygobr_games_played",
+  coinDashCarId: "@gobabygobr_coin_dash_car_id",
   legacyGarage: "@gobabygobr_garage",
 };
 
@@ -546,13 +550,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [lastSessionResult, setLastSessionResult] = useState<LastSessionResult | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [savedCars, setSavedCars] = useState<SavedCar[]>([]);
+  const [selectedCoinDashCarId, setSelectedCoinDashCarId] = useState<string | null>(null);
   const [designs, setDesigns] = useState<CarDesign[]>([]);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
   useEffect(() => {
     (async () => {
       try {
-        const [rawSettings, rawHistory, rawSession, rawSavedCars, rawDesigns, rawLegacyGarage, rawGamesPlayed] = await Promise.all([
+        const [rawSettings, rawHistory, rawSession, rawSavedCars, rawDesigns, rawLegacyGarage, rawGamesPlayed, rawCoinDashCarId] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.settings),
           AsyncStorage.getItem(STORAGE_KEYS.history),
           AsyncStorage.getItem(STORAGE_KEYS.session),
@@ -560,6 +565,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.getItem(STORAGE_KEYS.designs),
           AsyncStorage.getItem(STORAGE_KEYS.legacyGarage),
           AsyncStorage.getItem(STORAGE_KEYS.gamesPlayed),
+          AsyncStorage.getItem(STORAGE_KEYS.coinDashCarId),
         ]);
         if (rawGamesPlayed) setGamesPlayed(parseInt(rawGamesPlayed, 10) || 0);
         if (rawSettings) {
@@ -631,6 +637,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
         setSavedCars(initialCars);
+        const fallbackCoinDashCarId = initialCars[0]?.id ?? null;
+        const resolvedCoinDashCarId =
+          rawCoinDashCarId && initialCars.some((c) => c.id === rawCoinDashCarId)
+            ? rawCoinDashCarId
+            : fallbackCoinDashCarId;
+        setSelectedCoinDashCarId(resolvedCoinDashCarId);
+        if (resolvedCoinDashCarId !== rawCoinDashCarId) {
+          if (resolvedCoinDashCarId) {
+            await AsyncStorage.setItem(STORAGE_KEYS.coinDashCarId, resolvedCoinDashCarId);
+          } else {
+            await AsyncStorage.removeItem(STORAGE_KEYS.coinDashCarId);
+          }
+        }
         prewarmDefaultModelCache();
         if (rawDesigns) {
           const parsedDesigns = JSON.parse(rawDesigns) as unknown[];
@@ -650,6 +669,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const persistCars = useCallback(async (cars: SavedCar[]) => {
     await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(cars));
+  }, []);
+
+  const setCoinDashCar = useCallback(async (id: string) => {
+    setSelectedCoinDashCarId(id);
+    await AsyncStorage.setItem(STORAGE_KEYS.coinDashCarId, id);
   }, []);
 
   const persistDesigns = useCallback(async (list: CarDesign[]) => {
@@ -699,7 +723,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
     await persistCars(next);
-  }, [persistCars, savedCars]);
+    if (selectedCoinDashCarId === id) {
+      const fallbackId = next[0]?.id ?? null;
+      setSelectedCoinDashCarId(fallbackId);
+      if (fallbackId) {
+        await AsyncStorage.setItem(STORAGE_KEYS.coinDashCarId, fallbackId);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.coinDashCarId);
+      }
+    }
+  }, [persistCars, savedCars, selectedCoinDashCarId]);
+
+  useEffect(() => {
+    if (savedCars.length === 0) {
+      if (selectedCoinDashCarId !== null) {
+        setSelectedCoinDashCarId(null);
+      }
+      return;
+    }
+
+    if (!selectedCoinDashCarId || !savedCars.some((car) => car.id === selectedCoinDashCarId)) {
+      const fallbackId = savedCars[0].id;
+      setSelectedCoinDashCarId(fallbackId);
+      AsyncStorage.setItem(STORAGE_KEYS.coinDashCarId, fallbackId).catch(() => {});
+    }
+  }, [savedCars, selectedCoinDashCarId]);
 
   const addDesign = useCallback(async (data: Omit<CarDesign, "id" | "createdAt">): Promise<CarDesign> => {
     const design: CarDesign = { ...data, id: makeId(), createdAt: Date.now() };
@@ -816,6 +864,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSessionMissions([]);
   }, [sessionStartTime, sessionMissions, sessionHistory, settings.childName, settings.driverName]);
 
+  const selectedCoinDashCar = selectedCoinDashCarId
+    ? savedCars.find((car) => car.id === selectedCoinDashCarId) ?? null
+    : null;
+
   return (
     <AppContext.Provider
       value={{
@@ -836,6 +888,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isLoaded,
         isStickerUnlocked,
         savedCars,
+        selectedCoinDashCarId,
+        selectedCoinDashCar,
+        setCoinDashCar,
         addSavedCar,
         updateSavedCar,
         deleteSavedCar,
