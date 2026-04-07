@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -22,9 +22,12 @@ import { Colors } from "@/constants/colors";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+const CAPPED_TRACK_DURATION_MS = 0;
 
 function GlobalSoundtrackControl() {
   const { settings } = useApp();
+  const segmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCappedTrack = false;
   const source =
     settings.language === "spanish"
       ? require("../assets/sounds/coastal-playroom.mp3")
@@ -37,6 +40,13 @@ function GlobalSoundtrackControl() {
   const status = useAudioPlayerStatus(player);
   const muted = settings.soundtrackMuted ?? false;
   const volume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
+
+  const clearSegmentTimer = () => {
+    if (segmentTimerRef.current) {
+      clearTimeout(segmentTimerRef.current);
+      segmentTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (!status.isLoaded) {
@@ -60,13 +70,36 @@ function GlobalSoundtrackControl() {
         if (status.playing) {
           player.pause();
         }
+        clearSegmentTimer();
       } else if (!status.playing) {
         player.play();
+      }
+
+      if (!muted && isCappedTrack) {
+        clearSegmentTimer();
+        segmentTimerRef.current = setTimeout(() => {
+          void player
+            .seekTo(0)
+            .then(() => {
+              if (!muted) {
+                player.play();
+              }
+            })
+            .catch(() => {});
+        }, CAPPED_TRACK_DURATION_MS);
+      } else {
+        clearSegmentTimer();
       }
     } catch {
       // Ignore playback control failures to avoid blocking app startup.
     }
-  }, [muted, player, status.isLoaded, status.playing, volume]);
+  }, [isCappedTrack, muted, player, status.isLoaded, status.playing, volume]);
+
+  useEffect(() => {
+    return () => {
+      clearSegmentTimer();
+    };
+  }, []);
 
   return null;
 }
