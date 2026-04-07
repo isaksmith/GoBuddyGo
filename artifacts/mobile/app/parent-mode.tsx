@@ -21,6 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import { t } from "@/constants/i18n";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
@@ -37,10 +38,12 @@ function PinEntry({
   onUnlock,
   pin,
   usingDefaultPin,
+  language,
 }: {
   onUnlock: () => void;
   pin: string;
   usingDefaultPin: boolean;
+  language: "english" | "spanish";
 }) {
   const [entered, setEntered] = useState("");
   const [error, setError] = useState(false);
@@ -67,14 +70,14 @@ function PinEntry({
         <View style={pinStyles.lockCircle}>
           <Ionicons name="lock-closed" size={40} color={Colors.primary} />
         </View>
-        <Text style={pinStyles.title}>Settings</Text>
-        <Text style={pinStyles.subtitle}>Enter your PIN to access settings</Text>
+        <Text style={pinStyles.title}>{t("SETTINGS", language)}</Text>
+        <Text style={pinStyles.subtitle}>{t("Enter your PIN to access settings", language)}</Text>
 
         {usingDefaultPin && (
           <View style={pinStyles.defaultPinWarning}>
             <Ionicons name="warning-outline" size={16} color={Colors.primary} />
             <Text style={pinStyles.defaultPinWarningText}>
-              You are using the default PIN (0000). Change it after unlocking.
+              {t("You are using the default PIN (0000). Change it after unlocking.", language)}
             </Text>
           </View>
         )}
@@ -93,11 +96,11 @@ function PinEntry({
         {error && <Text style={pinStyles.errorText}>Incorrect PIN</Text>}
 
         <Pressable onPress={handleSubmit} style={pinStyles.unlockBtn} testID="pin-unlock-btn">
-          <Text style={pinStyles.unlockBtnText}>Unlock</Text>
+          <Text style={pinStyles.unlockBtnText}>{t("Unlock", language)}</Text>
         </Pressable>
 
         <Pressable onPress={() => router.back()} style={pinStyles.cancelBtn}>
-          <Text style={pinStyles.cancelBtnText}>Cancel</Text>
+          <Text style={pinStyles.cancelBtnText}>{t("Cancel", language)}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -211,6 +214,11 @@ const TEXT_SIZES = [
   { value: "large", label: "Large" },
 ] as const;
 
+const LANGUAGE_OPTIONS = [
+  { value: "english", label: "English" },
+  { value: "spanish", label: "Spanish" },
+] as const;
+
 export default function ParentModeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -229,6 +237,7 @@ export default function ParentModeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
   const usingDefaultPin = settings.parentPin === "0000";
+  const language = settings.language ?? "english";
   const soundtrackMuted = settings.soundtrackMuted ?? false;
   const soundtrackVolume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
   const contentMaxWidth = Math.min(width, 700);
@@ -241,12 +250,12 @@ export default function ParentModeScreen() {
 
   const handleResetProgress = () => {
     Alert.alert(
-      "Reset Progress",
-      "This will permanently clear all badges and session history. Your 4 default garage cars will be kept. This cannot be undone.",
+      t("Reset Progress", language),
+      t("This will permanently clear all badges and session history. Your 4 default garage cars will be kept. This cannot be undone.", language),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("Cancel", language), style: "cancel" },
         {
-          text: "Confirm Reset",
+          text: t("Confirm Reset", language),
           style: "destructive",
           onPress: async () => {
             await resetProgress();
@@ -282,6 +291,7 @@ export default function ParentModeScreen() {
             onUnlock={() => setUnlocked(true)}
             pin={settings.parentPin}
             usingDefaultPin={usingDefaultPin}
+            language={language}
           />
         </View>
       </AppBackground>
@@ -295,7 +305,7 @@ export default function ParentModeScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={Colors.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { fontSize: 22 * textScale }]}>Settings</Text>
+        <Text style={[styles.headerTitle, { fontSize: 22 * textScale }]}>{t("SETTINGS", language)}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -306,10 +316,10 @@ export default function ParentModeScreen() {
         style={{ width: "100%" }}
       >
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Names</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("NAMES", language)}</Text>
           <View style={styles.nameFieldsStack}>
             <View style={styles.nameInputRow}>
-              <Text style={styles.nameInputLabel}>Driver's Name</Text>
+              <Text style={styles.nameInputLabel}>{t("DRIVER'S NAME", language)}</Text>
               <TextInput
                 style={styles.nameInput}
                 value={driverName}
@@ -323,7 +333,7 @@ export default function ParentModeScreen() {
               />
             </View>
             <View style={[styles.nameInputRow, styles.nameInputRowSecond]}>
-              <Text style={styles.nameInputLabel}>Sibling's Name</Text>
+              <Text style={styles.nameInputLabel}>{t("SIBLING'S NAME", language)}</Text>
               <TextInput
                 style={styles.nameInput}
                 value={siblingName}
@@ -340,13 +350,13 @@ export default function ParentModeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>SOUND</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("SOUNDS", language)}</Text>
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
               <Ionicons name="musical-notes" size={18} color={Colors.primary} style={styles.toggleIcon} />
               <View>
-                <Text style={styles.toggleTitle}>Sound Effects</Text>
-                <Text style={styles.toggleDesc}>Play sounds in games and celebrations</Text>
+                <Text style={styles.toggleTitle}>{t("Sound Effects", language)}</Text>
+                <Text style={styles.toggleDesc}>{t("PLAY SOUNDS IN GAMES AND CELEBRATIONS", language)}</Text>
               </View>
             </View>
             <Switch
@@ -361,8 +371,8 @@ export default function ParentModeScreen() {
             <View style={styles.toggleInfo}>
               <Ionicons name="musical-note" size={18} color={Colors.primary} style={styles.toggleIcon} />
               <View>
-                <Text style={styles.toggleTitle}>Background Music</Text>
-                <Text style={styles.toggleDesc}>Mute or unmute the app soundtrack</Text>
+                <Text style={styles.toggleTitle}>{t("Background Music", language)}</Text>
+                <Text style={styles.toggleDesc}>{t("MUTE OR UNMUTE THE APP SOUNDTRACK", language)}</Text>
               </View>
             </View>
             <Switch
@@ -377,7 +387,7 @@ export default function ParentModeScreen() {
             />
           </View>
           <View style={styles.soundtrackVolumeWrap}>
-            <Text style={styles.soundtrackVolumeLabel}>Music Volume</Text>
+            <Text style={styles.soundtrackVolumeLabel}>{t("Music Volume", language)}</Text>
             <View style={styles.durationRow}>
               {SOUNDTRACK_VOLUME_STEPS.map((step) => {
                 const isActive = Math.abs(soundtrackVolume - step.value) < 0.001;
@@ -400,7 +410,7 @@ export default function ParentModeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Text Size</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("TEXT SIZE", language)}</Text>
           <View style={styles.durationRow}>
             {TEXT_SIZES.map((ts) => (
               <Pressable
@@ -426,28 +436,57 @@ export default function ParentModeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Security</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("LANGUAGE", language)}</Text>
+          <View style={styles.durationRow}>
+            {LANGUAGE_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  updateSettings({ language: option.value });
+                }}
+                style={[
+                  styles.durationChip,
+                  (settings.language ?? "english") === option.value && styles.durationChipActive,
+                ]}
+                testID={`language-${option.value}`}
+              >
+                <Text
+                  style={[
+                    styles.durationText,
+                    (settings.language ?? "english") === option.value && styles.durationTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("SECURITY", language)}</Text>
           <Pressable onPress={() => setChangePinVisible(true)} style={styles.changePinBtn} testID="change-pin-btn">
             <Ionicons name="key" size={20} color={Colors.primary} />
-            <Text style={styles.changePinText}>Change Parent PIN</Text>
+            <Text style={styles.changePinText}>{t("CHANGE PARENT PIN", language)}</Text>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </Pressable>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Data</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("DATA", language)}</Text>
           <Pressable onPress={handleResetProgress} style={styles.resetBtn} testID="reset-progress-btn">
             <Ionicons name="trash-outline" size={20} color={Colors.danger} />
-            <Text style={styles.resetBtnText}>Reset Progress</Text>
+            <Text style={styles.resetBtnText}>{t("RESET PROGRESS", language)}</Text>
           </Pressable>
-          <Text style={styles.resetBtnHint}>Clears all badges and session history.</Text>
+          <Text style={styles.resetBtnHint}>{t("Clears all badges and session history.", language)}</Text>
         </View>
 
         <View style={[styles.section, styles.aboutSection]}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>About</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>{t("ABOUT", language)}</Text>
           <View style={styles.aboutCard}>
             <Text style={styles.aboutAppName}>GoBuddyGo</Text>
-            <Text style={styles.aboutVersion}>Version {APP_VERSION}</Text>
+            <Text style={styles.aboutVersion}>{t("Version", language)} {APP_VERSION}</Text>
             <View style={styles.aboutDivider} />
             <Text style={styles.aboutTip}>
               GoBuddyGo is a gamified augmented reality app designed for the WSU GoBabyGo program. The project team developed this prototype to enhance the experience for siblings participating in GoBabyGo while prioritizing safety and accessibility. It allows the siblings of the driver to serve as pretend co-pilots through interactive games, fun rewards, and vehicle customization features.

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import { t } from "@/constants/i18n";
 import { useApp } from "@/context/AppContext";
 
 function GoldCoinIcon({ size = 40 }: { size?: number }) {
@@ -63,6 +64,8 @@ function GoldCoinIcon({ size = 40 }: { size?: number }) {
 }
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  const { settings } = useApp();
+  const language = settings.language;
   return (
     <Pressable
       onPress={() => {
@@ -83,7 +86,7 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
         style={styles.homeBtnGradient}
       >
         <Ionicons name="home" size={28} color="#FFFFFF" />
-        <Text style={styles.homeBtnText}>HOME</Text>
+        <Text style={styles.homeBtnText}>{t("HOME", language)}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -106,6 +109,7 @@ const MINI_GAMES = [
 export default function GamesScreen() {
   const insets = useSafeAreaInsets();
   const { settings, incrementGamesPlayed } = useApp();
+  const language = settings.language;
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 24;
@@ -129,7 +133,7 @@ export default function GamesScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Ionicons name="game-controller" size={26} color={Colors.primary} />
-        <Text style={styles.headerTitle}>GAMES</Text>
+        <Text style={styles.headerTitle}>{t("GAMES", language)}</Text>
       </View>
 
       <ScrollView
@@ -144,7 +148,7 @@ export default function GamesScreen() {
             style={styles.sectionBadge}
           >
             <Ionicons name="flash" size={14} color="#FFF" />
-            <Text style={styles.sectionBadgeText}>GAMES</Text>
+            <Text style={styles.sectionBadgeText}>{t("GAMES", language)}</Text>
           </LinearGradient>
         </View>
 
@@ -165,7 +169,7 @@ export default function GamesScreen() {
               ) : (
                 <Text style={styles.miniEmoji}>{game.emoji}</Text>
               )}
-              <Text style={styles.miniLabel}>{game.label}</Text>
+              <Text style={styles.miniLabel}>{t(game.label, language)}</Text>
             </Pressable>
           ))}
         </View>
@@ -178,7 +182,7 @@ export default function GamesScreen() {
             style={styles.sectionBadge}
           >
             <Ionicons name="star" size={14} color="#FFF" />
-            <Text style={styles.sectionBadgeText}>MINI GAMES</Text>
+            <Text style={styles.sectionBadgeText}>{t("MINI GAMES", language)}</Text>
           </LinearGradient>
         </View>
 
@@ -195,7 +199,7 @@ export default function GamesScreen() {
               testID={`game-${game.id}`}
             >
               <Text style={styles.miniEmoji}>{game.emoji}</Text>
-              <Text style={styles.miniLabel}>{game.label}</Text>
+              <Text style={styles.miniLabel}>{t(game.label, language)}</Text>
             </Pressable>
           ))}
         </View>

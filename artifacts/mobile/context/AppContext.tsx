@@ -46,6 +46,7 @@ export interface AppSettings {
   driverName: string;
   sessionDurationMinutes: number;
   difficulty: "easy" | "medium" | "all";
+  language: "english" | "spanish";
   enabledMissionIds: string[];
   parentPin: string;
   soundsEnabled: boolean;
@@ -345,6 +346,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   driverName: "",
   sessionDurationMinutes: 10,
   difficulty: "all",
+  language: "english",
   enabledMissionIds: ALL_MISSIONS.map((m) => m.id),
   parentPin: "0000",
   soundsEnabled: true,

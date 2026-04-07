@@ -16,10 +16,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
+import { t } from "@/constants/i18n";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: "english" | "spanish" }) {
   return (
     <Pressable
       onPress={() => {
@@ -40,7 +41,7 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
         style={homeBtnStyles.homeBtnGradient}
       >
         <Ionicons name="home" size={28} color="#FFFFFF" />
-        <Text style={homeBtnStyles.homeBtnText}>HOME</Text>
+        <Text style={homeBtnStyles.homeBtnText}>{t("HOME", language)}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -187,6 +188,7 @@ export default function SoundsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { settings } = useApp();
+  const language = settings.language;
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 24;
@@ -202,7 +204,7 @@ export default function SoundsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: 20 }]}>
         <Ionicons name="volume-high" size={26} color="rgba(255,255,255,0.8)" />
-        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>SOUNDS</Text>
+        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>{t("SOUNDS", language)}</Text>
       </View>
 
       <ScrollView
@@ -210,11 +212,16 @@ export default function SoundsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {SOUNDS.map((btn) => (
-          <SoundPad key={btn.id} btn={btn} soundsEnabled={soundsEnabled} cell={CELL} />
+          <SoundPad
+            key={btn.id}
+            btn={{ ...btn, label: t(btn.label, language), sublabel: t(btn.sublabel, language) }}
+            soundsEnabled={soundsEnabled}
+            cell={CELL}
+          />
         ))}
       </ScrollView>
 
-      <HomeButton bottomOffset={homeBtnBottom} />
+      <HomeButton bottomOffset={homeBtnBottom} language={language} />
     </View>
     </AppBackground>
   );

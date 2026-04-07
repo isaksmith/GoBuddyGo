@@ -7,11 +7,12 @@ import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, V
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import { t } from "@/constants/i18n";
 import { BADGE_REGISTRY, BADGE_UNLOCK_ORDER, DEFAULT_UNLOCKED_COUNT, BadgeMeta, resolveId } from "@/constants/badgeRegistry";
 import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+function HomeButton({ bottomOffset, language }: { bottomOffset: number; language: "english" | "spanish" }) {
   return (
     <Pressable
       onPress={() => {
@@ -32,7 +33,7 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
         style={styles.homeBtnGradient}
       >
         <Ionicons name="home" size={28} color="#FFFFFF" />
-        <Text style={styles.homeBtnText}>HOME</Text>
+        <Text style={styles.homeBtnText}>{t("HOME", language)}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -43,7 +44,7 @@ interface GalleryItem {
   earnedDate: number | null;
 }
 
-function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: number }) {
+function BadgeGridCard({ item, textScale, language }: { item: GalleryItem; textScale: number; language: "english" | "spanish" }) {
   const { meta, earnedDate } = item;
   const earned = earnedDate !== null;
   const { gradientColors, SvgComponent } = meta;
@@ -85,7 +86,7 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
         {meta.title.toUpperCase()}
       </Text>
       {earned ? null : (
-        <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale, color: gradientColors[0] + "BB" }]}>NOT YET EARNED</Text>
+        <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale, color: gradientColors[0] + "BB" }]}>{t("NOT YET EARNED", language)}</Text>
       )}
     </LinearGradient>
   );
@@ -94,7 +95,8 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { sessionHistory, gamesPlayed } = useApp();
+  const { sessionHistory, gamesPlayed, settings } = useApp();
+  const language = settings.language;
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const homeBtnBottom = insets.bottom + 24;
@@ -130,10 +132,10 @@ export default function BadgesScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 8, paddingHorizontal: hPad }]}>
         <Ionicons name="trophy" size={26} color={Colors.primary} />
-        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>BADGES</Text>
+        <Text style={[styles.headerTitle, { fontSize: 32 * textScale }]}>{t("BADGES", language)}</Text>
         <View style={styles.countPill}>
           <Text style={[styles.countText, { fontSize: 11 * textScale }]}>
-            {earnedCount}/{galleryItems.length} EARNED
+            {earnedCount}/{galleryItems.length} {t("EARNED", language)}
           </Text>
         </View>
       </View>
@@ -145,10 +147,10 @@ export default function BadgesScreen() {
         key={String(numCols)}
         contentContainerStyle={[styles.list, { paddingBottom: homeBtnBottom + 76, paddingHorizontal: hPad }]}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => <BadgeGridCard item={item} textScale={textScale} />}
+        renderItem={({ item }) => <BadgeGridCard item={item} textScale={textScale} language={language} />}
       />
 
-      <HomeButton bottomOffset={homeBtnBottom} />
+      <HomeButton bottomOffset={homeBtnBottom} language={language} />
     </View>
     </AppBackground>
   );

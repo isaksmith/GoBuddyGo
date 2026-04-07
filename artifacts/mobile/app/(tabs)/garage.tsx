@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DefaultCarSvg from "@/components/DefaultCarSvg";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import { t } from "@/constants/i18n";
 import {
   CarDesign,
   getVehicleModelUrl,
@@ -77,6 +78,8 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
   isCoinDashSelected: boolean;
   cardColor?: string;
 }) {
+  const { settings } = useApp();
+  const language = settings.language;
   const has3d = car.model3dStatus === "succeeded" && !!car.model3dUrl;
   return (
     <Pressable
@@ -107,7 +110,7 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
         {isCoinDashSelected && (
           <View style={cardStyles.selectedBadge}>
             <Ionicons name="checkmark-circle" size={11} color="#FFFFFF" />
-            <Text style={cardStyles.selectedBadgeText}>SELECTED</Text>
+            <Text style={cardStyles.selectedBadgeText}>{t("SELECTED", language)}</Text>
           </View>
         )}
       </View>
@@ -364,6 +367,8 @@ const cardStyles = StyleSheet.create({
 });
 
 function HomeButton({ bottomOffset }: { bottomOffset: number }) {
+  const { settings } = useApp();
+  const language = settings.language;
   return (
     <Pressable
       onPress={() => {
@@ -384,7 +389,7 @@ function HomeButton({ bottomOffset }: { bottomOffset: number }) {
         style={styles.homeBtnGradient}
       >
         <Ionicons name="home" size={28} color="#FFFFFF" />
-        <Text style={styles.homeBtnText}>HOME</Text>
+        <Text style={styles.homeBtnText}>{t("HOME", language)}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -394,7 +399,8 @@ type Tab = "cars" | "designs";
 
 export default function GarageScreen() {
   const insets = useSafeAreaInsets();
-  const { savedCars, selectedCoinDashCarId, setCoinDashCar, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign } = useApp();
+  const { savedCars, selectedCoinDashCarId, setCoinDashCar, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign, settings } = useApp();
+  const language = settings.language;
   const [activeTab, setActiveTab] = useState<Tab>("cars");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameType, setRenameType] = useState<Tab>("cars");
@@ -562,18 +568,18 @@ export default function GarageScreen() {
       >
         <View style={styles.header}>
           <Ionicons name="car-sport" size={26} color={Colors.primary} />
-          <Text style={styles.headerTitle}>GARAGE</Text>
+          <Text style={styles.headerTitle}>{t("GARAGE", language)}</Text>
         </View>
 
         <View style={styles.tabContainer}>
           <Animated.View style={[styles.tabIndicator, { left: tabIndicatorLeft }]} />
           <Pressable style={styles.tabBtn} onPress={() => switchTab("cars")}>
             <Ionicons name="camera" size={15} color={activeTab === "cars" ? Colors.text : Colors.textMuted} />
-            <Text style={[styles.tabLabel, activeTab === "cars" && styles.tabLabelActive]}>SAVED CARS</Text>
+            <Text style={[styles.tabLabel, activeTab === "cars" && styles.tabLabelActive]}>{t("SAVED CARS", language)}</Text>
           </Pressable>
           <Pressable style={styles.tabBtn} onPress={() => switchTab("designs")}>
             <Ionicons name="color-palette" size={15} color={activeTab === "designs" ? Colors.text : Colors.textMuted} />
-            <Text style={[styles.tabLabel, activeTab === "designs" && styles.tabLabelActive]}>MY DESIGNS</Text>
+            <Text style={[styles.tabLabel, activeTab === "designs" && styles.tabLabelActive]}>{t("MY DESIGNS", language)}</Text>
           </Pressable>
         </View>
 
@@ -581,7 +587,7 @@ export default function GarageScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <LinearGradient colors={["#4F8EF7", "#2563EB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>🚗 MY CARS</Text>
+                <Text style={styles.sectionBadgeText}>🚗 {t("MY CARS", language)}</Text>
               </LinearGradient>
             </View>
             <View style={styles.cardRow}>
@@ -599,7 +605,7 @@ export default function GarageScreen() {
                   cardColor={CAR_CARD_COLORS[idx % CAR_CARD_COLORS.length]}
                 />
               ))}
-              <CreateCard label="Scan New Car" onPress={handleScanNewCar} />
+              <CreateCard label={t("Scan New Car", language)} onPress={handleScanNewCar} />
             </View>
           </View>
         )}
@@ -608,18 +614,18 @@ export default function GarageScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>🎨 MY DESIGNS</Text>
+                <Text style={styles.sectionBadgeText}>🎨 {t("MY DESIGNS", language)}</Text>
               </LinearGradient>
             </View>
             {designs.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>🎨</Text>
-                <Text style={styles.emptyTitle}>NO DESIGNS YET</Text>
-                <Text style={styles.emptySubtitle}>Design your dream GoBabyGo ride! Pick a base, choose colors, and add accessories.</Text>
+                <Text style={styles.emptyTitle}>{t("NO DESIGNS YET", language)}</Text>
+                <Text style={styles.emptySubtitle}>{t("Design your dream GoBabyGo ride! Pick a base, choose colors, and add accessories.", language)}</Text>
                 <Pressable onPress={handleDesignNew} style={styles.emptyBtn}>
                   <LinearGradient colors={["#7B2FBE", "#5A1F8A"]} style={styles.emptyBtnGrad}>
                     <Ionicons name="color-palette" size={20} color="#FFFFFF" />
-                    <Text style={styles.emptyBtnText}>DESIGN NEW CAR!</Text>
+                    <Text style={styles.emptyBtnText}>{t("DESIGN NEW CAR!", language)}</Text>
                   </LinearGradient>
                 </Pressable>
               </View>
@@ -633,7 +639,7 @@ export default function GarageScreen() {
                     cardColor={DESIGN_CARD_COLORS[idx % DESIGN_CARD_COLORS.length]}
                   />
                 ))}
-                <CreateCard label="Design New Car" onPress={handleDesignNew} />
+                <CreateCard label={t("Design New Car", language)} onPress={handleDesignNew} />
               </View>
             )}
           </View>
@@ -646,13 +652,13 @@ export default function GarageScreen() {
         <View style={styles.renameOverlay}>
           <Pressable style={styles.renameBackdrop} onPress={() => setRenameId(null)} />
           <View style={styles.renameSheet}>
-            <Text style={styles.renameTitle}>RENAME</Text>
+            <Text style={styles.renameTitle}>{t("RENAME", language)}</Text>
             <TextInput
               style={styles.renameInput}
               value={renameText}
               onChangeText={setRenameText}
               autoFocus
-              placeholder="Enter new name..."
+              placeholder={t("Enter new name...", language)}
               placeholderTextColor={Colors.textMuted}
               returnKeyType="done"
               onSubmitEditing={commitRename}
@@ -660,10 +666,10 @@ export default function GarageScreen() {
             />
             <View style={styles.renameActions}>
               <Pressable onPress={() => setRenameId(null)} style={styles.renameCancelBtn}>
-                <Text style={styles.renameCancelText}>CANCEL</Text>
+                <Text style={styles.renameCancelText}>{t("CANCEL", language)}</Text>
               </Pressable>
               <Pressable onPress={commitRename} style={styles.renameSaveBtn}>
-                <Text style={styles.renameSaveText}>SAVE</Text>
+                <Text style={styles.renameSaveText}>{t("SAVE", language)}</Text>
               </Pressable>
             </View>
           </View>

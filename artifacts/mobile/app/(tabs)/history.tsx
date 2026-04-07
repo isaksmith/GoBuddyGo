@@ -6,10 +6,11 @@ import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, V
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/AppBackground";
 import { Colors } from "@/constants/colors";
+import { t } from "@/constants/i18n";
 import { SessionRecord, useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
-function SessionItem({ session, isFirst, textScale }: { session: SessionRecord; isFirst: boolean; textScale: number }) {
+function SessionItem({ session, isFirst, textScale, language }: { session: SessionRecord; isFirst: boolean; textScale: number; language: "english" | "spanish" }) {
   const date = new Date(session.date);
   const pct =
     session.totalMissions > 0
@@ -43,12 +44,12 @@ function SessionItem({ session, isFirst, textScale }: { session: SessionRecord; 
           </Text>
           {session.driverName ? (
             <Text style={[styles.cardChild, { fontSize: 12 * textScale }]}>
-              🏎 DRIVER: {session.driverName.toUpperCase()}
+              🏎 {t("DRIVER", language)}: {session.driverName.toUpperCase()}
             </Text>
           ) : null}
           {session.childName ? (
             <Text style={[styles.cardChild, { fontSize: 12 * textScale }]}>
-              🌟 CO-PILOT: {session.childName.toUpperCase()}
+              🌟 {t("CO-PILOT", language)}: {session.childName.toUpperCase()}
             </Text>
           ) : null}
         </View>
@@ -96,7 +97,8 @@ function SessionItem({ session, isFirst, textScale }: { session: SessionRecord; 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { sessionHistory } = useApp();
+  const { sessionHistory, settings } = useApp();
+  const language = settings.language;
   const textScale = useTextScale();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -110,9 +112,9 @@ export default function HistoryScreen() {
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn} hitSlop={12} testID="history-home-btn">
           <Ionicons name="arrow-back" size={26} color={Colors.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { fontSize: 24 * textScale }]}>🏆 HISTORY</Text>
+        <Text style={[styles.headerTitle, { fontSize: 24 * textScale }]}>🏆 {t("HISTORY", language)}</Text>
         <View style={styles.countPill}>
-          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>{sessionHistory.length} RIDES</Text>
+          <Text style={[styles.countText, { fontSize: 11 * textScale }]}>{sessionHistory.length} {t("RIDES", language)}</Text>
         </View>
       </View>
 
@@ -120,7 +122,7 @@ export default function HistoryScreen() {
         data={sessionHistory}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <SessionItem session={item} isFirst={index === 0} textScale={textScale} />
+          <SessionItem session={item} isFirst={index === 0} textScale={textScale} language={language} />
         )}
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110, paddingHorizontal: hPad, alignSelf: "center", width: contentMaxWidth }]}
         style={{ width: "100%" }}
@@ -131,9 +133,9 @@ export default function HistoryScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="trophy-outline" size={52} color={Colors.textMuted} />
             </View>
-            <Text style={styles.emptyTitle}>NO RIDES YET</Text>
+            <Text style={styles.emptyTitle}>{t("NO RIDES YET", language)}</Text>
             <Text style={styles.emptySubtitle}>
-              Complete your first mission to see your history here!
+              {t("Complete your first mission to see your history here!", language)}
             </Text>
           </View>
         }

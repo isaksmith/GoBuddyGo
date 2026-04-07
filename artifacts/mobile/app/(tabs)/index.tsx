@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RaceBackground } from "@/components/RaceBackground";
+import { t } from "@/constants/i18n";
+import { useApp } from "@/context/AppContext";
 import { useTextScale } from "@/hooks/useTextScale";
 
 type HubButton = {
@@ -171,6 +173,8 @@ function LapDot({ active }: { active: boolean }) {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { settings } = useApp();
+  const language = settings.language;
   const { width, height } = useWindowDimensions();
   const textScale = useTextScale();
   const isLandscape = width > height;
@@ -223,7 +227,7 @@ export default function HomeScreen() {
               GO <Text style={styles.appTitleAccent}>BUDDY</Text> GO
             </Text>
           </Pressable>
-          <Text style={[styles.titleSub, { fontSize: 13 * textScale }]}>START YOUR ENGINES!</Text>
+          <Text style={[styles.titleSub, { fontSize: 13 * textScale }]}>{t("START YOUR ENGINES!", language)}</Text>
         </View>
 
         <ScrollView
@@ -232,7 +236,11 @@ export default function HomeScreen() {
         >
           <View style={styles.hubGrid}>
             {HUB_BUTTONS.map((btn) => (
-              <HubCard key={btn.label} btn={btn} isTablet={isTablet} />
+              <HubCard
+                key={btn.label}
+                btn={{ ...btn, label: t(btn.label, language) }}
+                isTablet={isTablet}
+              />
             ))}
           </View>
         </ScrollView>
@@ -241,7 +249,7 @@ export default function HomeScreen() {
           <LapDot active />
           <LapDot active={false} />
           <LapDot active={false} />
-          <Text style={styles.lapText}>🏎️ On Your Mark</Text>
+          <Text style={styles.lapText}>🏎️ {t("On Your Mark", language)}</Text>
           <LapDot active={false} />
           <LapDot active={false} />
           <LapDot active />
