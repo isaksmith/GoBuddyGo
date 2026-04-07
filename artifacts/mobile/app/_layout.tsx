@@ -4,14 +4,16 @@ import {
   useFonts,
 } from "@expo-google-fonts/balsamiq-sans";
 import * as Font from "expo-font";
+import { useAudioPlayer } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DefaultModelsWarmup } from "@/components/DefaultModelsWarmup";
@@ -21,6 +23,43 @@ import { Colors } from "@/constants/colors";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function GlobalSoundtrackControl() {
+  const insets = useSafeAreaInsets();
+  const [muted, setMuted] = useState(false);
+  const player = useAudioPlayer(require("../assets/sounds/ten-past-naptime.mp3"));
+
+  useEffect(() => {
+    if (muted) {
+      player.pause();
+      return;
+    }
+    player.play();
+  }, [muted, player]);
+
+  return (
+    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+      <Pressable
+        onPress={() => {
+          setMuted((prev) => !prev);
+        }}
+        style={[
+          styles.musicButton,
+          {
+            top: insets.top + 8,
+          },
+        ]}
+        testID="global-music-toggle"
+      >
+        <Ionicons
+          name={muted ? "volume-mute" : "volume-high"}
+          size={20}
+          color="#FFFFFF"
+        />
+      </Pressable>
+    </View>
+  );
+}
 
 function RootLayoutNav() {
   return (
@@ -68,6 +107,7 @@ export default function RootLayout() {
               <AppProvider>
                 <DefaultModelsWarmup />
                 <RootLayoutNav />
+                <GlobalSoundtrackControl />
               </AppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
@@ -76,3 +116,19 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  musicButton: {
+    position: "absolute",
+    left: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(5,16,28,0.62)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    zIndex: 9999,
+  },
+});
