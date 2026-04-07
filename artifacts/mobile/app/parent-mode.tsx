@@ -36,9 +36,11 @@ const SOUNDTRACK_VOLUME_STEPS = [
 function PinEntry({
   onUnlock,
   pin,
+  usingDefaultPin,
 }: {
   onUnlock: () => void;
   pin: string;
+  usingDefaultPin: boolean;
 }) {
   const [entered, setEntered] = useState("");
   const [error, setError] = useState(false);
@@ -67,6 +69,15 @@ function PinEntry({
         </View>
         <Text style={pinStyles.title}>Settings</Text>
         <Text style={pinStyles.subtitle}>Enter your PIN to access settings</Text>
+
+        {usingDefaultPin && (
+          <View style={pinStyles.defaultPinWarning}>
+            <Ionicons name="warning-outline" size={16} color={Colors.primary} />
+            <Text style={pinStyles.defaultPinWarningText}>
+              You are using the default PIN (0000). Change it after unlocking.
+            </Text>
+          </View>
+        )}
 
         <TextInput
           style={[pinStyles.pinInput, error && pinStyles.pinInputError]}
@@ -165,6 +176,25 @@ const pinStyles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "BalsamiqSans_700Bold",
   },
+  defaultPinWarning: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 107, 43, 0.14)",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  defaultPinWarningText: {
+    flex: 1,
+    color: Colors.primary,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: "BalsamiqSans_700Bold",
+  },
   cancelBtn: {
     paddingVertical: 8,
   },
@@ -248,7 +278,11 @@ export default function ParentModeScreen() {
     return (
       <AppBackground>
         <View style={{ flex: 1, paddingTop: topPad }}>
-          <PinEntry onUnlock={() => setUnlocked(true)} pin={settings.parentPin} />
+          <PinEntry
+            onUnlock={() => setUnlocked(true)}
+            pin={settings.parentPin}
+            usingDefaultPin={usingDefaultPin}
+          />
         </View>
       </AppBackground>
     );
@@ -271,15 +305,6 @@ export default function ParentModeScreen() {
         keyboardShouldPersistTaps="handled"
         style={{ width: "100%" }}
       >
-        {usingDefaultPin && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="warning-outline" size={18} color={Colors.secondary} />
-            <Text style={styles.warningText}>
-              You are using the default PIN (0000). Change it below to secure Settings.
-            </Text>
-          </View>
-        )}
-
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Names</Text>
           <View style={styles.nameFieldsStack}>
