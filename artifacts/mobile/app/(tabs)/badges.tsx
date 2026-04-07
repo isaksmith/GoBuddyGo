@@ -84,11 +84,7 @@ function BadgeGridCard({ item, textScale }: { item: GalleryItem; textScale: numb
       >
         {meta.title.toUpperCase()}
       </Text>
-      {earned ? (
-        <Text style={[styles.badgeDate, { fontSize: 11 * textScale }]}>
-          {new Date(earnedDate!).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-        </Text>
-      ) : (
+      {earned ? null : (
         <Text style={[styles.badgeUnearned, { fontSize: 10 * textScale, color: gradientColors[0] + "BB" }]}>NOT YET EARNED</Text>
       )}
     </LinearGradient>
@@ -247,11 +243,6 @@ const styles = StyleSheet.create({
   },
   badgeTitleLocked: {
     color: Colors.textMuted,
-  },
-  badgeDate: {
-    color: Colors.textMuted,
-    fontSize: 11,
-    fontFamily: "BalsamiqSans_400Regular",
   },
   badgeUnearned: {
     color: Colors.textMuted,
