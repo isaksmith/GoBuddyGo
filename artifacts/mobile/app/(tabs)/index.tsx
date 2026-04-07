@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     alignItems: "center",
+    marginTop: 8,
     paddingBottom: 20,
   },
   titleWrap: {
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 16,
     justifyContent: "center",
+    marginTop: 16,
   },
   card: {
     borderRadius: 28,
