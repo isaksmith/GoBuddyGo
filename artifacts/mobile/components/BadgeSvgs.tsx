@@ -10,9 +10,190 @@ import Svg, {
   Stop,
   G,
   Ellipse,
+  SvgXml,
 } from "react-native-svg";
 
 const SIZE = 80;
+
+const DRIFT_KING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <rect width="100%" height="100%" fill="#23232c"/>
+
+  <g stroke="#30303d" stroke-width="2" opacity="0.7">
+    <path d="M 0,100 L 800,100 M 0,200 L 800,200 M 0,300 L 800,300 M 0,400 L 800,400 M 0,500 L 800,500"/>
+    <path d="M 100,0 L 100,600 M 200,0 L 200,600 M 300,0 L 300,600 M 400,0 L 400,600 M 500,0 L 500,600 M 600,0 L 600,600 M 700,0 L 700,600"/>
+  </g>
+
+  <g stroke="#ffffff" stroke-linecap="round" opacity="0.25">
+    <line x1="20" y1="480" x2="160" y2="440" stroke-width="4"/>
+    <line x1="80" y1="400" x2="280" y2="350" stroke-width="2"/>
+    <line x1="180" y1="320" x2="380" y2="260" stroke-width="3"/>
+    <line x1="550" y1="150" x2="780" y2="80" stroke-width="5"/>
+    <line x1="620" y1="220" x2="850" y2="150" stroke-width="3"/>
+    <line x1="500" y1="50" x2="680" y2="10" stroke-width="4"/>
+  </g>
+
+  <path d="M -50,540 Q 300,520 440,290" stroke="#121217" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="M -20,620 Q 330,580 480,340" stroke="#121217" stroke-width="20" fill="none" stroke-linecap="round"/>
+
+  <circle cx="150" cy="500" r="60" fill="#cfcfd6" opacity="0.05"/>
+  <circle cx="220" cy="460" r="65" fill="#cfcfd6" opacity="0.1"/>
+  <circle cx="280" cy="420" r="70" fill="#cfcfd6" opacity="0.15"/>
+  <circle cx="340" cy="380" r="75" fill="#cfcfd6" opacity="0.25"/>
+  <circle cx="380" cy="340" r="60" fill="#cfcfd6" opacity="0.35"/>
+
+  <g transform="translate(520, 270) rotate(-20)">
+    <rect x="-80" y="-55" width="36" height="18" rx="4" fill="#0d0d12"/>
+    <rect x="-80" y="37" width="36" height="18" rx="4" fill="#0d0d12"/>
+
+    <rect x="55" y="-55" width="36" height="18" rx="4" fill="#0d0d12" transform="rotate(-30, 73, -46)"/>
+    <rect x="55" y="37" width="36" height="18" rx="4" fill="#0d0d12" transform="rotate(-30, 73, 46)"/>
+
+    <rect x="-105" y="-45" width="200" height="90" rx="20" fill="#ff2a55"/>
+
+    <rect x="-105" y="-12" width="200" height="8" fill="#ffd700" opacity="0.9"/>
+    <rect x="-105" y="4" width="200" height="8" fill="#ffd700" opacity="0.9"/>
+
+    <rect x="-115" y="-40" width="25" height="80" rx="4" fill="#181822"/>
+    <path d="M -90,-30 L -105,-30 L -105,30 L -90,30 Z" fill="#181822"/>
+    <rect x="85" y="-40" width="12" height="22" rx="4" fill="#e0ffff"/>
+    <rect x="85" y="18" width="12" height="22" rx="4" fill="#e0ffff"/>
+    <polygon points="97,-40 350,-120 350, -10 97,-18" fill="#e0ffff" opacity="0.12"/>
+    <polygon points="97,18 350,10 350, 120 97,40" fill="#e0ffff" opacity="0.12"/>
+
+    <rect x="-105" y="-38" width="8" height="20" rx="3" fill="#ff0000"/>
+    <rect x="-105" y="18" width="8" height="20" rx="3" fill="#ff0000"/>
+    <polygon points="-105,-38 -160,-50 -160,-10 -105,-18" fill="#ff0000" opacity="0.25"/>
+    <polygon points="-105,18 -160,10 -160,50 -105,38" fill="#ff0000" opacity="0.25"/>
+
+    <rect x="-35" y="-35" width="85" height="70" rx="15" fill="#111116"/>
+
+    <polygon points="40,-30 55,-25 55,25 40,30" fill="#3b3b52"/>
+    <polygon points="-25,-30 -40,-25 -40,25 -25,30" fill="#3b3b52"/>
+    <polygon points="30,-32 45,-28 -20,-28 -15,-32" fill="#2d2d3e"/>
+    <polygon points="30,32 45,28 -20,28 -15,32" fill="#2d2d3e"/>
+  </g>
+
+  <g>
+    <circle cx="430" cy="220" r="45" fill="#ffffff" opacity="0.6"/>
+    <circle cx="390" cy="250" r="55" fill="#e8e8ed" opacity="0.7"/>
+
+    <circle cx="410" cy="290" r="50" fill="#f0f0f5" opacity="0.8"/>
+    <circle cx="450" cy="270" r="55" fill="#ffffff" opacity="0.85"/>
+    <circle cx="370" cy="290" r="60" fill="#d5d5db" opacity="0.5"/>
+
+    <circle cx="470" cy="330" r="60" fill="#ffffff" opacity="0.75"/>
+    <circle cx="430" cy="350" r="50" fill="#dfdfdf" opacity="0.6"/>
+    <circle cx="390" cy="340" r="65" fill="#e8e8ed" opacity="0.6"/>
+
+    <circle cx="460" cy="210" r="4" fill="#ffcc00"/>
+    <circle cx="480" cy="220" r="3" fill="#ff9900"/>
+    <circle cx="450" cy="200" r="2" fill="#ffffff"/>
+    <circle cx="440" cy="190" r="3" fill="#ffcc00"/>
+
+    <circle cx="490" cy="360" r="5" fill="#ffcc00"/>
+    <circle cx="510" cy="370" r="3" fill="#ff9900"/>
+    <circle cx="480" cy="380" r="2" fill="#ffffff"/>
+    <circle cx="460" cy="390" r="4" fill="#ffcc00"/>
+  </g>
+</svg>`;
+
+const GEARHEAD_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <g id="tooth">
+      <path d="M 92 12 L 108 12 L 114 35 L 86 35 Z" fill="#c07c4b" stroke="#6b2a0f" stroke-width="2" />
+    </g>
+
+    <mask id="centerHole">
+      <rect width="200" height="200" fill="white" />
+      <circle cx="100" cy="100" r="22" fill="black" />
+    </mask>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#0a192f" />
+
+  <g>
+    <use href="#tooth" transform="rotate(0 100 100)" />
+    <use href="#tooth" transform="rotate(30 100 100)" />
+    <use href="#tooth" transform="rotate(60 100 100)" />
+    <use href="#tooth" transform="rotate(90 100 100)" />
+    <use href="#tooth" transform="rotate(120 100 100)" />
+    <use href="#tooth" transform="rotate(150 100 100)" />
+    <use href="#tooth" transform="rotate(180 100 100)" />
+    <use href="#tooth" transform="rotate(210 100 100)" />
+    <use href="#tooth" transform="rotate(240 100 100)" />
+    <use href="#tooth" transform="rotate(270 100 100)" />
+    <use href="#tooth" transform="rotate(300 100 100)" />
+    <use href="#tooth" transform="rotate(330 100 100)" />
+
+    <circle cx="100" cy="100" r="75" fill="#c07c4b" stroke="#6b2a0f" stroke-width="2" mask="url(#centerHole)" />
+
+    <circle cx="100" cy="100" r="22" fill="none" stroke="#6b2a0f" stroke-width="3" />
+
+    <circle cx="100" cy="100" r="48" fill="none" stroke="#823c1b" stroke-width="4" />
+
+    <circle cx="100" cy="52" r="4" fill="#3b1404" />
+    <circle cx="100" cy="148" r="4" fill="#3b1404" />
+    <circle cx="52" cy="100" r="4" fill="#3b1404" />
+    <circle cx="148" cy="100" r="4" fill="#3b1404" />
+  </g>
+</svg>`;
+
+const NIGHT_RIDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <g id="star">
+      <path d="M 0 -8 Q 0 0 8 0 Q 0 0 0 8 Q 0 0 -8 0 Q 0 0 0 -8 Z" fill="#f5d0b5" />
+    </g>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#0a192f" />
+
+  <use href="#star" x="40" y="50" transform="scale(0.8)" />
+  <use href="#star" x="140" y="30" transform="scale(1.2)" />
+  <use href="#star" x="220" y="80" transform="scale(0.6)" />
+  <use href="#star" x="80" y="130" transform="scale(0.9)" />
+  <use href="#star" x="360" y="110" transform="scale(1)" />
+  <circle cx="90" cy="70" r="1.5" fill="#f5d0b5" />
+  <circle cx="180" cy="50" r="1.5" fill="#f5d0b5" />
+  <circle cx="280" cy="30" r="1.5" fill="#f5d0b5" />
+  <circle cx="340" cy="60" r="1.5" fill="#f5d0b5" />
+  <circle cx="120" cy="100" r="1.5" fill="#f5d0b5" />
+
+  <g id="moon">
+    <circle cx="320" cy="80" r="35" fill="#f5d0b5" stroke="#6b2a0f" stroke-width="2" />
+    <circle cx="305" cy="70" r="8" fill="#d48a58" stroke="#6b2a0f" stroke-width="1.5" />
+    <circle cx="335" cy="90" r="12" fill="#d48a58" stroke="#6b2a0f" stroke-width="1.5" />
+    <circle cx="315" cy="100" r="5" fill="#d48a58" stroke="#6b2a0f" stroke-width="1.5" />
+  </g>
+
+  <ellipse cx="80" cy="240" rx="140" ry="70" fill="#081528" stroke="#050c17" stroke-width="2" />
+  <ellipse cx="320" cy="240" rx="180" ry="90" fill="#0d213f" stroke="#050c17" stroke-width="2" />
+
+  <rect x="0" y="210" width="400" height="90" fill="#060f1c" />
+  <line x1="0" y1="210" x2="400" y2="210" stroke="#6b2a0f" stroke-width="4" />
+  <line x1="0" y1="255" x2="400" y2="255" stroke="#c07c4b" stroke-width="3" stroke-dasharray="25 25" />
+
+  <polygon points="275,195 400,165 400,230" fill="#f5d0b5" opacity="0.1" />
+
+  <g id="car">
+    <path d="M 70 210 L 70 185 C 70 180, 75 180, 85 180 L 95 180 L 120 150 C 125 145, 135 145, 145 145 L 185 145 C 195 145, 205 150, 210 160 L 230 185 L 265 185 C 275 185, 280 190, 280 200 L 280 210 Z"
+          fill="#c07c4b" stroke="#6b2a0f" stroke-width="3" stroke-linejoin="round" />
+
+    <path d="M 100 180 L 122 152 L 150 152 L 150 180 Z" fill="#0a192f" stroke="#6b2a0f" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 156 180 L 156 152 L 182 152 L 204 180 Z" fill="#0a192f" stroke="#6b2a0f" stroke-width="2" stroke-linejoin="round" />
+
+    <path d="M 276 188 L 282 188 L 282 200 L 276 200 Z" fill="#f5d0b5" stroke="#6b2a0f" stroke-width="1.5" />
+    <path d="M 68 185 L 72 185 L 72 195 L 68 195 Z" fill="#d45858" stroke="#6b2a0f" stroke-width="1.5" />
+
+    <circle cx="115" cy="210" r="20" fill="#111827" stroke="#6b2a0f" stroke-width="3" />
+    <circle cx="230" cy="210" r="20" fill="#111827" stroke="#6b2a0f" stroke-width="3" />
+
+    <circle cx="115" cy="210" r="8" fill="#c07c4b" stroke="#6b2a0f" stroke-width="2" />
+    <circle cx="230" cy="210" r="8" fill="#c07c4b" stroke="#6b2a0f" stroke-width="2" />
+
+    <circle cx="115" cy="210" r="3" fill="#3b1404" />
+    <circle cx="230" cy="210" r="3" fill="#3b1404" />
+  </g>
+</svg>`;
 
 export function SpeedDemonBadge() {
   return (
@@ -68,114 +249,15 @@ export function FirstVictoryBadge() {
 }
 
 export function DriftKingBadge() {
-  return (
-    <Svg width={SIZE} height={SIZE} viewBox="0 0 80 80">
-      <Defs>
-        <LinearGradient id="dkBg" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#9C27B0" />
-          <Stop offset="1" stopColor="#E91E63" />
-        </LinearGradient>
-      </Defs>
-      <Circle cx="40" cy="40" r="38" fill="url(#dkBg)" />
-      <Circle cx="40" cy="40" r="34" fill="none" stroke="#CE93D8" strokeWidth="1.5" strokeOpacity="0.5" />
-      <Path
-        d="M18 55 Q30 30 50 35 Q65 40 62 25"
-        stroke="#FFFFFF"
-        strokeWidth="5"
-        strokeLinecap="round"
-        fill="none"
-        strokeOpacity="0.9"
-      />
-      <Path
-        d="M20 60 Q32 35 52 40 Q67 45 64 30"
-        stroke="#E1BEE7"
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-        strokeOpacity="0.5"
-      />
-      <Ellipse cx="22" cy="58" rx="8" ry="4" fill="#FFFFFF" fillOpacity="0.2" />
-      <Ellipse cx="30" cy="62" rx="6" ry="3" fill="#FFFFFF" fillOpacity="0.15" />
-    </Svg>
-  );
+  return <SvgXml xml={DRIFT_KING_SVG} width={SIZE} height={SIZE} />;
 }
 
 export function GearheadBadge() {
-  return (
-    <Svg width={SIZE} height={SIZE} viewBox="0 0 80 80">
-      <Defs>
-        <LinearGradient id="ghBg" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#1565C0" />
-          <Stop offset="1" stopColor="#00838F" />
-        </LinearGradient>
-      </Defs>
-      <Circle cx="40" cy="40" r="38" fill="url(#ghBg)" />
-      <Circle cx="40" cy="40" r="34" fill="none" stroke="#4FC3F7" strokeWidth="1.5" strokeOpacity="0.5" />
-      <G>
-        <Circle cx="36" cy="38" r="10" fill="none" stroke="#FFFFFF" strokeWidth="3.5" />
-        <Circle cx="36" cy="38" r="4" fill="#FFFFFF" />
-        <Rect x="32" y="25" width="8" height="6" rx="2" fill="#FFFFFF" />
-        <Rect x="32" y="45" width="8" height="6" rx="2" fill="#FFFFFF" />
-        <Rect x="22" y="34" width="6" height="8" rx="2" fill="#FFFFFF" />
-        <Rect x="42" y="34" width="6" height="8" rx="2" fill="#FFFFFF" />
-        <Rect x="25.5" y="27.5" width="6" height="8" rx="2" fill="#FFFFFF" transform="rotate(45 28.5 31.5)" />
-        <Rect x="41.5" y="43.5" width="6" height="8" rx="2" fill="#FFFFFF" transform="rotate(45 44.5 47.5)" />
-        <Rect x="41.5" y="27.5" width="6" height="8" rx="2" fill="#FFFFFF" transform="rotate(-45 44.5 31.5)" />
-        <Rect x="25.5" y="43.5" width="6" height="8" rx="2" fill="#FFFFFF" transform="rotate(-45 28.5 47.5)" />
-      </G>
-      <Path
-        d="M52 42 L58 56"
-        stroke="#E0E0E0"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <Path
-        d="M50 40 L56 54"
-        stroke="#BDBDBD"
-        strokeWidth="4"
-        strokeLinecap="round"
-        transform="rotate(15 53 47)"
-      />
-      <Circle cx="50" cy="40" r="4" fill="#E0E0E0" />
-    </Svg>
-  );
+  return <SvgXml xml={GEARHEAD_SVG} width={SIZE} height={SIZE} />;
 }
 
 export function NightRiderBadge() {
-  return (
-    <Svg width={SIZE} height={SIZE} viewBox="0 0 80 80">
-      <Defs>
-        <LinearGradient id="nrBg" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#1A237E" />
-          <Stop offset="1" stopColor="#283593" />
-        </LinearGradient>
-      </Defs>
-      <Circle cx="40" cy="40" r="38" fill="url(#nrBg)" />
-      <Circle cx="40" cy="40" r="34" fill="none" stroke="#7986CB" strokeWidth="1.5" strokeOpacity="0.5" />
-      <Path
-        d="M38 20 Q48 20 48 30 Q48 38 40 38 Q46 26 38 20Z"
-        fill="#FFFFFF"
-      />
-      <Circle cx="24" cy="24" r="2" fill="#FFFFFF" fillOpacity="0.8" />
-      <Circle cx="58" cy="18" r="1.5" fill="#FFFFFF" fillOpacity="0.6" />
-      <Circle cx="62" cy="30" r="1" fill="#FFFFFF" fillOpacity="0.5" />
-      <Circle cx="18" cy="38" r="1.5" fill="#FFFFFF" fillOpacity="0.7" />
-      <Circle cx="55" cy="42" r="1" fill="#FFFFFF" fillOpacity="0.4" />
-      <Path
-        d="M10 60 L32 48 L50 52 L70 44"
-        stroke="#90A4AE"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <Path
-        d="M10 60 L32 48 L50 52 L70 44"
-        stroke="#FFFFFF"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeDasharray="4 4"
-      />
-    </Svg>
-  );
+  return <SvgXml xml={NIGHT_RIDER_SVG} width={SIZE} height={SIZE} />;
 }
 
 export function EnduranceBadge() {
