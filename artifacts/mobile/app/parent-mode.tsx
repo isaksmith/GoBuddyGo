@@ -212,11 +212,11 @@ export default function ParentModeScreen() {
   const handleResetProgress = () => {
     Alert.alert(
       "Reset Progress",
-      "This will permanently clear all badges and session history. This cannot be undone.",
+      "This will permanently clear all badges and session history. Your 4 default garage cars will be kept. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Reset",
+          text: "Confirm Reset",
           style: "destructive",
           onPress: async () => {
             await resetProgress();

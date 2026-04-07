@@ -839,6 +839,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSessionHistory([]);
     setCurrentBadges([]);
     setLastSessionResult(null);
+
+    let nextCars: SavedCar[] = [];
+    setSavedCars((prev) => {
+      const defaultCars = getDefaultCars();
+      const nonDefaultCars = prev.filter((c) => !c.isDefault);
+      const existingDefaultsById = new Map(
+        prev.filter((c) => c.isDefault).map((c) => [c.id, c])
+      );
+
+      const normalizedDefaults = defaultCars.map((def) => {
+        const existing = existingDefaultsById.get(def.id);
+        if (!existing) return def;
+        return {
+          ...existing,
+          name: def.name,
+          photoUri: "",
+          isDefault: true,
+          model3dStatus: "succeeded" as Model3dStatus,
+          model3dUrl: def.model3dUrl,
+        };
+      });
+
+      nextCars = [...normalizedDefaults, ...nonDefaultCars];
+      return nextCars;
+    });
+
+    await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(nextCars));
+
+    const nextSelectedCoinDashCarId =
+      selectedCoinDashCarId && nextCars.some((c) => c.id === selectedCoinDashCarId)
+        ? selectedCoinDashCarId
+        : (nextCars[0]?.id ?? null);
+
+    setSelectedCoinDashCarId(nextSelectedCoinDashCarId);
+    if (nextSelectedCoinDashCarId) {
+      await AsyncStorage.setItem(STORAGE_KEYS.coinDashCarId, nextSelectedCoinDashCarId);
+    } else {
+      await AsyncStorage.removeItem(STORAGE_KEYS.coinDashCarId);
+    }
+
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEYS.history),
       AsyncStorage.removeItem(STORAGE_KEYS.session),
@@ -846,7 +886,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSessionActive(false);
     setSessionStartTime(null);
     setSessionMissions([]);
-  }, []);
+  }, [selectedCoinDashCarId]);
 
   const endSession = useCallback(async () => {
     if (!sessionStartTime) return;
