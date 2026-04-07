@@ -151,7 +151,7 @@ function getDefaultCars(): SavedCar[] {
     },
     {
       id: "default-cruiser",
-      name: "Crusier",
+      name: "Cruiser",
       photoUri: "",
       stickers: [],
       model3dStatus: "succeeded",
@@ -252,7 +252,7 @@ export const STICKER_CATALOG: StickerDefinition[] = [
 export const VEHICLE_TYPES = [
   { id: "jeep", label: "Jeep", emoji: "🚙", modelUrl: getJeepModelUrl(), defaultPrimary: "#E91E8C", defaultAccent: "#1C1C1E" },
   { id: "mini-coop", label: "Mini Cooper", emoji: "🚗", modelUrl: getMiniCoopModelUrl(), defaultPrimary: "#3A86FF", defaultAccent: "#FFFFFF" },
-  { id: "cruiser", label: "Crusier", emoji: "🛻", modelUrl: getCruiserModelUrl(), defaultPrimary: "#4CAF50", defaultAccent: "#1C1C1E" },
+  { id: "cruiser", label: "Cruiser", emoji: "🛻", modelUrl: getCruiserModelUrl(), defaultPrimary: "#4CAF50", defaultAccent: "#1C1C1E" },
 ];
 
 export const DESIGN_COLORS = [
