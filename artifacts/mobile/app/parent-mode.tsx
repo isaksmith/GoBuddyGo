@@ -282,33 +282,35 @@ export default function ParentModeScreen() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Names</Text>
-          <View style={styles.nameInputRow}>
-            <Text style={styles.nameInputLabel}>Sibling's Name</Text>
-            <TextInput
-              style={styles.nameInput}
-              value={siblingName}
-              onChangeText={setSiblingName}
-              onBlur={handleSaveNames}
-              placeholder="e.g. Emma"
-              placeholderTextColor={Colors.textMuted}
-              returnKeyType="done"
-              onSubmitEditing={handleSaveNames}
-              testID="sibling-name-input"
-            />
-          </View>
-          <View style={styles.nameInputRow}>
-            <Text style={styles.nameInputLabel}>Driver's Name</Text>
-            <TextInput
-              style={styles.nameInput}
-              value={driverName}
-              onChangeText={setDriverName}
-              onBlur={handleSaveNames}
-              placeholder="e.g. Dad"
-              placeholderTextColor={Colors.textMuted}
-              returnKeyType="done"
-              onSubmitEditing={handleSaveNames}
-              testID="driver-name-input"
-            />
+          <View style={styles.nameFieldsStack}>
+            <View style={styles.nameInputRow}>
+              <Text style={styles.nameInputLabel}>Driver's Name</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={driverName}
+                onChangeText={setDriverName}
+                onBlur={handleSaveNames}
+                placeholder="Example: Andy"
+                placeholderTextColor={Colors.textMuted}
+                returnKeyType="done"
+                onSubmitEditing={handleSaveNames}
+                testID="driver-name-input"
+              />
+            </View>
+            <View style={[styles.nameInputRow, styles.nameInputRowSecond]}>
+              <Text style={styles.nameInputLabel}>Sibling's Name</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={siblingName}
+                onChangeText={setSiblingName}
+                onBlur={handleSaveNames}
+                placeholder="Example: Joanna"
+                placeholderTextColor={Colors.textMuted}
+                returnKeyType="done"
+                onSubmitEditing={handleSaveNames}
+                testID="sibling-name-input"
+              />
+            </View>
           </View>
         </View>
 
@@ -642,8 +644,14 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
     marginTop: 2,
   },
+  nameFieldsStack: {
+    marginTop: 0,
+  },
   nameInputRow: {
-    marginBottom: 12,
+    marginTop: 0,
+  },
+  nameInputRowSecond: {
+    marginTop: 12,
   },
   nameInputLabel: {
     color: Colors.textSecondary,
@@ -659,6 +667,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 0,
     borderWidth: 1.5,
     borderColor: Colors.border,
   },
