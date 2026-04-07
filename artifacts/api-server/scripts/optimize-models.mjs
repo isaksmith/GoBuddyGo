@@ -9,6 +9,10 @@ const projectRoot = path.resolve(__dirname, "..");
 const assetsDir = path.resolve(projectRoot, "public", "assets");
 
 const MODEL_NAMES = ["buddy-car", "jeep", "mini-coop", "cruiser"];
+const MOBILE_TEXTURE_SIZE = process.env.MOBILE_TEXTURE_SIZE ?? "512";
+const MOBILE_SIMPLIFY_RATIO = process.env.MOBILE_SIMPLIFY_RATIO ?? "0.22";
+const MOBILE_SIMPLIFY_ERROR = process.env.MOBILE_SIMPLIFY_ERROR ?? "0.003";
+const MOBILE_TEXTURE_FORMAT = process.env.MOBILE_TEXTURE_FORMAT ?? "webp";
 
 function runOptimize(inputPath, outputPath) {
   const args = [
@@ -20,15 +24,15 @@ function runOptimize(inputPath, outputPath) {
     "--compress",
     "draco",
     "--texture-compress",
-    "auto",
+    MOBILE_TEXTURE_FORMAT,
     "--texture-size",
-    "1024",
+    MOBILE_TEXTURE_SIZE,
     "--simplify",
     "true",
     "--simplify-ratio",
-    "0.35",
+    MOBILE_SIMPLIFY_RATIO,
     "--simplify-error",
-    "0.002",
+    MOBILE_SIMPLIFY_ERROR,
   ];
 
   const result = spawnSync("pnpm", args, {
@@ -43,6 +47,10 @@ function runOptimize(inputPath, outputPath) {
 }
 
 function main() {
+  console.log(
+    `Mobile optimize settings: texture=${MOBILE_TEXTURE_SIZE}px, format=${MOBILE_TEXTURE_FORMAT}, simplifyRatio=${MOBILE_SIMPLIFY_RATIO}, simplifyError=${MOBILE_SIMPLIFY_ERROR}`
+  );
+
   for (const name of MODEL_NAMES) {
     const inputPath = path.join(assetsDir, `${name}.glb`);
     const outputPath = path.join(assetsDir, `${name}.mobile.glb`);
