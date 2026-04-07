@@ -6,6 +6,9 @@ interface ModelViewerProps {
   style?: StyleProp<ViewStyle>;
   scrollEnabled?: boolean;
   cacheKey?: string;
+  onProgressChange?: (progress: number) => void;
+  onLoadingStateChange?: (isLoading: boolean) => void;
+  showLoadingOverlay?: boolean;
 }
 
 const loadedModelCache = new Set<string>();
@@ -15,7 +18,15 @@ function extractModelSrcFromHtml(html: string): string | null {
   return match?.[1] ?? null;
 }
 
-export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: ModelViewerProps) {
+export default function ModelViewer({
+  html,
+  style,
+  scrollEnabled,
+  cacheKey,
+  onProgressChange,
+  onLoadingStateChange,
+  showLoadingOverlay = true,
+}: ModelViewerProps) {
   const derivedSrc = useMemo(() => extractModelSrcFromHtml(html), [html]);
   const resolvedCacheKey = cacheKey ?? derivedSrc ?? "";
   const initiallyCached = resolvedCacheKey ? loadedModelCache.has(resolvedCacheKey) : false;
@@ -152,6 +163,14 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
     return () => clearInterval(timer);
   }, [showLoader]);
 
+  useEffect(() => {
+    onProgressChange?.(progress);
+  }, [onProgressChange, progress]);
+
+  useEffect(() => {
+    onLoadingStateChange?.(showLoader);
+  }, [onLoadingStateChange, showLoader]);
+
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]}>
@@ -172,7 +191,7 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
             <Text style={styles.errorBody}>{errorText}</Text>
           </View>
         )}
-        {showLoader && (
+        {showLoader && showLoadingOverlay && (
           <View style={styles.loadingOverlay}>
             <Text style={styles.loadingText}>Loading 3D... {loadingPercent}%</Text>
             <View style={styles.loadingTrack}>
@@ -292,7 +311,7 @@ export default function ModelViewer({ html, style, scrollEnabled, cacheKey }: Mo
           <Text style={styles.errorBody}>{errorText}</Text>
         </View>
       )}
-      {showLoader && (
+      {showLoader && showLoadingOverlay && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <Text style={styles.loadingText}>Loading 3D... {loadingPercent}%</Text>
           {loadingNotice && <Text style={styles.loadingSubText}>{loadingNotice}</Text>}
