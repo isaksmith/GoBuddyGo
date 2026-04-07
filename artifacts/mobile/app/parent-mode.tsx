@@ -315,7 +315,7 @@ export default function ParentModeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>Sound & Alerts</Text>
+          <Text style={[styles.sectionLabel, { fontSize: 13 * textScale }]}>SOUND</Text>
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
               <Ionicons name="musical-notes" size={18} color={Colors.primary} style={styles.toggleIcon} />
@@ -371,22 +371,6 @@ export default function ParentModeScreen() {
                 );
               })}
             </View>
-          </View>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Ionicons name="warning" size={18} color={Colors.primary} style={styles.toggleIcon} />
-              <View>
-                <Text style={styles.toggleTitle}>Proximity Alerts</Text>
-                <Text style={styles.toggleDesc}>"Give the driver some space!" warning</Text>
-              </View>
-            </View>
-            <Switch
-              value={settings.proximityAlertsEnabled ?? true}
-              onValueChange={(v) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateSettings({ proximityAlertsEnabled: v }); }}
-              trackColor={{ false: Colors.border, true: Colors.primary }}
-              thumbColor="#FFFFFF"
-              testID="proximity-toggle"
-            />
           </View>
         </View>
 
