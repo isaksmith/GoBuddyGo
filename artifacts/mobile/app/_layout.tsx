@@ -33,7 +33,18 @@ function GlobalSoundtrackControl() {
     const audioPlayer = player as unknown as {
       setVolume?: (next: number) => void;
       volume?: number;
+      setIsLooping?: (next: boolean) => void;
+      looping?: boolean;
+      isLooping?: boolean;
     };
+
+    if (typeof audioPlayer.setIsLooping === "function") {
+      audioPlayer.setIsLooping(true);
+    } else if (typeof audioPlayer.looping === "boolean") {
+      audioPlayer.looping = true;
+    } else if (typeof audioPlayer.isLooping === "boolean") {
+      audioPlayer.isLooping = true;
+    }
 
     if (typeof audioPlayer.setVolume === "function") {
       audioPlayer.setVolume(volume);
