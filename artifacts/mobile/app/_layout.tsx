@@ -4,7 +4,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/balsamiq-sans";
 import * as Font from "expo-font";
-import { useAudioPlayer } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -26,43 +26,39 @@ const queryClient = new QueryClient();
 function GlobalSoundtrackControl() {
   const { settings } = useApp();
   const player = useAudioPlayer(require("../assets/sounds/ten-past-naptime.mp3"));
+  const status = useAudioPlayerStatus(player);
   const muted = settings.soundtrackMuted ?? false;
   const volume = Math.max(0, Math.min(1, settings.soundtrackVolume ?? 0.5));
 
   useEffect(() => {
-    const audioPlayer = player as unknown as {
-      setVolume?: (next: number) => void;
-      volume?: number;
-      setIsLooping?: (next: boolean) => void;
-      looping?: boolean;
-      isLooping?: boolean;
-    };
-
-    if (typeof audioPlayer.setIsLooping === "function") {
-      audioPlayer.setIsLooping(true);
-    } else if (typeof audioPlayer.looping === "boolean") {
-      audioPlayer.looping = true;
-    } else if (typeof audioPlayer.isLooping === "boolean") {
-      audioPlayer.isLooping = true;
-    }
-
-    if (typeof audioPlayer.setVolume === "function") {
-      audioPlayer.setVolume(volume);
+    if (!status.isLoaded) {
       return;
     }
 
-    if (typeof audioPlayer.volume === "number") {
-      audioPlayer.volume = volume;
+    try {
+      player.loop = true;
+    } catch {
+      // Ignore loop assignment failures on unsupported runtimes.
     }
-  }, [player, volume]);
 
-  useEffect(() => {
-    if (muted) {
-      player.pause();
-      return;
+    try {
+      player.volume = muted ? 0 : volume;
+    } catch {
+      // Ignore volume assignment failures on unsupported runtimes.
     }
-    player.play();
-  }, [muted, player, volume]);
+
+    try {
+      if (muted) {
+        if (status.playing) {
+          player.pause();
+        }
+      } else if (!status.playing) {
+        player.play();
+      }
+    } catch {
+      // Ignore playback control failures to avoid blocking app startup.
+    }
+  }, [muted, player, status.isLoaded, status.playing, volume]);
 
   return null;
 }
