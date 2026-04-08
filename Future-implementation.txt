@@ -1,0 +1,14 @@
+Future implementations
+
+1. Adaptive difficulty that adjusts speed, steering sensitivity, and obstacle density based on player performance.
+2. Progression system with unlockable cars, paint jobs, and badges.
+3. Daily/weekly challenges to increase replayability.
+4. Parent-facing dashboard with practice time, focus streaks, and milestone summaries.
+5. Accessibility presets (larger controls, slower acceleration curves, reduced reaction mode).
+6. Ghost racing against your best lap.
+7. AR and 3D optimization: model caching, quality tiers by device, and usage analytics.
+8. Reliability upgrades: error boundaries, better recovery UX for model/network failures.
+9. Performance budgets in CI for startup time, FPS, and memory.
+10. Feature flags + staged release channels for safer rollouts.
+11. End-to-end smoke tests for critical flows (race start, finish, summary, parent mode).
+12. Visual regression testing and telemetry dashboards (crash-free sessions, completion rate, asset load failures).
