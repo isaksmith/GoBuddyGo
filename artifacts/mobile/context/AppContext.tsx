@@ -22,6 +22,12 @@ export interface SessionMission extends Mission {
   completedAt?: number;
 }
 
+interface PersistedSession {
+  missions: SessionMission[];
+  active: boolean;
+  startTime: number | null;
+}
+
 export interface Badge {
   id: string;
   title: string;
@@ -560,6 +566,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [designs, setDesigns] = useState<CarDesign[]>([]);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
+  const restorePersistedSession = useCallback(async (rawSession: string | null) => {
+    if (!rawSession) return;
+
+    try {
+      const session = JSON.parse(rawSession) as Partial<PersistedSession>;
+      const missions = Array.isArray(session.missions)
+        ? session.missions.filter((mission): mission is SessionMission => {
+            return !!mission && typeof mission.id === "string" && typeof mission.completed === "boolean";
+          })
+        : [];
+
+      if (!session.active || missions.length === 0) {
+        await AsyncStorage.removeItem(STORAGE_KEYS.session);
+        return;
+      }
+
+      const normalizedStartTime = typeof session.startTime === "number" && Number.isFinite(session.startTime)
+        ? session.startTime
+        : Date.now();
+
+      setSessionMissions(missions);
+      setSessionActive(true);
+      setSessionStartTime(normalizedStartTime);
+
+      if (normalizedStartTime !== session.startTime || missions.length !== (session.missions?.length ?? 0)) {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.session,
+          JSON.stringify({ missions, active: true, startTime: normalizedStartTime satisfies PersistedSession["startTime"] })
+        );
+      }
+    } catch {
+      await AsyncStorage.removeItem(STORAGE_KEYS.session);
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
@@ -582,14 +623,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setSettings(parsed);
         }
         if (rawHistory) setSessionHistory(JSON.parse(rawHistory));
-        if (rawSession) {
-          const session = JSON.parse(rawSession) as { missions: SessionMission[]; active: boolean; startTime: number | null };
-          if (session.active) {
-            setSessionMissions(session.missions);
-            setSessionActive(true);
-            setSessionStartTime(session.startTime);
-          }
-        }
+        await restorePersistedSession(rawSession);
 
         let initialCars: SavedCar[] = rawSavedCars ? JSON.parse(rawSavedCars) : [];
 
@@ -671,7 +705,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsLoaded(true);
       }
     })();
-  }, []);
+  }, [restorePersistedSession]);
 
   const persistCars = useCallback(async (cars: SavedCar[]) => {
     await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(cars));

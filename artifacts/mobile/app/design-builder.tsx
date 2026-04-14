@@ -40,6 +40,8 @@ type ScannedVehicle = {
   label: string;
 };
 
+type UploadStage = "idle" | "encoding" | "uploading" | "processing";
+
 const SCANNED_RESTORED_ID = "scanned-restored";
 
 const PICKER_COLORS = [
@@ -249,6 +251,8 @@ export default function DesignBuilderScreen() {
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
+  const [uploadStage, setUploadStage] = useState<UploadStage>("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [scannedVehicles, setScannedVehicles] = useState<ScannedVehicle[]>(() =>
     isRestoredCustom
       ? [{ id: SCANNED_RESTORED_ID, modelUrl: existingDesign!.customVehicleModelUrl!, label: existingDesign!.name?.trim() || "New Car" }]
@@ -309,6 +313,7 @@ export default function DesignBuilderScreen() {
         if (activeTaskIdRef.current !== taskId) return;
         if (data.status === "succeeded") {
           stopPolling();
+          resetUploadProgress();
           const url = data.modelUrl ?? null;
           if (url) {
             const newId = `scanned-${Date.now()}`;
@@ -324,12 +329,14 @@ export default function DesignBuilderScreen() {
         } else if (data.status === "failed") {
           stopPolling();
           setScanStatus("failed");
+          resetUploadProgress();
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
           pollAttemptRef.current += 1;
           if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
             stopPolling();
             setScanStatus("failed");
+            resetUploadProgress();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           } else {
             scheduleNextPoll();
@@ -341,6 +348,7 @@ export default function DesignBuilderScreen() {
         if (pollAttemptRef.current >= MAX_POLL_ATTEMPTS) {
           stopPolling();
           setScanStatus("failed");
+          resetUploadProgress();
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
           scheduleNextPoll();
@@ -350,9 +358,58 @@ export default function DesignBuilderScreen() {
       }
     };
     poll();
-  }, [stopPolling, animatePreview]);
+  }, [stopPolling, animatePreview, resetUploadProgress]);
 
   useEffect(() => { return () => stopPolling(); }, [stopPolling]);
+
+  const resetUploadProgress = useCallback(() => {
+    setUploadStage("idle");
+    setUploadProgress(0);
+  }, []);
+
+  const uploadScanRequest = useCallback((imageDataUri: string) => {
+    return new Promise<{ taskId: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${getApiBaseUrl()}/image-to-3d`);
+      xhr.setRequestHeader("Content-Type", "application/json");
+
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) {
+          setUploadStage("uploading");
+          setUploadProgress((prev) => Math.max(prev, 0.35));
+          return;
+        }
+
+        const pct = event.total > 0 ? event.loaded / event.total : 0;
+        setUploadStage("uploading");
+        setUploadProgress(Math.max(0.08, Math.min(0.92, pct)));
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText) as { taskId: string };
+            setUploadStage("processing");
+            setUploadProgress(1);
+            resolve(data);
+          } catch (error) {
+            reject(error);
+          }
+          return;
+        }
+
+        reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
+      };
+
+      xhr.onerror = () => {
+        reject(new Error("Upload failed"));
+      };
+
+      setUploadStage("uploading");
+      setUploadProgress(0.04);
+      xhr.send(JSON.stringify({ imageDataUri }));
+    });
+  }, []);
 
   const submitImageForScan = useCallback(async (photoUri: string) => {
     try {
@@ -360,27 +417,27 @@ export default function DesignBuilderScreen() {
       if (Platform.OS === "web" || photoUri.startsWith("data:")) {
         imageDataUri = photoUri;
       } else {
+        setUploadStage("encoding");
+        setUploadProgress(0.02);
         const ext = photoUri.split(".").pop()?.toLowerCase() ?? "jpeg";
         const mime = ext === "png" ? "image/png" : ext === "heic" ? "image/heic" : "image/jpeg";
         const base64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
         imageDataUri = `data:${mime};base64,${base64}`;
+        setUploadProgress(0.08);
       }
-      const res = await fetch(`${getApiBaseUrl()}/image-to-3d`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUri }),
-      });
-      if (!res.ok) {
+      const data = await uploadScanRequest(imageDataUri);
+      if (!data.taskId) {
         setScanStatus("failed");
+        resetUploadProgress();
         return;
       }
-      const data = await res.json() as { taskId: string };
       setScanStatus("pending");
       startPolling(data.taskId);
     } catch (_e) {
       setScanStatus("failed");
+      resetUploadProgress();
     }
-  }, [startPolling]);
+  }, [resetUploadProgress, startPolling, uploadScanRequest]);
 
   const handleScanNewCar = useCallback(async () => {
     if (Platform.OS === "web") {
@@ -608,6 +665,24 @@ export default function DesignBuilderScreen() {
               </>
             )}
           </Pressable>
+
+          {uploadStage !== "idle" && (
+            <View style={styles.uploadProgressCard}>
+              <View style={styles.uploadProgressHeader}>
+                <Text style={styles.uploadProgressTitle}>
+                  {uploadStage === "encoding"
+                    ? "PREPARING PHOTO…"
+                    : uploadStage === "uploading"
+                      ? "UPLOADING PHOTO…"
+                      : "STARTING MESHY SCAN…"}
+                </Text>
+                <Text style={styles.uploadProgressPct}>{Math.round(uploadProgress * 100)}%</Text>
+              </View>
+              <View style={styles.uploadProgressTrack}>
+                <View style={[styles.uploadProgressFill, { width: `${Math.max(uploadProgress * 100, 6)}%` }]} />
+              </View>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -898,6 +973,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.8,
+  },
+  uploadProgressCard: {
+    marginTop: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundDeep,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  uploadProgressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  uploadProgressTitle: {
+    flex: 1,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 1.2,
+  },
+  uploadProgressPct: {
+    color: Colors.primary,
+    fontSize: 10,
+    fontFamily: "BalsamiqSans_700Bold",
+    letterSpacing: 1,
+  },
+  uploadProgressTrack: {
+    height: 10,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  uploadProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: Colors.primary,
   },
   vtEmoji: { fontSize: 32 },
   vtLabel: {

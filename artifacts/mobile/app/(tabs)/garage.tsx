@@ -70,12 +70,11 @@ const dpStyles = StyleSheet.create({
   accEmoji: {},
 });
 
-const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, onRename, isCoinDashSelected, cardColor }: {
+const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, onRename, cardColor }: {
   car: SavedCar;
   onPress: () => void;
   onDelete: () => void;
   onRename: () => void;
-  isCoinDashSelected: boolean;
   cardColor?: string;
 }) {
   const { settings } = useApp();
@@ -87,7 +86,6 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
       style={[
         cardStyles.card,
         cardColor ? { backgroundColor: cardColor } : undefined,
-        isCoinDashSelected && cardStyles.cardSelected,
       ]}
     >
       <View style={cardStyles.imageArea}>
@@ -107,12 +105,7 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
         )}
-        {isCoinDashSelected && (
-          <View style={cardStyles.selectedBadge}>
-            <Ionicons name="checkmark-circle" size={11} color="#FFFFFF" />
-            <Text style={cardStyles.selectedBadgeText}>{t("SELECTED", language)}</Text>
-          </View>
-        )}
+
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{car.name}</Text>
@@ -214,14 +207,7 @@ const cardStyles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  cardSelected: {
-    borderWidth: 3,
-    borderColor: "#3ECF8E",
-    shadowColor: "#3ECF8E",
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    elevation: 10,
-  },
+
   imageArea: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.08)",
@@ -320,26 +306,7 @@ const cardStyles = StyleSheet.create({
     fontFamily: "BalsamiqSans_700Bold",
     letterSpacing: 0.8,
   },
-  selectedBadge: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(62,207,142,0.92)",
-    borderRadius: 50,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.65)",
-  },
-  selectedBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 8,
-    fontFamily: "BalsamiqSans_700Bold",
-    letterSpacing: 0.5,
-  },
+
   coinDashBadge: {
     position: "absolute",
     top: 6,
@@ -601,7 +568,6 @@ export default function GarageScreen() {
                   }}
                   onDelete={() => handleDeleteCar(car)}
                   onRename={() => startRename(car.id, "cars", car.name)}
-                  isCoinDashSelected={selectedCoinDashCarId === car.id}
                   cardColor={CAR_CARD_COLORS[idx % CAR_CARD_COLORS.length]}
                 />
               ))}
