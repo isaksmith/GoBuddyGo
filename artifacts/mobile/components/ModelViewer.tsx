@@ -12,6 +12,8 @@ interface ModelViewerProps {
 }
 
 const loadedModelCache = new Set<string>();
+const STALLED_PROGRESS_TIMEOUT_MS = 15000;
+const CONNECTION_CHECK_TIMEOUT_MS = 8000;
 
 function extractModelSrcFromHtml(html: string): string | null {
   const match = html.match(/<model-viewer[^>]*\ssrc=\"([^\"]+)\"/i);
@@ -54,6 +56,13 @@ export default function ModelViewer({
     var mv = document.querySelector('model-viewer');
     if (!mv) {
       post('mv-error', { message: 'model-viewer element not found' });
+      return;
+    }
+
+    if (!window.customElements || !window.customElements.get('model-viewer')) {
+      post('mv-error', {
+        message: 'model-viewer library failed to load. Check internet/CDN access to jsdelivr.'
+      });
       return;
     }
 
@@ -171,6 +180,56 @@ export default function ModelViewer({
     onLoadingStateChange?.(showLoader);
   }, [onLoadingStateChange, showLoader]);
 
+  useEffect(() => {
+    if (Platform.OS === "web" || !showLoader || !derivedSrc || !/^https?:\/\//.test(derivedSrc)) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+
+      setLoadingNotice("Checking model connection...");
+
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timeoutId = controller
+        ? setTimeout(() => {
+            controller.abort();
+          }, CONNECTION_CHECK_TIMEOUT_MS)
+        : null;
+
+      fetch(derivedSrc, {
+        method: "HEAD",
+        ...(controller ? { signal: controller.signal } : {}),
+      })
+        .then((response) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (cancelled) return;
+          if (response.ok) {
+            setLoadingNotice("Model downloaded slowly. Please wait...");
+            return;
+          }
+          setErrorText(`Model URL returned HTTP ${response.status}\nSource: ${derivedSrc}`);
+          setShowLoader(false);
+          setLoadingNotice(null);
+        })
+        .catch(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (cancelled) return;
+          setErrorText(
+            `Could not reach model URL within ${Math.round(CONNECTION_CHECK_TIMEOUT_MS / 1000)}s. If you changed Wi-Fi, restart Expo with EXPO_PUBLIC_API_BASE_URL set to your Mac's current IP.\nSource: ${derivedSrc}`
+          );
+          setShowLoader(false);
+          setLoadingNotice(null);
+        });
+    }, STALLED_PROGRESS_TIMEOUT_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [derivedSrc, showLoader]);
+
   if (Platform.OS === "web") {
     return (
       <View style={[styles.fill, style]}>
@@ -226,7 +285,7 @@ export default function ModelViewer({
     <View style={[styles.webviewContainer, style]}>
       <WebView
         source={{ html: injectedHTML }}
-        style={[styles.fill, showLoader && styles.hiddenWebview]}
+        style={styles.fill}
         containerStyle={styles.webviewTransparentContainer}
         originWhitelist={["*"]}
         javaScriptEnabled
@@ -269,7 +328,7 @@ export default function ModelViewer({
             };
             if (data.type === "mv-progress") {
               const next = typeof data.payload?.progress === "number" ? data.payload.progress : 0;
-              setProgress(Math.max(0, Math.min(1, next)));
+              setProgress((prev) => Math.max(prev, Math.max(0, Math.min(1, next))));
             }
             if (data.type === "mv-ready") {
               if (resolvedCacheKey) {
@@ -287,6 +346,7 @@ export default function ModelViewer({
               const src = data.payload?.src ? `\nSource: ${data.payload.src}` : "";
               setErrorText(`${message}${src}`);
               setShowLoader(false);
+              setLoadingNotice(null);
             }
           } catch {
             // Ignore malformed bridge messages from injected HTML.

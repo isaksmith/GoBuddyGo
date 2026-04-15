@@ -71,10 +71,26 @@ export interface PlacedSticker {
 
 export type Model3dStatus = "idle" | "pending" | "succeeded" | "failed";
 
+export type CarAngle =
+  | "frontThreeQuarter"
+  | "front"
+  | "driverSide"
+  | "rear"
+  | "passengerSide";
+
+export interface CarPhotos {
+  frontThreeQuarter?: string;
+  front?: string;
+  driverSide?: string;
+  rear?: string;
+  passengerSide?: string;
+}
+
 export interface SavedCar {
   id: string;
   name: string;
   photoUri: string;
+  photos?: CarPhotos;
   stickers: PlacedSticker[];
   model3dTaskId?: string | null;
   model3dStatus?: Model3dStatus;
@@ -676,6 +692,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
           }
         }
+        // Migrate legacy cars that don't have a photos field yet
+        {
+          const migrated = initialCars.map((car) => {
+            if (!car.photos) {
+              return {
+                ...car,
+                photos: car.photoUri ? { frontThreeQuarter: car.photoUri } : {},
+              };
+            }
+            return car;
+          });
+          if (JSON.stringify(migrated) !== JSON.stringify(initialCars)) {
+            initialCars = migrated;
+            await AsyncStorage.setItem(STORAGE_KEYS.savedCars, JSON.stringify(initialCars));
+          }
+        }
+
         setSavedCars(initialCars);
         const fallbackCoinDashCarId = initialCars[0]?.id ?? null;
         const resolvedCoinDashCarId =

@@ -105,7 +105,6 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
         ) : (
           <Image source={{ uri: car.photoUri }} style={cardStyles.image} resizeMode="cover" />
         )}
-
       </View>
       <View style={cardStyles.footer}>
         <Text style={cardStyles.name} numberOfLines={1}>{car.name}</Text>
@@ -130,8 +129,7 @@ const SavedCarCard = React.memo(function SavedCarCard({ car, onPress, onDelete, 
     prev.car.photoUri === next.car.photoUri &&
     prev.car.model3dStatus === next.car.model3dStatus &&
     prev.car.model3dUrl === next.car.model3dUrl &&
-    prev.car.isDefault === next.car.isDefault &&
-    prev.isCoinDashSelected === next.isCoinDashSelected
+    prev.car.isDefault === next.car.isDefault
   );
 });
 
@@ -366,7 +364,7 @@ type Tab = "cars" | "designs";
 
 export default function GarageScreen() {
   const insets = useSafeAreaInsets();
-  const { savedCars, selectedCoinDashCarId, setCoinDashCar, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign, settings } = useApp();
+  const { savedCars, designs, addSavedCar, deleteSavedCar, updateSavedCar, updateDesign, settings } = useApp();
   const language = settings.language;
   const [activeTab, setActiveTab] = useState<Tab>("cars");
   const [renameId, setRenameId] = useState<string | null>(null);
@@ -563,8 +561,8 @@ export default function GarageScreen() {
                   key={car.id}
                   car={car}
                   onPress={() => {
-                    setCoinDashCar(car.id);
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push(`/saved-car-detail?carId=${car.id}`);
                   }}
                   onDelete={() => handleDeleteCar(car)}
                   onRename={() => startRename(car.id, "cars", car.name)}
