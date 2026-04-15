@@ -4,8 +4,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
+import CarAngleCaptureView from "@/components/CarAngleCaptureView";
 
 export interface Mission {
   id: string;
@@ -84,6 +86,18 @@ export interface CarPhotos {
   driverSide?: string;
   rear?: string;
   passengerSide?: string;
+}
+
+const REQUIRED_CAR_PHOTO_ANGLES: CarAngle[] = [
+  "frontThreeQuarter",
+  "front",
+  "driverSide",
+  "rear",
+  "passengerSide",
+];
+
+function hasAllCarPhotoAngles(car: SavedCar): boolean {
+  return REQUIRED_CAR_PHOTO_ANGLES.every((angle) => !!car.photos?.[angle]);
 }
 
 export interface SavedCar {
@@ -581,6 +595,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [selectedCoinDashCarId, setSelectedCoinDashCarId] = useState<string | null>(null);
   const [designs, setDesigns] = useState<CarDesign[]>([]);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [backgroundCaptureCarId, setBackgroundCaptureCarId] = useState<string | null>(null);
+  const backgroundCaptureAttemptsRef = useRef<Map<string, number>>(new Map());
 
   const restorePersistedSession = useCallback(async (rawSession: string | null) => {
     if (!rawSession) return;
@@ -981,6 +997,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ? savedCars.find((car) => car.id === selectedCoinDashCarId) ?? null
     : null;
 
+  const backgroundCaptureCar = backgroundCaptureCarId
+    ? savedCars.find((car) => car.id === backgroundCaptureCarId) ?? null
+    : null;
+
+  const handleBackgroundCaptureComplete = useCallback(async (photos: Partial<CarPhotos>) => {
+    const carId = backgroundCaptureCarId;
+    if (!carId) return;
+
+    const existing = savedCars.find((car) => car.id === carId);
+    if (!existing) {
+      setBackgroundCaptureCarId(null);
+      return;
+    }
+
+    await updateSavedCar(carId, {
+      photos: {
+        ...(existing.photos ?? {}),
+        ...photos,
+      },
+    });
+
+    setBackgroundCaptureCarId(null);
+  }, [backgroundCaptureCarId, savedCars, updateSavedCar]);
+
+  const handleBackgroundCaptureError = useCallback(() => {
+    setBackgroundCaptureCarId(null);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded || backgroundCaptureCarId) return;
+
+    const nextCar = savedCars.find((car) => {
+      if (!car.model3dUrl || car.model3dStatus !== "succeeded") return false;
+      if (hasAllCarPhotoAngles(car)) return false;
+      const attempts = backgroundCaptureAttemptsRef.current.get(car.id) ?? 0;
+      return attempts < 3;
+    });
+
+    if (!nextCar) return;
+    const prevAttempts = backgroundCaptureAttemptsRef.current.get(nextCar.id) ?? 0;
+    backgroundCaptureAttemptsRef.current.set(nextCar.id, prevAttempts + 1);
+    setBackgroundCaptureCarId(nextCar.id);
+  }, [savedCars, isLoaded, backgroundCaptureCarId]);
+
   return (
     <AppContext.Provider
       value={{
@@ -1016,6 +1076,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      {backgroundCaptureCar?.model3dUrl && (
+        <CarAngleCaptureView
+          modelUrl={backgroundCaptureCar.model3dUrl}
+          onComplete={handleBackgroundCaptureComplete}
+          onError={handleBackgroundCaptureError}
+        />
+      )}
     </AppContext.Provider>
   );
 }

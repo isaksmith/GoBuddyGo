@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Platform, StyleSheet } from "react-native";
-import { CarAngle, CarPhotos } from "@/context/AppContext";
+import type { CarAngle, CarPhotos } from "@/context/AppContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

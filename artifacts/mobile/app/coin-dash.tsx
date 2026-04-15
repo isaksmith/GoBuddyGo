@@ -3,7 +3,6 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { SvgXml } from "react-native-svg";
 import {
   Dimensions,
   Image,
@@ -24,45 +23,22 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Colors } from "@/constants/colors";
-import { getBuddyCarModelUrl, useApp } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { CarSelectionCarousel } from "@/components/CarSelectionCarousel";
+import DefaultCarSvg from "@/components/DefaultCarSvg";
 import ModelViewer from "@/components/ModelViewer";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 const CAR_W = 200;
 const CAR_H = 140;
+const CAR_HITBOX_RADIUS = 56;
 const COIN_R = 20;
+const COIN_HITBOX_RADIUS = 12;
 const MOVE_STEP = 28;
 const PLAYFIELD_TOP = 100;
 const PLAYFIELD_BOTTOM_MARGIN = 280;
-const MIN_CAR_LOADING_BAR_MS = 700;
 const COIN_RESPAWN_DELAY_MS = 1500;
-
-const COIN_DASH_PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" width="100%" height="100%">
-  <ellipse cx="120" cy="140" rx="90" ry="8" fill="#e2e8f0"/>
-
-  <path d="M 60 80 C 60 30, 180 30, 180 80" fill="#3b82f6"/>
-
-  <path d="M 68 80 C 68 40, 172 40, 172 80 Z" fill="#e0f2fe"/>
-
-  <rect x="115" y="44" width="8" height="36" fill="#3b82f6"/>
-
-  <rect x="30" y="75" width="180" height="50" rx="20" fill="#2563eb"/>
-
-  <ellipse cx="200" cy="95" rx="8" ry="12" fill="#fef08a"/>
-
-  <ellipse cx="40" cy="95" rx="6" ry="10" fill="#ef4444"/>
-
-  <circle cx="75" cy="125" r="22" fill="#1e293b"/>
-  <circle cx="75" cy="125" r="10" fill="#94a3b8"/>
-  <circle cx="75" cy="125" r="4" fill="#cbd5e1"/>
-
-  <circle cx="165" cy="125" r="22" fill="#1e293b"/>
-  <circle cx="165" cy="125" r="10" fill="#94a3b8"/>
-  <circle cx="165" cy="125" r="4" fill="#cbd5e1"/>
-
-  <rect x="125" y="85" width="15" height="4" rx="2" fill="#1d4ed8"/>
-</svg>`;
 
 function randomCoinPos() {
   const margin = COIN_R + 16;
@@ -171,25 +147,26 @@ function DPadButton({
 
 export default function CoinDashScreen() {
   const insets = useSafeAreaInsets();
-  const { selectedCoinDashCar } = useApp();
+  const { selectedCoinDashCar, savedCars, selectedCoinDashCarId, setCoinDashCar } = useApp();
   const activeCar = selectedCoinDashCar;
   const activeCarModelUrl =
-    activeCar?.model3dStatus === "succeeded" && activeCar.model3dUrl
+    activeCar?.model3dStatus === "succeeded" && activeCar?.model3dUrl
       ? activeCar.model3dUrl
-      : activeCar?.isDefault && activeCar?.model3dUrl
-        ? activeCar.model3dUrl
-        : getBuddyCarModelUrl();
-  const usesPhotoCar = Boolean(activeCar && !activeCar.isDefault && activeCar.photoUri);
+      : null;
+  const activeCarImageUri = activeCar?.photos?.frontThreeQuarter ?? activeCar?.photoUri ?? null;
+  const modelViewerKeyRef = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const selectedFromCarouselRef = useRef(false);
+  const hideModelLoadingBarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoMoveUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleDpadRef = useRef<(dir: "up" | "down" | "left" | "right") => void>(() => {});
   const [permission, requestPermission] = useCameraPermissions();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [score, setScore] = useState(0);
-  const [carAssetProgress, setCarAssetProgress] = useState(usesPhotoCar ? 1 : 0);
-  const [isCarAssetLoading, setIsCarAssetLoading] = useState(!usesPhotoCar);
-  const carLoadingStartTimeRef = useRef<number>(0);
-  const carLoadingHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const viewerInstanceKeyRef = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const [showCarouselInitial, setShowCarouselInitial] = useState(true);
+  const [modelLoadingProgress, setModelLoadingProgress] = useState(0);
+  const [showModelLoadingBar, setShowModelLoadingBar] = useState(false);
   const [coins, setCoins] = useState(() =>
     Array.from({ length: 6 }, (_, i) => makeCoin(i))
   );
@@ -200,7 +177,6 @@ export default function CoinDashScreen() {
   const carY = useSharedValue(
     PLAYFIELD_TOP + (SCREEN_H - PLAYFIELD_TOP - PLAYFIELD_BOTTOM_MARGIN) / 2 - CAR_H / 2
   );
-  const carFlip = useSharedValue(1);
   const carBounce = useSharedValue(0);
 
   const carPosRef = useRef({
@@ -224,39 +200,96 @@ export default function CoinDashScreen() {
   }, [permission]);
 
   useEffect(() => {
-    if (usesPhotoCar) {
-      if (carLoadingHideTimerRef.current) {
-        clearTimeout(carLoadingHideTimerRef.current);
-        carLoadingHideTimerRef.current = null;
-      }
-      setCarAssetProgress(1);
-      setIsCarAssetLoading(false);
-      return;
-    }
-    if (carLoadingHideTimerRef.current) {
-      clearTimeout(carLoadingHideTimerRef.current);
-      carLoadingHideTimerRef.current = null;
-    }
-    carLoadingStartTimeRef.current = Date.now();
-    setCarAssetProgress(0);
-    setIsCarAssetLoading(true);
-  }, [activeCarModelUrl, usesPhotoCar]);
-
-  useEffect(() => {
     return () => {
-      if (carLoadingHideTimerRef.current) {
-        clearTimeout(carLoadingHideTimerRef.current);
-      }
       coinRespawnTimersRef.current.forEach((timer) => clearTimeout(timer));
       coinRespawnTimersRef.current = [];
+      if (hideModelLoadingBarTimerRef.current) {
+        clearTimeout(hideModelLoadingBarTimerRef.current);
+        hideModelLoadingBarTimerRef.current = null;
+      }
+      if (autoMoveUpTimerRef.current) {
+        clearTimeout(autoMoveUpTimerRef.current);
+        autoMoveUpTimerRef.current = null;
+      }
     };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedFromCarouselRef.current) {
+      return;
+    }
+
+    if (!activeCarModelUrl) {
+      setShowModelLoadingBar(false);
+      setModelLoadingProgress(0);
+      selectedFromCarouselRef.current = false;
+      return;
+    }
+
+    setModelLoadingProgress(0);
+    setShowModelLoadingBar(true);
+  }, [activeCarModelUrl]);
+
+  const handleSelectCar = useCallback(
+    (carId: string) => {
+      const selectedCar = savedCars.find((car) => car.id === carId);
+      const hasModelToLoad =
+        selectedCar?.model3dStatus === "succeeded" &&
+        typeof selectedCar?.model3dUrl === "string" &&
+        selectedCar.model3dUrl.length > 0;
+
+      if (hideModelLoadingBarTimerRef.current) {
+        clearTimeout(hideModelLoadingBarTimerRef.current);
+        hideModelLoadingBarTimerRef.current = null;
+      }
+      if (autoMoveUpTimerRef.current) {
+        clearTimeout(autoMoveUpTimerRef.current);
+        autoMoveUpTimerRef.current = null;
+      }
+
+      selectedFromCarouselRef.current = hasModelToLoad;
+      setModelLoadingProgress(0);
+      setShowModelLoadingBar(hasModelToLoad);
+
+      void setCoinDashCar(carId);
+
+      autoMoveUpTimerRef.current = setTimeout(() => {
+        handleDpadRef.current("up");
+        autoMoveUpTimerRef.current = null;
+      }, 2000);
+    },
+    [savedCars, setCoinDashCar]
+  );
+
+  const handleCarModelProgress = useCallback((progress: number) => {
+    if (!selectedFromCarouselRef.current) {
+      return;
+    }
+    setModelLoadingProgress(Math.max(0, Math.min(1, progress)));
+  }, []);
+
+  const handleCarModelLoadingStateChange = useCallback((isLoading: boolean) => {
+    if (!selectedFromCarouselRef.current) {
+      return;
+    }
+
+    if (isLoading) {
+      setShowModelLoadingBar(true);
+      return;
+    }
+
+    setModelLoadingProgress(1);
+    hideModelLoadingBarTimerRef.current = setTimeout(() => {
+      setShowModelLoadingBar(false);
+      selectedFromCarouselRef.current = false;
+      hideModelLoadingBarTimerRef.current = null;
+    }, 250);
   }, []);
 
   const carStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: carX.value },
       { translateY: carY.value + carBounce.value },
-      { scaleX: carFlip.value },
     ],
   }));
 
@@ -271,7 +304,7 @@ export default function CoinDashScreen() {
           const dx = carCenterX - coin.x;
           const dy = carCenterY - coin.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < CAR_W / 2 + COIN_R - 6) {
+          if (dist < CAR_HITBOX_RADIUS + COIN_HITBOX_RADIUS) {
             collectedAny = true;
             return false;
           }
@@ -282,6 +315,7 @@ export default function CoinDashScreen() {
           const toAdd = prev.length - next.length;
           setScore((s) => s + toAdd);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setShowCarouselInitial(false);
 
           const respawnTimer = setTimeout(() => {
             setCoins((currentCoins) => {
@@ -323,14 +357,8 @@ export default function CoinDashScreen() {
 
       if (dir === "up") ny -= MOVE_STEP;
       if (dir === "down") ny += MOVE_STEP;
-      if (dir === "left") {
-        nx -= MOVE_STEP;
-        carFlip.value = -1;
-      }
-      if (dir === "right") {
-        nx += MOVE_STEP;
-        carFlip.value = 1;
-      }
+      if (dir === "left") nx -= MOVE_STEP;
+      if (dir === "right") nx += MOVE_STEP;
 
       nx = Math.max(playfield.minX, Math.min(playfield.maxX, nx));
       ny = Math.max(playfield.minY, Math.min(playfield.maxY, ny));
@@ -346,12 +374,9 @@ export default function CoinDashScreen() {
     []
   );
 
+  handleDpadRef.current = handleDpad;
+
   const cameraGranted = permission?.granted ?? false;
-  const carAssetLoadingPercent = Math.max(
-    0,
-    Math.min(100, Math.round(carAssetProgress * 100))
-  );
-  const showCarAssetLoadingBar = !usesPhotoCar && isCarAssetLoading;
 
   return (
     <View style={styles.container}>
@@ -382,19 +407,26 @@ export default function CoinDashScreen() {
         </View>
       </View>
 
-      {showCarAssetLoadingBar && (
-        <View style={[styles.carLoadingHud, { top: topPad + 78 }]} pointerEvents="none">
-          <Text style={styles.carLoadingText}>Loading car asset... {carAssetLoadingPercent}%</Text>
-          <View style={styles.carLoadingTrack}>
+      <CarSelectionCarousel
+        cars={savedCars}
+        selectedCarId={selectedCoinDashCarId}
+        onSelectCar={handleSelectCar}
+        visible={showCarouselInitial}
+      />
+
+      {showModelLoadingBar && activeCarModelUrl ? (
+        <View style={styles.modelLoadingHud} pointerEvents="none">
+          <Text style={styles.modelLoadingText}>Loading selected car...</Text>
+          <View style={styles.modelLoadingTrack}>
             <View
               style={[
-                styles.carLoadingFill,
-                { width: `${Math.max(4, carAssetLoadingPercent)}%` },
+                styles.modelLoadingFill,
+                { width: `${Math.round(Math.max(0, Math.min(1, modelLoadingProgress)) * 100)}%` },
               ]}
             />
           </View>
         </View>
-      )}
+      ) : null}
 
       {/* Playfield */}
       <View style={styles.playfield} pointerEvents="none">
@@ -405,51 +437,27 @@ export default function CoinDashScreen() {
 
         {/* Car */}
         <Animated.View style={[styles.car, carStyle]}>
-          {activeCar && !activeCar.isDefault && activeCar.photoUri ? (
+          {activeCarModelUrl ? (
+            <View style={styles.carModel}>
+              <ModelViewer
+                html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"><\/script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;mix-blend-mode:multiply;isolation:auto;}canvas{mix-blend-mode:multiply !important;background:transparent !important;}</style></head><body><model-viewer src="${activeCarModelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate auto-rotate-delay="0" rotation-per-second="-90deg" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Coin Dash car"></model-viewer></body></html>`}
+                style={StyleSheet.absoluteFill}
+                scrollEnabled={false}
+                cacheKey={`${modelViewerKeyRef.current}:${activeCarModelUrl}`}
+                onProgressChange={handleCarModelProgress}
+                onLoadingStateChange={handleCarModelLoadingStateChange}
+                showLoadingOverlay={false}
+              />
+            </View>
+          ) : activeCarImageUri ? (
             <Image
-              source={{ uri: activeCar.photoUri }}
+              source={{ uri: activeCarImageUri }}
               style={styles.carImage}
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.carModel}>
-              {showCarAssetLoadingBar && (
-                <View style={styles.carPlaceholder} pointerEvents="none">
-                  <SvgXml xml={COIN_DASH_PLACEHOLDER_SVG} width="100%" height="100%" />
-                </View>
-              )}
-              <ModelViewer
-                html={`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"><\/script><script nomodule src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-legacy.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;background:transparent;overflow:hidden}model-viewer{width:100%;height:100%;background-color:transparent;--poster-color:transparent;mix-blend-mode:multiply;isolation:auto;}canvas{mix-blend-mode:multiply !important;background:transparent !important;}</style></head><body><model-viewer src="${activeCarModelUrl}" camera-orbit="225deg 65deg auto" camera-controls="false" interaction-prompt="none" auto-rotate auto-rotate-delay="0" rotation-per-second="90deg" shadow-intensity="0" environment-image="neutral" exposure="1.2" alt="Buddy Car"></model-viewer></body></html>`}
-                style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
-                scrollEnabled={false}
-                cacheKey={`${viewerInstanceKeyRef.current}:${activeCarModelUrl}`}
-                showLoadingOverlay={false}
-                onProgressChange={(progress) => {
-                  setCarAssetProgress(progress);
-                }}
-                onLoadingStateChange={(loading) => {
-                  if (loading) {
-                    carLoadingStartTimeRef.current = Date.now();
-                    setIsCarAssetLoading(true);
-                    return;
-                  }
-                  const elapsed = Date.now() - carLoadingStartTimeRef.current;
-                  const remaining = Math.max(0, MIN_CAR_LOADING_BAR_MS - elapsed);
-                  if (carLoadingHideTimerRef.current) {
-                    clearTimeout(carLoadingHideTimerRef.current);
-                  }
-                  if (remaining > 0) {
-                    carLoadingHideTimerRef.current = setTimeout(() => {
-                      setCarAssetProgress(1);
-                      setIsCarAssetLoading(false);
-                      carLoadingHideTimerRef.current = null;
-                    }, remaining);
-                    return;
-                  }
-                  setCarAssetProgress(1);
-                  setIsCarAssetLoading(false);
-                }}
-              />
+            <View style={styles.defaultCarPreview}>
+              <DefaultCarSvg width={180} height={112} bodyColor="#4F8EF7" accentColor="#FFD93D" />
             </View>
           )}
         </Animated.View>
@@ -537,42 +545,36 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  carLoadingHud: {
+  modelLoadingHud: {
     position: "absolute",
+    top: 118,
     left: 16,
     right: 16,
-    zIndex: 11,
-    backgroundColor: "rgba(8, 27, 40, 0.78)",
-    borderColor: "rgba(182, 241, 255, 0.5)",
-    borderWidth: 1,
+    zIndex: 20,
+    backgroundColor: "rgba(9,25,42,0.84)",
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 6,
   },
-  carLoadingText: {
-    color: "#E7F9FF",
+  modelLoadingText: {
+    color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "BalsamiqSans_700Bold",
-    letterSpacing: 0.3,
+    fontWeight: "700",
   },
-  carLoadingTrack: {
+  modelLoadingTrack: {
     width: "100%",
-    height: 7,
+    height: 6,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.24)",
     overflow: "hidden",
   },
-  carLoadingFill: {
+  modelLoadingFill: {
     height: "100%",
     borderRadius: 999,
-    backgroundColor: "#5BF2AC",
-  },
-  carPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 14,
-    overflow: "hidden",
-    zIndex: 2,
+    backgroundColor: "#3ECF8E",
   },
   playfield: {
     flex: 1,
@@ -623,6 +625,17 @@ const styles = StyleSheet.create({
     height: CAR_H,
     backgroundColor: "transparent",
     overflow: "hidden",
+  },
+  defaultCarPreview: {
+    width: CAR_W,
+    height: CAR_H,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(79,142,247,0.08)",
   },
   dpadWrapper: {
     alignItems: "center",

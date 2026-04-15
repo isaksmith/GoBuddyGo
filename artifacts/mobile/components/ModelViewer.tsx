@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Platform, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface ModelViewerProps {
@@ -37,6 +37,7 @@ export default function ModelViewer({
   const [showLoader, setShowLoader] = useState(!initiallyCached);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [loadingNotice, setLoadingNotice] = useState<string | null>(null);
+  const modelReadyRef = useRef(initiallyCached);
 
   const loadingPercent = Math.max(0, Math.min(100, Math.round(progress * 100)));
 
@@ -143,12 +144,14 @@ export default function ModelViewer({
 
   useEffect(() => {
     if (resolvedCacheKey && loadedModelCache.has(resolvedCacheKey)) {
+      modelReadyRef.current = true;
       setProgress(1);
       setShowLoader(false);
       setErrorText(null);
       setLoadingNotice(null);
       return;
     }
+    modelReadyRef.current = false;
     setProgress(0);
     setShowLoader(true);
     setErrorText(null);
@@ -299,7 +302,9 @@ export default function ModelViewer({
         opaque={false}
         backgroundColor="transparent"
         onLoadStart={() => {
+          modelReadyRef.current = false;
           if (resolvedCacheKey && loadedModelCache.has(resolvedCacheKey)) {
+            modelReadyRef.current = true;
             setProgress(1);
             setShowLoader(false);
             setErrorText(null);
@@ -331,17 +336,22 @@ export default function ModelViewer({
               setProgress((prev) => Math.max(prev, Math.max(0, Math.min(1, next))));
             }
             if (data.type === "mv-ready") {
+              modelReadyRef.current = true;
               if (resolvedCacheKey) {
                 loadedModelCache.add(resolvedCacheKey);
               }
               setProgress(1);
               setShowLoader(false);
+              setErrorText(null);
               setLoadingNotice(null);
             }
             if (data.type === "mv-slow") {
               setLoadingNotice(data.payload?.message ?? "Still loading model...");
             }
             if (data.type === "mv-error") {
+              if (modelReadyRef.current) {
+                return;
+              }
               const message = data.payload?.message ?? "Unknown model-viewer error";
               const src = data.payload?.src ? `\nSource: ${data.payload.src}` : "";
               setErrorText(`${message}${src}`);
